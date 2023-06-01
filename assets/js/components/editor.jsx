@@ -10,7 +10,7 @@ function resize(editor, id) {
   if(editor) {
     console.log('ed:', editor);
     const height = (editor.getModel().getLineCount() + 0) * 21;
-    container.style.height = `${height + 16}px`;
+    container.style.height = `${height + 4}px`;
     reactMonacoContainer.style.height = `${height}px`;
     editor.layout();
   }
@@ -55,22 +55,24 @@ class Editor extends React.Component {
     };
 
     return (
-      <div className="block rounded" style={{margin:"40px", padding:"8px", backgroundColor: "#1E1E1E"}}>
-        <div id={`editor-${this.state.id}`}>
-          <MonacoEditor
-            language="lua"
-            theme="vs-dark"
-            value={code}
-            options={options}
-            onChange={this.onChange.bind(this)}
-            editorDidMount={this.editorDidMount.bind(this)}
-          />
-        </div>
-        <div className="block flex flex-row flex-row-reverse flex-directio fs-2 text-sm text-white" >
-          <button onClick={this.evaluate.bind(this)} ><span>▶</span> Save & Run</button>
+      <div className="m-5 p-5 border-b-2">
+        <div className="flex flex-row fs-2 mb-4 text-sm" >
+            <button onClick={this.evaluate.bind(this)} ><span>▶</span> Save & Run</button>
+          </div>
+        <div className="rounded p-2" style={{backgroundColor: "#1E1E1E"}}>
+
+          <div id={`editor-${this.state.id}`}>
+            <MonacoEditor
+              language="lua"
+              theme="vs-dark"
+              value={code}
+              options={options}
+              onChange={this.onChange.bind(this)}
+              editorDidMount={this.editorDidMount.bind(this)}
+            />
+          </div>
         </div>
       </div>
-
     );
   }
 }
