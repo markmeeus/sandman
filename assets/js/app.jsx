@@ -24,6 +24,9 @@ import "phoenix_html"
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import * as monaco from "monaco-editor";
+import React from "react";
+import { createRoot } from 'react-dom/client';
+import Editor from './components/editor';
 import topbar from "../vendor/topbar"
 import CodeEditor from "./hooks/code_editor";
 
@@ -111,4 +114,10 @@ this.editor.getModel().onDidChangeContent((event) => {
 	this.editor.layout();
 });
 
+const reactContainer = document.getElementById("react-editor");
+const root = createRoot(reactContainer);
+root.render(<>
+	<Editor code='code 1' id='123'/>
+	<Editor code='code 2' id='1234'/>
+</>);
 
