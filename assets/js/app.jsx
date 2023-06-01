@@ -31,11 +31,13 @@ import topbar from "../vendor/topbar"
 import hotkeys from 'hotkeys-js';
 import Split from 'split.js'
 
+import RunnerHook from './hooks/runner';
+
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
   params: {_csrf_token: csrfToken},
   hooks: {
-    // ... possibly other hooks
+    RunnerHook
   }
 })
 
@@ -58,29 +60,28 @@ Split(['#document-container', '#log-container'], {
   minSize: [40, 80],
 });
 
-// self.MonacoEnvironment = {
-// 	globalAPI: true,
-// 	getWorkerUrl(_workerId, label) {
-// 		switch (label) {
-// 			case "css":
-// 			case "less":
-// 			case "scss":
-// 				return "/assets/monaco-editor/language/css/css.worker.js";
-// 			case "html":
-// 			case "handlebars":
-// 			case "razor":
-// 				return "/assets/monaco-editor/language/html/html.worker.js";
-// 			case "json":
-// 				return "/assets/monaco-editor/language/json/json.worker.js";
-// 			case "javascript":
-// 			case "typescript":
-// 				return "/assets/monaco-editor/language/typescript/ts.worker.js";
-// 			default:
-// 				return "/assets/monaco-editor/editor/editor.worker.js";
-// 		}
-// 	},
-// };
-
+self.MonacoEnvironment = {
+	globalAPI: true,
+	getWorkerUrl(_workerId, label) {
+		switch (label) {
+			case "css":
+			case "less":
+			case "scss":
+				return "/assets/monaco-editor/language/css/css.worker.js";
+			case "html":
+			case "handlebars":
+			case "razor":
+				return "/assets/monaco-editor/language/html/html.worker.js";
+			case "json":
+				return "/assets/monaco-editor/language/json/json.worker.js";
+			case "javascript":
+			case "typescript":
+				return "/assets/monaco-editor/language/typescript/ts.worker.js";
+			default:
+				return "/assets/monaco-editor/editor/editor.worker.js";
+		}
+	},
+};
 
 const reactContainer = document.getElementById("document-root");
 const root = createRoot(reactContainer);

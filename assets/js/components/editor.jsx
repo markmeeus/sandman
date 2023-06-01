@@ -35,6 +35,12 @@ class Editor extends React.Component {
   }
   evaluate(e) {
     window.sandman.document.blocks[this.state.id - 1].code = this.editor.getValue();
+    const event = new Event('sandman:run-block');
+    event.data = {
+      doc: window.sandman.document,
+      block_id: this.state.id
+    };
+    window.dispatchEvent(event);
   }
   render() {
     const code = this.state.code;
