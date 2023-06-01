@@ -1,4 +1,6 @@
 import React from "react";
+// this import is important, otherwise syntax highlighting is broken ...
+import * as monaco from "monaco-editor";
 import MonacoEditor from 'react-monaco-editor';
 
 function resize(editor, id) {
@@ -38,7 +40,10 @@ class Editor extends React.Component {
       minimap: {
         enabled: false
       },
-      language: 'lua',
+      // scrollbar: {
+      //   alwaysConsumeMouseWheel: false
+      // },
+      //language: 'lua',
       fontSize: '14px',
       fontWeight: "bold",
       theme: 'vs-dark',
@@ -48,7 +53,7 @@ class Editor extends React.Component {
 
     return (
       <div id={`editor-${this.state.id}`} className="flex rounded"
-      style={{margin:"4px", padding:"4px", backgroundColor: "#1E1E1E"}}>
+      style={{margin:"40px", padding:"8px", backgroundColor: "#1E1E1E"}}>
         <MonacoEditor
           language="lua"
           theme="vs-dark"

@@ -23,13 +23,10 @@ import "phoenix_html"
 // Establish Phoenix Socket and LiveView configuration.
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
-import * as monaco from "monaco-editor";
 import React from "react";
 import { createRoot } from 'react-dom/client';
-import Editor from './components/editor';
 import Document from './components/document';
 import topbar from "../vendor/topbar"
-import CodeEditor from "./hooks/code_editor";
 
 import hotkeys from 'hotkeys-js';
 import Split from 'split.js'
@@ -38,7 +35,6 @@ let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("
 let liveSocket = new LiveSocket("/live", Socket, {
   params: {_csrf_token: csrfToken},
   hooks: {
-    CodeEditor,
     // ... possibly other hooks
   }
 })
@@ -57,63 +53,34 @@ liveSocket.connect()
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
 
-Split(['#script-container', '#log-container'], {
+Split(['#document-container', '#log-container'], {
   direction: 'vertical',
   minSize: [40, 80],
 });
 
-self.MonacoEnvironment = {
-	globalAPI: true,
-	getWorkerUrl(_workerId, label) {
-		switch (label) {
-			case "css":
-			case "less":
-			case "scss":
-				return "/assets/monaco-editor/language/css/css.worker.js";
-			case "html":
-			case "handlebars":
-			case "razor":
-				return "/assets/monaco-editor/language/html/html.worker.js";
-			case "json":
-				return "/assets/monaco-editor/language/json/json.worker.js";
-			case "javascript":
-			case "typescript":
-				return "/assets/monaco-editor/language/typescript/ts.worker.js";
-			default:
-				return "/assets/monaco-editor/editor/editor.worker.js";
-		}
-	},
-};
-
-// const el = document.getElementById("code-editor")
-// const container = el.querySelector("[data-el-code-editor]");
-// const { language, code } = el.dataset;
-
-// this.editor = monaco.editor.create(container, {
-// 	value: code,
-// 	minimap: {
-// 		enabled: false
+// self.MonacoEnvironment = {
+// 	globalAPI: true,
+// 	getWorkerUrl(_workerId, label) {
+// 		switch (label) {
+// 			case "css":
+// 			case "less":
+// 			case "scss":
+// 				return "/assets/monaco-editor/language/css/css.worker.js";
+// 			case "html":
+// 			case "handlebars":
+// 			case "razor":
+// 				return "/assets/monaco-editor/language/html/html.worker.js";
+// 			case "json":
+// 				return "/assets/monaco-editor/language/json/json.worker.js";
+// 			case "javascript":
+// 			case "typescript":
+// 				return "/assets/monaco-editor/language/typescript/ts.worker.js";
+// 			default:
+// 				return "/assets/monaco-editor/editor/editor.worker.js";
+// 		}
 // 	},
-// 	language: 'lua',
-// 	fontSize: '14px',
-// 	fontWeight: "bold",
-// 	theme: 'vs-dark',
-// 	//automaticLayout: true,
-// 	scrollBeyondLastLine: false
-// 	// ... other options
-// });
+// };
 
-// const contentHeight = 10 + (this.editor.getModel().getLineCount() + 0) * 19 ;
-// const parent = container.parentElement;
-// parent.style.height = `${contentHeight}px`;
-// this.editor.layout();
-
-// this.editor.getModel().onDidChangeContent((event) => {
-// 	const contentHeight = 10 + (this.editor.getModel().getLineCount() + 0) * 19 ;
-// 	const parent = container.parentElement;
-// 	parent.style.height = `${contentHeight}px`;
-// 	this.editor.layout();
-// });
 
 const reactContainer = document.getElementById("document-root");
 const root = createRoot(reactContainer);
