@@ -8,6 +8,7 @@ const path = require("path")
 module.exports = {
   content: [
     "./js/**/*.js",
+    "./js/**/*.jsx",
     "../lib/*_web.ex",
     "../lib/*_web/**/*.*ex"
   ],

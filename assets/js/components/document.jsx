@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Editor from './editor';
 import MarkDownEditor from './markdown';
 
@@ -7,20 +7,32 @@ window.sandman = {
   document: {
     blocks: [
       {id: 1, type:'md', code: '# Sandman, helps you rest.'},
-      {id: 1, type:'lua', code: 'print("hello world")'}
+      {id: 2, type:'lua', code: 'print("hello world")'}
     ]
   }
 }
 
 const Document = (props) => {
+  const [document, setDocument] = useState(window.sandman.document);
+
+  const onNewBlock = (type) => {
+    window.sandman.document.blocks.push({id: window.sandman.document.blocks.length +1, type:type, code: ""});
+    // Dirty of me to keep the doc in the windod ...
+    // even more dirty that I need this to render (could also use a counter to bruteforce rerendering here)
+    setDocument({...window.sandman.document});
+  }
+
   return (<>
   {window.sandman?.document.blocks.map(block => {
     if(block.type === 'lua') {
-      return <Editor block={block}/>;
+      console.log("usin ke", block.id)
+      return <Editor key={block.id} block={block}/>;
     }else{
-      return <MarkDownEditor block={block} />;
+      console.log("usin ke", block.id)
+      return <MarkDownEditor key={block.id} block={block} />;
     }
   })}
+  <button onClick={()=>onNewBlock('lua')}>New block</button>
   </>);
 }
 

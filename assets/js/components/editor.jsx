@@ -6,11 +6,12 @@ import MonacoEditor from 'react-monaco-editor';
 function resize(editor, id) {
   let container = document.getElementById(`editor-${id}`);
   // grab child element
-  container = container.querySelector('.react-monaco-editor-container');
+  const reactMonacoContainer = container.querySelector('.react-monaco-editor-container');
   if(editor) {
     console.log('ed:', editor);
     const height = (editor.getModel().getLineCount() + 0) * 21;
-    container.style.height = `${height}px`;
+    container.style.height = `${height + 16}px`;
+    reactMonacoContainer.style.height = `${height}px`;
     editor.layout();
   }
 }
@@ -30,8 +31,10 @@ class Editor extends React.Component {
     //editor.focus();
   }
   onChange(newValue, e) {
-    console.log('onChange', newValue, e);
     resize(this.editor, this.state.id);
+  }
+  evaluate(e) {
+    window.sandman.document.blocks[this.state.id - 1].code = this.editor.getValue();
   }
   render() {
     const code = this.state.code;
@@ -52,16 +55,20 @@ class Editor extends React.Component {
     };
 
     return (
-      <div id={`editor-${this.state.id}`} className="flex rounded"
-      style={{margin:"40px", padding:"8px", backgroundColor: "#1E1E1E"}}>
-        <MonacoEditor
-          language="lua"
-          theme="vs-dark"
-          value={code}
-          options={options}
-          onChange={this.onChange.bind(this)}
-          editorDidMount={this.editorDidMount.bind(this)}
-        />
+      <div className="block rounded" style={{margin:"40px", padding:"8px", backgroundColor: "#1E1E1E"}}>
+        <div id={`editor-${this.state.id}`}>
+          <MonacoEditor
+            language="lua"
+            theme="vs-dark"
+            value={code}
+            options={options}
+            onChange={this.onChange.bind(this)}
+            editorDidMount={this.editorDidMount.bind(this)}
+          />
+        </div>
+        <div className="block flex flex-row flex-row-reverse flex-directio fs-2 text-sm text-white" >
+          <button onClick={this.evaluate.bind(this)} ><span>▶</span> Save & Run</button>
+        </div>
       </div>
 
     );
