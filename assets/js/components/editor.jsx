@@ -33,12 +33,13 @@ class Editor extends React.Component {
   onChange(newValue, e) {
     resize(this.editor, this.state.id);
   }
-  evaluate(e) {
+  evaluate(stepsToRun) {
     window.sandman.document.blocks[this.state.id - 1].code = this.editor.getValue();
     const event = new Event('sandman:run-block');
     event.data = {
       doc: window.sandman.document,
-      block_id: this.state.id
+      block_id: this.state.id,
+      stepsToRun: stepsToRun
     };
     window.dispatchEvent(event);
   }
@@ -49,10 +50,9 @@ class Editor extends React.Component {
       minimap: {
         enabled: false
       },
-      // scrollbar: {
-      //   alwaysConsumeMouseWheel: false
-      // },
-      //language: 'lua',
+      scrollbar: {
+        alwaysConsumeMouseWheel: false
+      },
       fontSize: '14px',
       fontWeight: "bold",
       theme: 'vs-dark',
@@ -63,7 +63,8 @@ class Editor extends React.Component {
     return (
       <div className="m-5 p-5 border-b-2">
         <div className="flex flex-row fs-2 mb-4 text-sm" >
-            <button onClick={this.evaluate.bind(this)} ><span>▶</span> Save & Run</button>
+            <button onClick={()=>this.evaluate.bind(this)("upto")} ><span>▶</span> Run Up To This Step</button>
+            <button class="mx-2" onClick={()=>this.evaluate.bind(this)("only-this")} ><span>▶</span> This Step Only</button>
           </div>
         <div className="rounded p-2" style={{backgroundColor: "#1E1E1E"}}>
 

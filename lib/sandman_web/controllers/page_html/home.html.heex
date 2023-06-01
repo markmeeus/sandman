@@ -3,7 +3,7 @@
   <div id="document-container" class="h-full" style="overflow:scroll;">
     <div id="document-root"/>
   </div>
-  <div id="log-container">
+  <div id="log-container" class="overscroll-contain" style="overflow:scroll;">
     <%= live_render(@conn, SandmanWeb.LiveView.Runner) %>
   </div>
 </div>
