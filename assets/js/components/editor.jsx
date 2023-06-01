@@ -64,7 +64,7 @@ class Editor extends React.Component {
       <div className="m-5 p-5 border-b-2">
         <div className="flex flex-row fs-2 mb-4 text-sm" >
             <button onClick={()=>this.evaluate.bind(this)("upto")} ><span>▶</span> Run Up To This Step</button>
-            <button class="mx-2" onClick={()=>this.evaluate.bind(this)("only-this")} ><span>▶</span> This Step Only</button>
+            <button className="mx-2" onClick={()=>this.evaluate.bind(this)("only-this")} ><span>▶</span> This Step Only</button>
           </div>
         <div className="rounded p-2" style={{backgroundColor: "#1E1E1E"}}>
 

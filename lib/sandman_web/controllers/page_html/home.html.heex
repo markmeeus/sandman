@@ -1,14 +1,16 @@
 <.flash_group flash={@flash} />
-<div id="document-log-container" class="h-screen p-12">
-  <div id="document-container" class="h-full" style="overflow:scroll;">
-    <div id="document-root"/>
+<div id="app-wrapper" class="flex flex-row">
+  <div id="document-log-container" class="h-screen p-12">
+    <div id="document-container" class="h-full" style="overflow:scroll;">
+      <div id="document-root"/>
+    </div>
+    <div id="log-container" class="overscroll-contain" style="overflow:scroll;">
+      <%= live_render(@conn, SandmanWeb.LiveView.Runner) %>
+    </div>
   </div>
-  <div id="log-container" class="overscroll-contain" style="overflow:scroll;">
-    <%= live_render(@conn, SandmanWeb.LiveView.Runner) %>
+  <div id="req-res-container" style="overflow:scroll;">
+  <%= live_render(@conn, SandmanWeb.LiveView.RequestResponse) %>
   </div>
-</div>
-<div id="req-res-container">
-
 </div>
 
 <button>run</button>

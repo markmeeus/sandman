@@ -55,10 +55,17 @@ liveSocket.connect()
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
 
+Split(['#document-log-container', '#req-res-container'], {
+  direction: 'horizontal',
+  minSize: [400, 80],
+});
+
+
 Split(['#document-container', '#log-container'], {
   direction: 'vertical',
   minSize: [40, 80],
 });
+
 
 self.MonacoEnvironment = {
 	globalAPI: true,
