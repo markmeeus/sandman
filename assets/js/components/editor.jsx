@@ -19,8 +19,8 @@ class Editor extends React.Component {
     super(props);
     this.monacoRef= React.createRef();
     this.state = {
-      code: props.code,
-      id: props.id
+      code: props.block.code,
+      id: props.block.id
     }
   }
   editorDidMount(editor, monaco) {

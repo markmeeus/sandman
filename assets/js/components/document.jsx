@@ -1,13 +1,27 @@
 import React from "react";
 import Editor from './editor';
 import MarkDownEditor from './markdown';
+
+// initial document ...
+window.sandman = {
+  document: {
+    blocks: [
+      {id: 1, type:'md', code: '# Sandman, helps you rest.'},
+      {id: 1, type:'lua', code: 'print("hello world")'}
+    ]
+  }
+}
+
 const Document = (props) => {
-  return <>
-    <Editor code="e1" id="1"/>
-    <Editor code="e2" id="2"/>
-    <MarkDownEditor></MarkDownEditor>
-    <Editor code="e3" id="3"/>
-  </>
+  return (<>
+  {window.sandman?.document.blocks.map(block => {
+    if(block.type === 'lua') {
+      return <Editor block={block}/>;
+    }else{
+      return <MarkDownEditor block={block} />;
+    }
+  })}
+  </>);
 }
 
 export default Document;
