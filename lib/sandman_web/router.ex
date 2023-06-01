@@ -18,6 +18,7 @@ defmodule SandmanWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    live "/app", LiveView.App
   end
 
   # Other scopes may use custom stacks.

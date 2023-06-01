@@ -7,9 +7,6 @@
 # General application configuration
 import Config
 
-config :sandman,
-  ecto_repos: [Sandman.Repo]
-
 # Configures the endpoint
 config :sandman, SandmanWeb.Endpoint,
   url: [host: "localhost"],
@@ -34,9 +31,22 @@ config :esbuild,
   version: "0.17.11",
   default: [
     args:
-      ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/assets --external:/fonts/* --external:/images/*),
+      ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/assets --external:/fonts/* --external:/images/* --loader:.ttf=file),
     cd: Path.expand("../assets", __DIR__),
     env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)}
+  ],
+  monaco_editor: [
+    args: ~w(
+        node_modules/monaco-editor/esm/vs/editor/editor.worker.js
+        node_modules/monaco-editor/esm/vs/language/css/css.worker.js
+        node_modules/monaco-editor/esm/vs/language/html/html.worker.js
+        node_modules/monaco-editor/esm/vs/language/json/json.worker.js
+        node_modules/monaco-editor/esm/vs/language/typescript/ts.worker.js
+        --bundle
+        --target=es2017
+        --outdir=../priv/static/assets/monaco-editor
+      ),
+    cd: Path.expand("../assets", __DIR__)
   ]
 
 # Configure tailwind (the version is required)
@@ -45,8 +55,8 @@ config :tailwind,
   default: [
     args: ~w(
       --config=tailwind.config.js
-      --input=css/app.css
-      --output=../priv/static/assets/app.css
+      --input=css/style.css
+      --output=../priv/static/assets/style.css
     ),
     cd: Path.expand("../assets", __DIR__)
   ]

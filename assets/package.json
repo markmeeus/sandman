@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "hotkeys-js": "^3.10.2",
+    "monaco-editor": "^0.38.0",
+    "split.js": "^1.6.5"
+  }
+}
