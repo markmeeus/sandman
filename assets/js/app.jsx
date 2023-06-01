@@ -27,6 +27,7 @@ import * as monaco from "monaco-editor";
 import React from "react";
 import { createRoot } from 'react-dom/client';
 import Editor from './components/editor';
+import Document from './components/document';
 import topbar from "../vendor/topbar"
 import CodeEditor from "./hooks/code_editor";
 
@@ -84,40 +85,37 @@ self.MonacoEnvironment = {
 	},
 };
 
-const el = document.getElementById("code-editor")
-const container = el.querySelector("[data-el-code-editor]");
-const { language, code } = el.dataset;
+// const el = document.getElementById("code-editor")
+// const container = el.querySelector("[data-el-code-editor]");
+// const { language, code } = el.dataset;
 
-this.editor = monaco.editor.create(container, {
-	value: code,
-	minimap: {
-		enabled: false
-	},
-	language: 'lua',
-	fontSize: '14px',
-	fontWeight: "bold",
-	theme: 'vs-dark',
-	//automaticLayout: true,
-	scrollBeyondLastLine: false
-	// ... other options
-});
+// this.editor = monaco.editor.create(container, {
+// 	value: code,
+// 	minimap: {
+// 		enabled: false
+// 	},
+// 	language: 'lua',
+// 	fontSize: '14px',
+// 	fontWeight: "bold",
+// 	theme: 'vs-dark',
+// 	//automaticLayout: true,
+// 	scrollBeyondLastLine: false
+// 	// ... other options
+// });
 
-const contentHeight = 10 + (this.editor.getModel().getLineCount() + 0) * 19 ;
-const parent = container.parentElement;
-parent.style.height = `${contentHeight}px`;
-this.editor.layout();
+// const contentHeight = 10 + (this.editor.getModel().getLineCount() + 0) * 19 ;
+// const parent = container.parentElement;
+// parent.style.height = `${contentHeight}px`;
+// this.editor.layout();
 
-this.editor.getModel().onDidChangeContent((event) => {
-	const contentHeight = 10 + (this.editor.getModel().getLineCount() + 0) * 19 ;
-	const parent = container.parentElement;
-	parent.style.height = `${contentHeight}px`;
-	this.editor.layout();
-});
+// this.editor.getModel().onDidChangeContent((event) => {
+// 	const contentHeight = 10 + (this.editor.getModel().getLineCount() + 0) * 19 ;
+// 	const parent = container.parentElement;
+// 	parent.style.height = `${contentHeight}px`;
+// 	this.editor.layout();
+// });
 
-const reactContainer = document.getElementById("react-editor");
+const reactContainer = document.getElementById("document-root");
 const root = createRoot(reactContainer);
-root.render(<>
-	<Editor code='code 1' id='123'/>
-	<Editor code='code 2' id='1234'/>
-</>);
+root.render(<Document/>)
 

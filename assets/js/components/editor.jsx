@@ -25,7 +25,7 @@ class Editor extends React.Component {
     this.editor = editor;
     console.log('editorDidMount', editor);
     resize(this.editor, this.state.id);
-    editor.focus();
+    //editor.focus();
   }
   onChange(newValue, e) {
     console.log('onChange', newValue, e);
@@ -45,8 +45,10 @@ class Editor extends React.Component {
       //automaticLayout: true,
       scrollBeyondLastLine: false
     };
+
     return (
-      <div id={`editor-${this.state.id}`}>
+      <div id={`editor-${this.state.id}`} className="flex rounded"
+      style={{margin:"4px", padding:"4px", backgroundColor: "#1E1E1E"}}>
         <MonacoEditor
           language="lua"
           theme="vs-dark"
