@@ -15,9 +15,18 @@ defmodule Sandman.Application do
       # Start Finch
       {Finch, name: Sandman.Finch},
       # Start the Endpoint (http/https)
-      SandmanWeb.Endpoint
+      SandmanWeb.Endpoint,
       # Start a worker by calling: Sandman.Worker.start_link(arg)
       # {Sandman.Worker, arg}
+      {Desktop.Window,
+      [
+          app: :sandman,
+          id: MainApp,
+          url: &SandmanWeb.Endpoint.url/0,
+          title: "Sandman",
+          size: { 1000, 600 },
+          menubar: MenuBar
+      ]}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

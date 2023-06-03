@@ -6,8 +6,8 @@ import MarkDownEditor from './markdown';
 window.sandman = {
   document: {
     blocks: [
-      {id: 1, type:'md', code: '# Sandman, helps you rest.'},
-      {id: 2, type:'lua', code: 'print("hello world")'}
+      {id: 1, type:'md', code: '# Start with a reuest.'},
+      {id: 2, type:'lua', code: 'http.get("http://google.com")'}
     ]
   }
 }

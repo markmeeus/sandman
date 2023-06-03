@@ -9,6 +9,8 @@ import Config
 
 # Configures the endpoint
 config :sandman, SandmanWeb.Endpoint,
+  # only listen to 127.0.0.1, random port
+  http: [ip: {127, 0, 0, 1}, port: 0],
   url: [host: "localhost"],
   render_errors: [
     formats: [html: SandmanWeb.ErrorHTML, json: SandmanWeb.ErrorJSON],

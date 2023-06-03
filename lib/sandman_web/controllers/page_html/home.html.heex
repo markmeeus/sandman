@@ -1,10 +1,10 @@
 <.flash_group flash={@flash} />
 <div id="app-wrapper" class="flex flex-row">
-  <div id="document-log-container" class="h-screen p-12">
+  <div id="document-log-container" class="h-screen">
     <div id="document-container" class="h-full" style="overflow:scroll;">
       <div id="document-root"/>
     </div>
-    <div id="log-container" class="overscroll-contain" style="overflow:scroll;">
+    <div id="log-container" class="overscroll-contain" style="overflow:scroll; background-color: #E8E8E8">
       <%= live_render(@conn, SandmanWeb.LiveView.Runner) %>
     </div>
   </div>

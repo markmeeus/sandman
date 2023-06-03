@@ -3,6 +3,7 @@ defmodule SandmanWeb.LiveView.RequestResponse do
   use Phoenix.LiveView,
     container: {:div, class: "h-full"}
 
+  alias Phoenix.LiveView.JS
 
   @spec render(any) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
@@ -10,60 +11,105 @@ defmodule SandmanWeb.LiveView.RequestResponse do
       <div class="text-black font-mono mx-10 p-4 text-xs"
           style="background-color: white"}>
           <div>
-          <div class="lg:hidden">
-            <label for="tabs" class="sr-only">Select a tab</label>
-            <!-- Use an "onChange" listener to redirect the user to the selected tab URL. -->
-            <select id="tabs" name="tabs" class="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
-              <option selected>Request</option>
-              <option>Payload</option>
-              <option>Response Headers</option>
-              <option>Response Body</option>
-              <option>Response Preview</option>
-            </select>
-          </div>
-          <div class="hidden lg:block">
+          <div class="block">
             <div class="border-b border-gray-200">
               <nav class="-mb-px flex space-x-2" aria-label="Tabs">
-                <!-- Current: "border-indigo-500 text-indigo-600", Default: "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700" -->
-                <a href="#" class="border-indigo-500 text-indigo-600 whitespace-nowrap border-b-2 py-4 px-1 text-xs font-medium" aria-current="page">
-                  Request
-                </a>
-                <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-1 text-xs font-medium">
-                  Payload
-                </a>
-                <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-1 text-xs font-medium">
-                  Response Headers
-                </a>
-
-                <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-1 text-xs font-medium">
-                  Response Body
-                </a>
-                <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-1 text-xs font-medium">
-                  Response Preview
-                </a>
-                <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-1 text-xs font-medium">
-                  Timing
-                </a>
+                <%= Enum.map(["Request", "Response"], fn item -> %>
+                  <SandmanWeb.TabBar.item event="switch_tab" item={item} selected={item == @tab}/>
+                <% end) %>
               </nav>
             </div>
           </div>
         </div>
-        <%= @req_res %>
+        <%!-- <nav class="-mb-px flex space-x-2" aria-label="Tabs">
+          <%= if @tab == "Request" do %>
+            <%= Enum.map(["Headers", "Body"], fn item -> %>
+              <SandmanWeb.TabBar.item event="switch_sub_tab" item={item} selected={item == @sub_tab}/>
+            <% end) %>
+          <% end %>
+          <%= if @tab == "Response" do %>
+            <%= Enum.map(["Headers", "Body", "Preview"], fn item -> %>
+              <SandmanWeb.TabBar.item event="switch_sub_tab" item={item} selected={item == @sub_tab}/>
+            <% end) %>
+          <% end %>
+        </nav> --%>
+
+        <%= case @tab do %>
+          <% "Request" -> %>
+            <.request req={@req_res.req} sub_tab={@sub_tab}/>
+          <% "Response" -> %>
+          <.response res={@req_res.res} sub_tab={@sub_tab}/>
+        <%end%>
       </div>
     """
   end
 
   def mount(_params, _session, socket) do
     Process.send_after(self(), :update, 3000)
-    IO.inspect("MOUNTED code view")
-    req_res = "request and response goes here"
+    req_res = %{
+      req: %{
+        headers: "REQ headers",
+        body: "REQ body"
+      },
+      res: %{
+        headers: "RESP headers",
+        body: "RESP body"
+      },
+    }
     socket = socket
     |> assign(:req_res, req_res)
+    |> assign(tab: "Response")
+    |> assign(sub_tab: "Preview")
     {:ok, socket}
   end
 
-  def handle_info(:update, socket) do
-    IO.inspect({"HANDLE UPDATE", connected?(socket)})
-    {:noreply, assign(socket, :req_res, "updated req")}
+  def handle_event("switch_tab", %{"tab" => tab}, socket) do
+    # switching subtab to headers, better to keep separate state
+    {:noreply, assign(socket, tab: tab, sub_tab: "Headers")}
   end
+  def handle_event("switch_sub_tab", %{"tab" => sub_tab}, socket) do
+    {:noreply, assign(socket, sub_tab: sub_tab)}
+  end
+
+  def request(assigns) do
+      ~H"""
+      <div class="flex flex-col mt-4">
+        <a href="#" phx-click={toggle_hidden("#request-headers")} >Response</a>
+        <div id="request-headers" class="hidden">
+          Request headers
+        </div>
+        <a href="#" phx-click={toggle_hidden("#request-body")} >Body</a>
+        <div id="request-body" class="hidden">
+          Request body
+        </div>
+      </div>
+      """
+  end
+  def response(assigns) do
+      ~H"""
+      <div class="flex flex-col mt-4" >
+        <a href="#" phx-click={toggle_hidden("#response-headers")} >Response</a>
+        <div id="response-headers" class="hidden">
+          Hidden response headers
+        </div>
+        <a href="#" phx-click={toggle_hidden("#response-body")} >Body</a>
+        <div id="response-body" class="hidden">
+          Hidden response body
+        </div>
+      </div>
+      """
+  end
+
+  def toggle_hidden(js \\ %JS{}, el) do
+    js
+    |> JS.remove_class(
+      "hidden",
+      to: "#{el}.hidden"
+    )
+    |> JS.add_class(
+      "hidden",
+      to: "#{el}:not(.hidden)"
+    )
+  end
+
 end
