@@ -20,6 +20,18 @@ defmodule SandmanWeb.LiveView.Runner do
   end
 
   def mount(_params, _session, socket) do
+    # :wx.set_env(Desktop.Env.wx_env())
+    # file_dialog = GenServer.whereis(MainApp)
+    # |> Desktop.Window.webview()
+    # |> :wxFileDialog.new([style: 2]) # 2 is wxFD_SAVE ....
+
+    # :wxFileDialog.showModal(file_dialog)
+    # :filename.join(
+    #   :wxFileDialog.getDirectory(file_dialog),
+    #   :wxFileDialog.getFilename(file_dialog)
+    # )
+    # |> IO.inspect()
+
     Process.send_after(self(), :update, 3000)
     IO.inspect("MOUNTED code view")
     log = "-- your first request\n -- get('http://')"
