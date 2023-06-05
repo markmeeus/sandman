@@ -48,10 +48,10 @@ class Editor extends React.Component {
     resize(this.editor, this.state.id);
   }
   evaluate(stepsToRun) {
-    window.sandman.document.blocks[this.state.id - 1].code = this.editor.getValue();
+    window.sandman.sandmanDocument.blocks[this.state.id - 1].code = this.editor.getValue();
     const event = new Event('sandman:run-block');
     event.data = {
-      doc: window.sandman.document,
+      doc: window.sandman.sandmanDocument,
       block_id: this.state.id,
       stepsToRun: stepsToRun
     };

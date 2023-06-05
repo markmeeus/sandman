@@ -28,11 +28,6 @@ defmodule MenuBar do
           <hr/>
           <item onclick="quit"><%= "Quit" %></item>
       </menu>
-      <menu label="Items">
-        <%= for item <- @items do %>
-          <item><%= item.name %></item>
-        <% end %>
-      </menu>
       <menu label="Help">
           <item onclick="help"><%= "Show Documentation" %></item>
           <item onclick="about"><%= "About" %></item>
