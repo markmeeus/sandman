@@ -79,7 +79,7 @@ class Editor extends React.Component {
     };
 
     return (
-      <div className="m-5 p-5 border-b-2">
+      <div className="my-1 pt-1 pb-5 px-5 border-b-2">
         <div className="flex flex-row fs-2 mb-1 text-sm" >
             <button onClick={()=>this.evaluate.bind(this)("upto")} ><span>▶</span> Run</button>
             <button className="mx-2" onClick={()=>this.evaluate.bind(this)("only-this")} ><span>▶▶</span>From top</button>

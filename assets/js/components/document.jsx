@@ -32,16 +32,22 @@ const Document = (props) => {
     return <></>
   }
   return (<>
-    {window.sandman?.sandmanDocument.blocks.map(block => {
-      if(block.type === 'lua') {
-        console.log("usin ke", block.id)
-        return <Editor key={block.id} block={block}/>;
-      }else{
-        console.log("usin ke", block.id)
-        return <MarkDownEditor key={block.id} block={block} />;
-      }
-    })}
-  <button onClick={()=>onNewBlock('lua')}>New block</button>
+    <h1 class="text-xl text-center mx-5 mt-1 font-bold" contentEditable>
+      New Script
+    </h1>
+    <>
+      {window.sandman?.sandmanDocument.blocks.map(block => {
+        if(block.type === 'lua') {
+          console.log("usin ke", block.id)
+          return <Editor key={block.id} block={block}/>;
+        }else{
+          console.log("usin ke", block.id)
+          return <MarkDownEditor key={block.id} block={block} />;
+        }
+      })}
+    <button onClick={()=>onNewBlock('lua')}>New block</button>
+  </>
+
   </>);
 }
 
