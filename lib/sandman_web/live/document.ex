@@ -10,18 +10,23 @@ defmodule SandmanWeb.LiveView.Document do
   def render(assigns) do
     ~H"""
     <h1 class="text-xl text-center mx-5 mt-1 font-bold" contenteditable="true">
-      New Script</h1>
-      <div class="flex rounded my-1 py-2 px-5 border-b-2">
-      <h1>My First Request.</h1></div>
-      <div class="my-1 pt-1 pb-5 px-5 border-b-2">
+      New Script
+    </h1>
+
+    <div class="flex rounded my-1 py-2 px-5 border-b-2">
+      <h1>My First Request.</h1>
+    </div>
+    <div class="my-1 pt-1 pb-5 px-5 border-b-2">
       <div class="flex flex-row fs-2 mb-1 text-sm">
       <button><span><%="▶"%></span> Run</button><button class="mx-2">
       <span><%="▶▶"%></span>From top</button></div>
       <div class="rounded-t p-2" style="background-color: rgb(30, 30, 30);">
-      <div id="editor-1" style="height: 35px;">
-      <div class="react-monaco-editor-container" data-keybinding-context="1"
-      data-mode-id="lua"
-       style="width: 100%; height: 35px; --vscode-editorCodeLens-lineHeight: 18px; --vscode-editorCodeLens-fontSize: 12px; --vscode-editorCodeLens-fontFeatureSettings: &quot;liga&quot; off, &quot;calt&quot; off;"><div class="monaco-editor no-user-select mac  showUnused showDeprecated vs-dark" role="code" data-uri="inmemory://model/1" style="width: 309px; height: 35px;"><div data-mprt="3" class="overflow-guard" style="width: 309px; height: 35px;"><div class="margin" role="presentation" aria-hidden="true" style="position: absolute; transform: translate3d(0px, 0px, 0px); contain: strict; top: 0px; height: 35px; width: 68px;"><div class="glyph-margin" style="left: 0px; width: 0px; height: 35px;"></div><div class="margin-view-zones" role="presentation" aria-hidden="true" style="position: absolute;"></div><div class="margin-view-overlays" role="presentation" aria-hidden="true" style="position: absolute; font-family: Menlo, Monaco, &quot;Courier New&quot;, monospace; font-weight: bold; font-size: 14px; font-feature-settings: &quot;liga&quot; 0, &quot;calt&quot; 0; font-variation-settings: normal; line-height: 21px; letter-spacing: 0px; width: 68px; height: 35px;"><div style="position:absolute;top:0px;width:100%;height:21px;"><div class="current-line" style="width:68px; height:21px;"></div><div class="line-numbers active-line-number" style="left:0px;width:42px;">1</div></div></div></div><div class="monaco-scrollable-element editor-scrollable vs-dark mac" role="presentation" data-mprt="5" style="position: absolute; overflow: hidden; left: 68px; width: 241px; height: 35px;"><div class="lines-content monaco-editor-background" style="position: absolute; overflow: hidden; width: 1e+06px; height: 1e+06px; transform: translate3d(0px, 0px, 0px); contain: strict; top: 0px; left: 0px;"><div class="view-overlays" role="presentation" aria-hidden="true" style="position: absolute; font-family: Menlo, Monaco, &quot;Courier New&quot;, monospace; font-weight: bold; font-size: 14px; font-feature-settings: &quot;liga&quot; 0, &quot;calt&quot; 0; font-variation-settings: normal; line-height: 21px; letter-spacing: 0px; height: 0px; width: 359px;"><div style="position:absolute;top:0px;width:100%;height:21px;"></div></div><div role="presentation" aria-hidden="true" class="view-rulers"></div><div class="view-zones" role="presentation" aria-hidden="true" style="position: absolute;"></div><div class="view-lines monaco-mouse-cursor-text" role="presentation" aria-hidden="true" data-mprt="7" style="position: absolute; font-family: Menlo, Monaco, &quot;Courier New&quot;, monospace; font-weight: bold; font-size: 14px; font-feature-settings: &quot;liga&quot; 0, &quot;calt&quot; 0; font-variation-settings: normal; line-height: 21px; letter-spacing: 0px; width: 359px; height: 35px;"><div style="top:0px;height:21px;" class="view-line"><span><span class="mtk1">http</span><span class="mtk9">.</span><span class="mtk1">get</span><span class="mtk9 bracket-highlighting-0">(</span><span class="mtk5">"</span><span class="mtk5 detected-link">https://google/com/testme</span><span class="mtk5">"</span><span class="mtk9 bracket-highlighting-0">)</span></span></div></div><div data-mprt="1" class="contentWidgets" style="position: absolute; top: 0px;"></div><div role="presentation" aria-hidden="true" class="cursors-layer cursor-line-style cursor-solid"><div class="cursor monaco-mouse-cursor-text " style="height: 21px; top: 0px; left: 0px; font-family: Menlo, Monaco, &quot;Courier New&quot;, monospace; font-weight: bold; font-size: 14px; font-feature-settings: &quot;liga&quot; 0, &quot;calt&quot; 0; font-variation-settings: normal; line-height: 21px; letter-spacing: 0px; display: block; visibility: hidden; padding-left: 0px; width: 2px;"></div></div></div><div role="presentation" aria-hidden="true" class="invisible scrollbar horizontal fade" style="position: absolute; width: 227px; height: 12px; left: 0px; bottom: 0px;"><div class="slider" style="position: absolute; top: 0px; left: 0px; height: 12px; transform: translate3d(0px, 0px, 0px); contain: strict; width: 152px;"></div></div><canvas class="decorationsOverviewRuler" aria-hidden="true" width="0" height="0" style="position: absolute; transform: translate3d(0px, 0px, 0px); contain: strict; top: 0px; right: 0px; width: 14px; height: 35px; display: none;"></canvas><div role="presentation" aria-hidden="true" class="invisible scrollbar vertical fade" style="position: absolute; width: 14px; height: 35px; right: 0px; top: 0px;"><div class="slider" style="position: absolute; top: 0px; left: 0px; width: 14px; transform: translate3d(0px, 0px, 0px); contain: strict; height: 35px;"></div></div></div><div role="presentation" aria-hidden="true" style="width: 309px;"></div><textarea data-mprt="6" class="inputarea monaco-mouse-cursor-text" wrap="off" autocorrect="off" autocapitalize="off" autocomplete="off" spellcheck="false" aria-label="Editor content;Press Alt+F1 for Accessibility Options." tabindex="0" role="textbox" aria-roledescription="editor" aria-multiline="true" aria-haspopup="false" aria-autocomplete="both" style="tab-size: 33.7188px; font-family: Menlo, Monaco, &quot;Courier New&quot;, monospace; font-weight: bold; font-size: 14px; font-feature-settings: &quot;liga&quot; 0, &quot;calt&quot; 0; font-variation-settings: normal; line-height: 21px; letter-spacing: 0px; top: 0px; left: 68px; width: 1px; height: 21px;"></textarea><div class="monaco-editor-background textAreaCover line-numbers" style="position: absolute; top: 0px; left: 0px; width: 0px; height: 0px;"></div><div data-mprt="4" class="overlayWidgets" style="width: 309px;"></div><div data-mprt="8" class="minimap slider-mouseover" role="presentation" aria-hidden="true" style="position: absolute; left: 0px; width: 0px; height: 35px;"><div class="minimap-shadow-hidden" style="height: 35px;"></div><canvas width="0" height="70" style="position: absolute; left: 0px; width: 0px; height: 35px;"></canvas><canvas class="minimap-decorations-layer" width="0" height="70" style="position: absolute; left: 0px; width: 0px; height: 35px;"></canvas><div class="minimap-slider" style="position: absolute; transform: translate3d(0px, 0px, 0px); contain: strict; width: 0px;"><div class="minimap-slider-horizontal" style="position: absolute; width: 0px; height: 0px;"></div></div></div><div role="presentation" aria-hidden="true" class="blockDecorations-container"></div></div><div data-mprt="2" class="overflowingContentWidgets"></div></div></div></div></div><div class="flex flex-col"><div class="flex flex-row-reverse text-xs rounded-b pb-1 px-1" style="background-color: rgb(238, 238, 238);">
+        <div id="monaco-1" phx-hook="MonacoHook">
+          <%="test code" %>
+        </div>
+      </div>
+      <div class="flex flex-col">
+       <div class="flex flex-row-reverse text-xs rounded-b pb-1 px-1" style="background-color: rgb(238, 238, 238);">
        <a href="#" class="mt-1 text-emerald-600">&nbsp;<%="2xx"%></a>
        <a href="#" class="mt-1">3 requests</a>
        </div>
@@ -32,8 +37,8 @@ defmodule SandmanWeb.LiveView.Document do
        <a href="#" class="mt-1 text-red-700">&nbsp;500</a>
        <a href="#" class="mt-1"><%= "GET https://test.com"%></a></div></div>
        </div>
-       <button>New block</button>
 
+       <button>New block</button>
     """
   end
 end

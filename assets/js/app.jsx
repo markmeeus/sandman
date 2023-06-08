@@ -32,13 +32,15 @@ import hotkeys from 'hotkeys-js';
 
 import RunnerHook from './hooks/runner';
 import HomeHook from './hooks/home';
+import MonacoHook from "./hooks/monaco";
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
   params: {_csrf_token: csrfToken},
   hooks: {
     RunnerHook,
-		HomeHook
+		HomeHook,
+		MonacoHook
   }
 })
 
