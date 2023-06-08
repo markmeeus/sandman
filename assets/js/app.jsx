@@ -29,15 +29,16 @@ import Document from './components/document';
 import topbar from "../vendor/topbar"
 
 import hotkeys from 'hotkeys-js';
-import Split from 'split.js'
 
 import RunnerHook from './hooks/runner';
+import HomeHook from './hooks/home';
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
   params: {_csrf_token: csrfToken},
   hooks: {
-    RunnerHook
+    RunnerHook,
+		HomeHook
   }
 })
 
@@ -54,30 +55,6 @@ liveSocket.connect()
 // >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
-
-Split(['#document-log-container', '#req-res-container'], {
-  direction: 'horizontal',
-  minSize: [400, 80],
-	gutterStyle: () => {
-		return {
-			'background-color': '#CCC',
-			width: "2px"
-		}
-	}
-});
-
-
-Split(['#document-container', '#log-container'], {
-  direction: 'vertical',
-  minSize: [40, 80],
-	gutterSize: 2,
-	gutterStyle: () => {
-		return {
-			'background-color': '#CCC',
-			height: "2px"
-		}
-	}
-});
 
 
 self.MonacoEnvironment = {
@@ -102,8 +79,3 @@ self.MonacoEnvironment = {
 		}
 	},
 };
-
-const reactContainer = document.getElementById("document-root");
-const root = createRoot(reactContainer);
-root.render(<Document/>)
-

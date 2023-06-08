@@ -5,7 +5,7 @@ import MarkDownEditor from './markdown';
 // initial document ...
 window.sandman = {
 }
-
+//
 
 
 const Document = (props) => {
@@ -13,9 +13,11 @@ const Document = (props) => {
   const [sandmanDocument, setDocument] = useState(window.sandman.sandmanDocument);
 
   useEffect(() => {
-    window.addEventListener(`phx:document_loaded`, (e) => {
-      window.sandman.sandmanDocument = e.detail;
-      setDocument({...window.sandman.sandmanDocument});
+    window.addEventListener(`phx:document_event`, (e) => {
+      if(e.detail.type === 'loaded') {
+        window.sandman.sandmanDocument = e.detail.document;
+        setDocument({...window.sandman.sandmanDocument});
+      }
     })
   });
 

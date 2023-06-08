@@ -42,7 +42,7 @@ defmodule SandmanWeb.LiveView.Runner do
     document = Document.get(doc_pid)
 
     socket =  socket
-    |> push_event("document_loaded", document)
+    |> push_event("document_event", %{type: "loaded", document: document})
     |> assign(:log, "document loaded")
 
     {:noreply, socket}
