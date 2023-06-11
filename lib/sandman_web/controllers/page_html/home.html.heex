@@ -1,18 +1,2 @@
 <.flash_group flash={@flash} />
-<div id="app-wrapper" class="flex flex-row" phx-hook="HomeHook">
-  <div id="document-log-container" class="h-screen">
-    <div id="document-container" class="h-full" style="overflow:scroll;">
-      <div id="document-root">
-        <%= live_render(@conn, SandmanWeb.LiveView.Document) %>
-      </div>
-    </div>
-    <div id="log-container" class="overscroll-contain" style="overflow:scroll; background-color: #E8E8E8">
-      <%= live_render(@conn, SandmanWeb.LiveView.Runner) %>
-    </div>
-  </div>
-  <div id="req-res-container" style="overflow:scroll;">
-  <%= live_render(@conn, SandmanWeb.LiveView.RequestResponse) %>
-  </div>
-</div>
-
-<button>run</button>
+<%= live_render(@conn, SandmanWeb.LiveView.App) %>

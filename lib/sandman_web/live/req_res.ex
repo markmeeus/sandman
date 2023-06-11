@@ -1,8 +1,6 @@
 defmodule SandmanWeb.LiveView.RequestResponse do
   # In Phoenix v1.6+ apps, the line is typically: use MyAppWeb, :live_view
-  use Phoenix.LiveView,
-    container: {:div, class: "h-full"}
-
+  use Phoenix.Component
   alias Phoenix.LiveView.JS
 
   @spec render(any) :: Phoenix.LiveView.Rendered.t()

@@ -1,6 +1,7 @@
 import * as monaco from "monaco-editor";
 
 function observeResize(editor, container){
+  // TODO: add container resize observer (voor split bijv) ?
   editor.onDidChangeHiddenAreas(()=>{
     // changing collapsible code block
     resize(editor, container);
@@ -15,8 +16,9 @@ function resize(editor, container) {
 const MonacoHook = {
   mounted() {
     code = this.el.innerText;
+    const blockId = this.el.dataset.blockId;
     this.el.innerText = "";
-    editor = monaco.editor.create(this.el, {
+    let editor = monaco.editor.create(this.el, {
     	value: code,
       language: 'lua',
     	minimap: {
@@ -34,7 +36,13 @@ const MonacoHook = {
       overviewRulerLanes: 0,
       scrollBeyondLastLine: false
     });
-    editor.getModel().onDidChangeContent(()=>resize(editor, this.el));
+
+    editor.getModel().onDidChangeContent((changeEvent)=>{
+      const event = new Event('sandman:code-changed');
+      event.data = {value: editor.getValue(), blockId};
+      window.dispatchEvent(event);
+      resize(editor, this.el);
+    });
     resize(editor, this.el);
     observeResize(editor, this.el);
   }
