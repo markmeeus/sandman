@@ -26,8 +26,15 @@ defmodule Sandman.Document do
   end
 
   def add_block(pid, after_block) do
-    IO.inspect("adding block")
     GenServer.cast(pid, {:add_block, :after, after_block})
+  end
+
+  def remove_block(pid, block_id) do
+    GenServer.cast(pid, {:remove_block, block_id})
+  end
+
+  def change_code(pid, block_id, code) do
+    GenServer.cast(pid, {:change_code, block_id, code})
   end
 
   def init([doc_id, file_path]) do
@@ -38,7 +45,8 @@ defmodule Sandman.Document do
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_loaded)
     {:ok, %{
       doc_id: doc_id,
-      document: document
+      document: document,
+      file_path: file_path
     }}
   end
 
@@ -56,7 +64,29 @@ defmodule Sandman.Document do
     end)
     document = Map.put(document, "blocks", new_blocks)
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
-    IO.inspect({"new doc", document})
-    {:noreply, state = %{state | document: document}}
+    write_file(document, state)
+    {:noreply, state = %{ state | document: document}}
+  end
+
+  def handle_cast({:remove_block, block_id}, state  = %{document: document, doc_id: doc_id}) do
+    new_blocks = Enum.filter(document["blocks"], & &1["id"] != block_id)
+    document = Map.put(document, "blocks", new_blocks)
+    write_file(document, state)
+    PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
+    {:noreply, state = %{ state | document: document}}
+  end
+
+  def handle_cast({:change_code, block_id, code}, state = %{document: document}) do
+    new_blocks = Enum.map(document["blocks"], fn
+      block = %{"id" => ^block_id} -> Map.put(block, "code", code)
+      block -> block
+    end)
+    document = Map.put(document, "blocks", new_blocks)
+    write_file(document, state)
+    {:noreply, state = %{ state | document: document}}
+  end
+
+  defp write_file(document, %{file_path: file_path}) do
+    #:ok = File.write(file_path, Jason.encode!(document))
   end
 end

@@ -1,6 +1,5 @@
 import * as monaco from "monaco-editor";
 
-let insideObserver = false;
 
 function trackSize(editor, container, resize){
   editor.onDidChangeHiddenAreas(()=>{
@@ -8,10 +7,10 @@ function trackSize(editor, container, resize){
     resize();
   });
   new ResizeObserver(()=>{
-    if(!insideObserver){
-      insideObserver = true;
+    if(!this.insideObserver){
+      this.insideObserver = true;
       resize()
-      insideObserver = false;
+      this.insideObserver = false;
     }
 
   }).observe(container);
@@ -25,7 +24,7 @@ function resize(editor, container) {
 
 const MonacoHook = {
   mounted() {
-    code = this.el.innerText;
+    const code = this.el.innerHTML;
     const blockId = this.el.dataset.blockId;
     this.el.innerText = "";
     let editor = monaco.editor.create(this.el, {

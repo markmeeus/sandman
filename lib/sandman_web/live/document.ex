@@ -26,9 +26,7 @@ defmodule SandmanWeb.LiveView.Document do
           <button><span><%="▶"%></span> Run</button><button class="mx-2">
           <span><%="▶▶"%></span>From top</button></div>
           <div class="rounded-t p-2" style="background-color: rgb(30, 30, 30);">
-            <div id={"monaco-#{block["id"]}"} phx-hook="MonacoHook" data-block-id={block["id"]} phx-update="ignore">
-              <%= block["code"] %>
-            </div>
+            <div id={"monaco-#{block["id"]}"} phx-hook="MonacoHook" data-block-id={block["id"]} phx-update="ignore"><%= block["code"] %></div>
           </div>
           <div class="flex flex-col">
           <div class="flex flex-row-reverse text-xs rounded-b pb-1 px-1" style="background-color: rgb(238, 238, 238);">
@@ -41,9 +39,13 @@ defmodule SandmanWeb.LiveView.Document do
           <div class="flex flex-row-reverse text-xs rounded-b pb-1 px-1" style="background-color: rgb(238, 238, 238);">
           <a href="#" class="mt-1 text-red-700">&nbsp;500</a>
           <a href="#" class="mt-1"><%= "GET https://test.com"%></a></div></div>
+          <div class="flex flex-row">
+            <button class="pt-1 text-sm" phx-click="add-block" phx-value-block-id={block["id"]}>Add</button>
+            <div class="grow"/>
+            <button class="pt-1 text-sm" phx-click="remove-block" phx-value-block-id={block["id"]}>Remove</button>
           </div>
+        </div>
 
-          <button phx-click="add-block" phx-value-block-id={block["id"]}>New block</button>
 
       <% end) %>
 

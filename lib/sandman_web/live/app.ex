@@ -53,8 +53,9 @@ defmodule SandmanWeb.LiveView.App do
     {:ok, socket}
   end
 
-  def handle_event("code-changed", %{"blockId" => block_id, "value" => value}, socket) do
+  def handle_event("code-changed", %{"blockId" => block_id, "value" => code}, socket = %{assigns: %{doc_pid: doc_pid}}) do
     # persist document here
+    Document.change_code(doc_pid, block_id, code)
     {:noreply, socket}
   end
 
@@ -64,12 +65,17 @@ defmodule SandmanWeb.LiveView.App do
     {:noreply, socket}
   end
 
+  def handle_event("remove-block", %{"block-id" => block_id}, socket = %{assigns: %{doc_pid: doc_pid}}) do
+    # persist document here
+    Document.remove_block(doc_pid, block_id)
+    {:noreply, socket}
+  end
+
   def handle_info(:document_loaded, socket = %{assigns: %{doc_pid: doc_pid}}) do
     {:noreply, assign(socket, :document, Document.get(doc_pid))}
   end
 
   def handle_info(:document_changed, socket = %{assigns: %{doc_pid: doc_pid}}) do
-    IO.inspect({"changed doc", Document.get(doc_pid)})
     {:noreply, assign(socket, :document, Document.get(doc_pid))}
   end
 
