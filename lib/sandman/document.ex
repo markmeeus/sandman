@@ -25,17 +25,15 @@ defmodule Sandman.Document do
     GenServer.call(pid, :get)
   end
 
+  def add_block(pid, after_block) do
+    IO.inspect("adding block")
+    GenServer.cast(pid, {:add_block, :after, after_block})
+  end
+
   def init([doc_id, file_path]) do
     #TODO: load doc from file
     {:ok, file} = File.read(file_path)
     document = Jason.decode!(file)
-
-    # assign id's (it's index basically) to every block
-    document = update_in(document["blocks"], fn blocks ->
-      blocks
-      |> Enum.with_index()
-      |> Enum.map(fn {block, id} -> Map.put(block, :id, id) end)
-    end)
 
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_loaded)
     {:ok, %{
@@ -45,4 +43,20 @@ defmodule Sandman.Document do
   end
 
   def handle_call(:get, _sender, state = %{document: document}), do: {:reply, document, state}
+
+  def handle_cast({:add_block, :after, after_block_id}, state  = %{document: document, doc_id: doc_id}) do
+    new_block = %{
+      "type" => "lua",
+      "code" => "",
+      "id" => UUID.uuid4()
+    }
+    new_blocks = Enum.reduce(document["blocks"], [], fn
+      block = %{"id" => ^after_block_id}, acc -> acc ++ [block, new_block]
+      block, acc -> acc ++ [block]
+    end)
+    document = Map.put(document, "blocks", new_blocks)
+    PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
+    IO.inspect({"new doc", document})
+    {:noreply, state = %{state | document: document}}
+  end
 end

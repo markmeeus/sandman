@@ -1,12 +1,22 @@
 import * as monaco from "monaco-editor";
 
-function observeResize(editor, container){
-  // TODO: add container resize observer (voor split bijv) ?
+let insideObserver = false;
+
+function trackSize(editor, container, resize){
   editor.onDidChangeHiddenAreas(()=>{
     // changing collapsible code block
-    resize(editor, container);
+    resize();
   });
+  new ResizeObserver(()=>{
+    if(!insideObserver){
+      insideObserver = true;
+      resize()
+      insideObserver = false;
+    }
+
+  }).observe(container);
 }
+
 function resize(editor, container) {
   const contentHeight = editor.getContentHeight();
   container.style.height = `${contentHeight + 2}px`;
@@ -37,14 +47,20 @@ const MonacoHook = {
       scrollBeyondLastLine: false
     });
 
+    // send changes to backend
     editor.getModel().onDidChangeContent((changeEvent)=>{
       const event = new Event('sandman:code-changed');
       event.data = {value: editor.getValue(), blockId};
       window.dispatchEvent(event);
       resize(editor, this.el);
     });
+
+    // keep track of sizing
+    trackSize(editor, this.el, () => {
+      resize(editor, this.el);
+    })
+    // set initial size
     resize(editor, this.el);
-    observeResize(editor, this.el);
   }
 }
 

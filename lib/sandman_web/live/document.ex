@@ -12,7 +12,7 @@ defmodule SandmanWeb.LiveView.Document do
 
   def render(assigns) do
     ~H"""
-    <div phx-hook="DocumentHook" id="document" phx-update="ignore">
+    <div phx-hook="DocumentHook" id="document">
       <h1 class="text-xl text-center mx-5 mt-1 font-bold" contenteditable="true">
         New Script
       </h1>
@@ -21,14 +21,12 @@ defmodule SandmanWeb.LiveView.Document do
         <h1>My First Request.</h1>
       </div>
       <%= Enum.map(@document["blocks"], fn block ->%>
-
-
         <div class="my-1 pt-1 pb-5 px-5 border-b-2">
           <div class="flex flex-row fs-2 mb-1 text-sm">
           <button><span><%="▶"%></span> Run</button><button class="mx-2">
           <span><%="▶▶"%></span>From top</button></div>
           <div class="rounded-t p-2" style="background-color: rgb(30, 30, 30);">
-            <div id={"monaco-#{block.id}"} phx-hook="MonacoHook" data-block-id={block.id}>
+            <div id={"monaco-#{block["id"]}"} phx-hook="MonacoHook" data-block-id={block["id"]} phx-update="ignore">
               <%= block["code"] %>
             </div>
           </div>
@@ -45,7 +43,7 @@ defmodule SandmanWeb.LiveView.Document do
           <a href="#" class="mt-1"><%= "GET https://test.com"%></a></div></div>
           </div>
 
-          <button>New block</button>
+          <button phx-click="add-block" phx-value-block-id={block["id"]}>New block</button>
 
       <% end) %>
 

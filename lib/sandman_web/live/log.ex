@@ -8,7 +8,7 @@ defmodule SandmanWeb.LiveView.Log do
   @spec render(any) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
-      <div id="sandman-log" phx-hook="RunnerHook" class="text-black text-xs">
+      <div id="sandman-log" class="text-black text-xs">
         <div id="log-bar" class="space-x-1 flex flex-row-reverse" style="background-color:#EEE">
           <button class="mr-1" >clear</button>
           <div class="grow">Log</div>
