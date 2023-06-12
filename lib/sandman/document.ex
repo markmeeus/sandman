@@ -52,6 +52,19 @@ defmodule Sandman.Document do
 
   def handle_call(:get, _sender, state = %{document: document}), do: {:reply, document, state}
 
+  def handle_cast({:add_block, :after, "-"}, state  = %{document: document, doc_id: doc_id}) do
+    new_block = %{
+      "type" => "lua",
+      "code" => "",
+      "id" => UUID.uuid4()
+    }
+    new_blocks = [new_block] ++ (document["blocks"] || [])
+    document = Map.put(document, "blocks", new_blocks)
+    PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
+    write_file(document, state)
+    {:noreply, state = %{ state | document: document}}
+  end
+
   def handle_cast({:add_block, :after, after_block_id}, state  = %{document: document, doc_id: doc_id}) do
     new_block = %{
       "type" => "lua",
@@ -87,6 +100,6 @@ defmodule Sandman.Document do
   end
 
   defp write_file(document, %{file_path: file_path}) do
-    #:ok = File.write(file_path, Jason.encode!(document))
+    :ok = File.write(file_path, Jason.encode!(document))
   end
 end

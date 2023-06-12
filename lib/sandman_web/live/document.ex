@@ -16,11 +16,23 @@ defmodule SandmanWeb.LiveView.Document do
       <h1 class="text-xl text-center mx-5 mt-1 font-bold" contenteditable="true">
         New Script
       </h1>
+      <%= case @document["blocks"] do
+        [] -> render_empty_state(assigns)
+        _ -> render_blocks(assigns)
+      end %>
+    </div>
+    """
+  end
 
-      <div class="flex rounded my-1 py-2 px-5 border-b-2">
-        <h1>My First Request.</h1>
-      </div>
-      <%= Enum.map(@document["blocks"], fn block ->%>
+  def render_empty_state(assigns) do
+    ~H"""
+      <button class="pt-1 text-sm" phx-click="add-block" phx-value-block-id="-">Add Block</button>
+    """
+  end
+  def render_blocks(assigns) do
+    ~H"""
+    <button class="pt-1 text-sm" phx-click="add-block" phx-value-block-id="-">Add block</button>
+    <%= Enum.map(@document["blocks"], fn block ->%>
         <div class="my-1 pt-1 pb-5 px-5 border-b-2">
           <div class="flex flex-row fs-2 mb-1 text-sm">
           <button><span><%="▶"%></span> Run</button><button class="mx-2">
@@ -45,11 +57,7 @@ defmodule SandmanWeb.LiveView.Document do
             <button class="pt-1 text-sm" phx-click="remove-block" phx-value-block-id={block["id"]}>Remove</button>
           </div>
         </div>
-
-
       <% end) %>
-
-    </div>
     """
   end
 end
