@@ -13,12 +13,12 @@ defmodule SandmanWeb.LiveView.App do
         <div id="document-log-container" class="h-screen">
           <div id="document-container" style="overflow:scroll;" phx-hook="MaintainDimensions">
             <div id="document-root">
-              <SandmanWeb.LiveView.Document.render document={@document} code="ola code" />
+              <SandmanWeb.LiveView.Document.render document={@document.document} code="ola code" />
             </div>
           </div>
           <div class="gutter gutter-vertical" id="doc-log-gutter" phx-update="ignore"></div>
           <div id="log-container" class="overscroll-contain" phx-hook="MaintainDimensions" style="overflow:scroll; background-color: #E8E8E8">
-            <SandmanWeb.LiveView.Log.render log="ola log" />
+            <SandmanWeb.LiveView.Log.render log={@document.log} />
           </div>
         </div>
         <div class="gutter gutter-horizontal" id="doc-req-gutter" phx-update="ignore"></div>
@@ -45,7 +45,7 @@ defmodule SandmanWeb.LiveView.App do
     doc_id = UUID.uuid4()
     PubSub.subscribe(Sandman.PubSub, "document:#{doc_id}")
     {:ok, doc_pid} = Document.start_link(doc_id, "/Users/markmeeus/Documents/projects/github/sandman/doc/test.json")
-    document = Document.get(doc_pid)
+    document= Document.get(doc_pid)
     socket = socket
     |> assign(:doc_pid, doc_pid)
     |> assign(:document, document)
@@ -68,6 +68,11 @@ defmodule SandmanWeb.LiveView.App do
   def handle_event("remove-block", %{"block-id" => block_id}, socket = %{assigns: %{doc_pid: doc_pid}}) do
     # persist document here
     Document.remove_block(doc_pid, block_id)
+    {:noreply, socket}
+  end
+
+  def handle_event("update", %{"_target" => ["title"], "title" => title}, socket = %{assigns: %{doc_pid: doc_pid}}) do
+    Document.update_title(doc_pid, title)
     {:noreply, socket}
   end
 

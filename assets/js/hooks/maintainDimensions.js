@@ -1,5 +1,3 @@
-import Split from 'split.js';
-
 const MaintainDimensions = {
   beforeUpdate() {
     this.prevHeight = this.el.style.height;

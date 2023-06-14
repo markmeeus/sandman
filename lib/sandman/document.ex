@@ -37,20 +37,27 @@ defmodule Sandman.Document do
     GenServer.cast(pid, {:change_code, block_id, code})
   end
 
+  def update_title(pid, title) do
+    GenServer.cast(pid, {:update_title, title})
+  end
+
   def init([doc_id, file_path]) do
     #TODO: load doc from file
     {:ok, file} = File.read(file_path)
     document = Jason.decode!(file)
-
+    log = "log from init"
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_loaded)
     {:ok, %{
       doc_id: doc_id,
       document: document,
-      file_path: file_path
+      file_path: file_path,
+      log: log
     }}
   end
 
-  def handle_call(:get, _sender, state = %{document: document}), do: {:reply, document, state}
+  def handle_call(:get, _sender, state = %{document: document, log: log}) do
+    {:reply, %{document: document, log: log}, state}
+  end
 
   def handle_cast({:add_block, :after, "-"}, state  = %{document: document, doc_id: doc_id}) do
     new_block = %{
@@ -99,6 +106,11 @@ defmodule Sandman.Document do
     {:noreply, state = %{ state | document: document}}
   end
 
+  def handle_cast({:update_title, title}, state = %{document: document}) do
+    document = Map.put(document, :title, title)
+    write_file(document, state)
+    {:noreply, state = %{ state | document: document}}
+  end
   defp write_file(document, %{file_path: file_path}) do
     :ok = File.write(file_path, Jason.encode!(document))
   end

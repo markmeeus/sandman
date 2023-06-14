@@ -13,9 +13,17 @@ defmodule SandmanWeb.LiveView.Document do
   def render(assigns) do
     ~H"""
     <div phx-hook="DocumentHook" id="document">
-      <h1 class="text-xl text-center mx-5 mt-1 font-bold" contenteditable="true">
-        New Script
-      </h1>
+      <form phx-change="update" phx-hook="TitleForm" id="title-form">
+        <input
+          type="text"
+          id="title"
+          name="title"
+          value={@document["title"] || "new script"}
+          spellcheck="false"
+          autocomplete="off"
+          class="w-full text-center border-0 p-0 font-semibold"
+        />
+      </form>
       <%= case @document["blocks"] do
         [] -> render_empty_state(assigns)
         _ -> render_blocks(assigns)
@@ -41,9 +49,9 @@ defmodule SandmanWeb.LiveView.Document do
             <div id={"monaco-#{block["id"]}"} phx-hook="MonacoHook" data-block-id={block["id"]} phx-update="ignore"><%= block["code"] %></div>
           </div>
           <div class="flex flex-col">
-          <div class="flex flex-row-reverse text-xs rounded-b pb-1 px-1" style="background-color: rgb(238, 238, 238);">
-          <a href="#" class="mt-1 text-emerald-600">&nbsp;<%="2xx"%></a>
-          <a href="#" class="mt-1">3 requests</a>
+            <div class="flex flex-row-reverse text-xs rounded-b pb-1 px-1" style="background-color: rgb(238, 238, 238);">
+            <a href="#" class="mt-1 text-emerald-600">&nbsp;<%="2xx"%></a>
+            <a href="#" class="mt-1">3 requests</a>
           </div>
           <div class="flex flex-row-reverse text-xs rounded-b pb-1 px-1" style="background-color: rgb(238, 238, 238);">
           <a href="#" class="mt-1 text-emerald-600">&nbsp;302</a>
