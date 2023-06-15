@@ -18,7 +18,7 @@ defmodule SandmanWeb.LiveView.App do
           </div>
           <div class="gutter gutter-vertical" id="doc-log-gutter" phx-update="ignore"></div>
           <div id="log-container" class="overscroll-contain" phx-hook="MaintainDimensions" style="overflow:scroll; background-color: #E8E8E8">
-            <SandmanWeb.LiveView.Log.render log={@document.log} />
+            <SandmanWeb.LiveView.Log.render logs={@streams.logs} />
           </div>
         </div>
         <div class="gutter gutter-horizontal" id="doc-req-gutter" phx-update="ignore"></div>
@@ -49,9 +49,12 @@ defmodule SandmanWeb.LiveView.App do
     socket = socket
     |> assign(:doc_pid, doc_pid)
     |> assign(:document, document)
-    |> assign(:log, "")
+    |> assign(:log_count, 0)
+    |> stream(:logs, [])
+
     {:ok, socket}
   end
+
 
   def handle_event("code-changed", %{"blockId" => block_id, "value" => code}, socket = %{assigns: %{doc_pid: doc_pid}}) do
     Document.change_code(doc_pid, block_id, code)
@@ -91,6 +94,13 @@ defmodule SandmanWeb.LiveView.App do
 
   def handle_info(:document_changed, socket = %{assigns: %{doc_pid: doc_pid}}) do
     {:noreply, assign(socket, :document, Document.get(doc_pid))}
+  end
+
+  def handle_info({:log, text}, socket = %{assigns: %{doc_pid: doc_pid, log_count: log_count}}) do
+    socket = socket
+    |> assign(:log_count, log_count + 1)
+    |> stream_insert(:logs, %{id: log_count, text: text})
+    {:noreply, socket}
   end
 
 end

@@ -60,18 +60,17 @@ defmodule Sandman.Document do
     })
     {:ok, file} = File.read(file_path)
     document = Jason.decode!(file)
-    log = "log from init"
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_loaded)
+    PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", {:log, "a logged lined"})
     {:ok, %{
       doc_id: doc_id,
       document: document,
-      file_path: file_path,
-      log: log
+      file_path: file_path
     }}
   end
 
-  def handle_call(:get, _sender, state = %{document: document, log: log}) do
-    {:reply, %{document: document, log: log}, state}
+  def handle_call(:get, _sender, state = %{document: document}) do
+    {:reply, %{document: document}, state}
   end
 
   def handle_cast({:add_block, :after, "-"}, state  = %{document: document, doc_id: doc_id}) do

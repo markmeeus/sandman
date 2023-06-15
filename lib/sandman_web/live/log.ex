@@ -14,23 +14,13 @@ defmodule SandmanWeb.LiveView.Log do
           <div class="grow">Log</div>
         </div>
         <div id="log-wrapper" class="font-mono p-2">
-          <%= @log %>
+          <ul id="logs" phx-update="stream">
+            <li :for={{dom_id, log} <- @logs} id={dom_id}>
+              <%= log.text %>
+            </li>
+          </ul>
         </div>
       </div>
     """
   end
-
-  # def mount(_params, _session, socket) do
-  #   # start_doc
-  #   doc_id = UUID.uuid4()
-  #   #PubSub.subscribe(Sandman.PubSub, "document:#{doc_id}")
-  #   {:ok, doc_pid} = Document.start_link(doc_id, "/Users/markmeeus/Documents/projects/github/sandman/doc/test.json")
-
-  #   socket = socket
-  #   |> assign(:doc_pid, doc_pid)
-  #   |> assign(:log, "")
-  #   {:ok, socket}
-  # end
-
-
 end
