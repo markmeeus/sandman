@@ -96,10 +96,10 @@ defmodule SandmanWeb.LiveView.App do
     {:noreply, assign(socket, :document, Document.get(doc_pid))}
   end
 
-  def handle_info({:log, text}, socket = %{assigns: %{doc_pid: doc_pid, log_count: log_count}}) do
+  def handle_info({:log, log}, socket = %{assigns: %{doc_pid: doc_pid, log_count: log_count}}) do
     socket = socket
     |> assign(:log_count, log_count + 1)
-    |> stream_insert(:logs, %{id: log_count, text: text})
+    |> stream_insert(:logs, Map.put(log, :id, log_count))
     {:noreply, socket}
   end
 

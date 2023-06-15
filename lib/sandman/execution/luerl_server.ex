@@ -39,8 +39,7 @@ defmodule Sandman.LuerlServer do
 
   @impl true
 
-  def handle_cast(document_pid,
-        {:run_code, response_tag, code},
+  def handle_cast({:run_code, response_tag, code},
         state = %{luerl_state: luerl_state, document_pid: document_pid}
       ) do
 

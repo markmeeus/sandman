@@ -1,6 +1,7 @@
 defmodule Sandman.Document do
 
   alias Sandman.LuerlServer
+  alias Sandman.LuaMapper
   alias Phoenix.PubSub
 
   use GenServer, restart: :transient
@@ -44,6 +45,10 @@ defmodule Sandman.Document do
     GenServer.cast(pid, {:update_title, title})
   end
 
+  def run_to_block(pid, block_id) do
+    GenServer.cast(pid, {:run_to_block, block_id})
+  end
+
   def init([doc_id, file_path]) do
     #TODO: load doc from file
     self_pid = self()
@@ -61,11 +66,11 @@ defmodule Sandman.Document do
     {:ok, file} = File.read(file_path)
     document = Jason.decode!(file)
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_loaded)
-    PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", {:log, "a logged lined"})
     {:ok, %{
       doc_id: doc_id,
       document: document,
-      file_path: file_path
+      file_path: file_path,
+      luerl_server_pid: luerl_server_pid
     }}
   end
 
@@ -125,17 +130,37 @@ defmodule Sandman.Document do
     write_file(document, state)
     {:noreply, state = %{ state | document: document}}
   end
+
+  def handle_cast({:run_to_block, block_id}, state = %{document: document, luerl_server_pid: luerl_server_pid}) do
+    Enum.each(document["blocks"], fn block ->
+      # TODO this is a cast, so we need to send the tail with the response tag?
+      # or maybe only the block id's to run?
+      # currently it will run all blocks in correct order because the mailbox is in order
+      # but it should actually stop processing if a single block fails
+      LuerlServer.run_code(luerl_server_pid, {:run_to_block, block_id, block["id"] }, block["code"])
+    end)
+    {:noreply, state}
+  end
+
+  def handle_info({:lua_response, {:run_to_block, to_block_id, result_for_block_id}, response}, state = %{doc_id: doc_id}) do
+    case response do
+      {:error, err, formatted} ->
+        log(doc_id, "Error executing block: #{to_block_id}\n" <> formatted)
+      _ -> nil
+    end
+    {:noreply, state}
+  end
   defp write_file(document, %{file_path: file_path}) do
     :ok = File.write(file_path, Jason.encode!(document))
   end
 
   # luacallbacks
-  def handle_call({:handle_lua_call, :print, arg}, _sender, state = %{document: document}) do
+  def handle_call({:handle_lua_call, :print, arg}, _sender, state = %{document: document, doc_id: doc_id}) do
     formatted = arg
     |> Enum.map(&LuaMapper.to_printable/1)
     |> Enum.join(" ")
     # logs should be appended here and raise a doc changed event;
-    log(state, formatted)
+    log(doc_id, formatted)
     # append
     {:reply, {:ok, [true]}, state}
   end

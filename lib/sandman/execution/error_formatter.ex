@@ -19,6 +19,13 @@ defmodule Sandman.ErrorFormatter do
     |> String.replace("\n", "\\n")
     "Illegal at #{line_nr}: => #{illegal}"
   end
+  def format_parse_error([{line_nr, :luerl_scan, {:user, illegal}}]) do
+    # illegal can be an entire script
+    illegal =  to_string(illegal)
+    |> String.slice(0, 100)
+    |> String.replace("\n", "\\n")
+    "Illegal at #{line_nr}: => #{illegal}"
+  end
 
   def format_parse_error(error) do
    "Parse Error:" <> inspect(error)

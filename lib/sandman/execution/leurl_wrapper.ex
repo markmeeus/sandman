@@ -53,12 +53,11 @@ defmodule Sandman.LuerlWrapper do
           {:ok, res, luerl_state}
 
         {:error, error, luerl_state} ->
+          IO.inspect({"FORMATTING parse error:", format_parse_error(error)})
           {:error, error, luerl_state, format_parse_error(error)}
-          |> IO.inspect
         {:lua_error, error, luerl_state} ->
           #lua error
           {:error, error, luerl_state, format_lua_error(error, luerl_state)}
-          |> IO.inspect
       end
     rescue exception ->
       IO.inspect({"WARN: CAUGHT EXCEPTION:", exception})
