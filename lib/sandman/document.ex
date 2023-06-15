@@ -1,8 +1,9 @@
 defmodule Sandman.Document do
 
+  alias Phoenix.PubSub
   alias Sandman.LuerlServer
   alias Sandman.LuaMapper
-  alias Phoenix.PubSub
+  alias SandMan.HttpClient
 
   use GenServer, restart: :transient
 
@@ -57,9 +58,9 @@ defmodule Sandman.Document do
         {:ok, res} = GenServer.call(self_pid, {:handle_lua_call, :print, args})
         {res, luerl_state}
       end,
-      # fetch: fn method, args, luerl_state ->
-      #   HttpClient.fetch_handler(agent_id, method, args, luerl_state)
-      # end,
+      fetch: fn method, args, luerl_state ->
+        HttpClient.fetch_handler(doc_id, method, args, luerl_state)
+      end,
       # json_decode: &Json.decode(agent_id, &1, &2),
       # json_encode: &Json.encode(agent_id, &1, &2),
     })

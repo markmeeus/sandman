@@ -18,10 +18,10 @@ defmodule Sandman.LuerlWrapper do
     #   luerl_state
     # end)
 
-    # luerl_state = :luerl.set_table(["http"], [], luerl_state)
-    # luerl_state = Enum.reduce(["get", "post", "put", "delete", "patch", "head"], luerl_state, fn method, luerl_state ->
-    #   :luerl.set_table(["http", String.downcase(method)], &handlers.fetch.(method, &1, &2), luerl_state)
-    # end)
+    luerl_state = :luerl.set_table(["http"], [], luerl_state)
+    luerl_state = Enum.reduce(["get", "post", "put", "delete", "patch", "head"], luerl_state, fn method, luerl_state ->
+      :luerl.set_table(["http", String.downcase(method)], &handlers.fetch.(method, &1, &2), luerl_state)
+    end)
 
     # luerl_state = :luerl.set_table(["json"], [], luerl_state)
     # luerl_state = :luerl.set_table(["json", "encode"], handlers.json_encode, luerl_state)
