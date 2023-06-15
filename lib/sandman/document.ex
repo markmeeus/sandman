@@ -1,8 +1,11 @@
 defmodule Sandman.Document do
 
+  alias Sandman.LuerlServer
+  alias Phoenix.PubSub
+
   use GenServer, restart: :transient
 
-  alias Phoenix.PubSub
+  import Sandman.Logger
 
   # FIle load/save dialog
   # :wx.set_env(Desktop.Env.wx_env())
@@ -43,6 +46,18 @@ defmodule Sandman.Document do
 
   def init([doc_id, file_path]) do
     #TODO: load doc from file
+    self_pid = self()
+    {:ok, luerl_server_pid} = LuerlServer.start_link(self_pid, %{
+      print: fn args, luerl_state ->
+        {:ok, res} = GenServer.call(self_pid, {:handle_lua_call, :print, args})
+        {res, luerl_state}
+      end,
+      # fetch: fn method, args, luerl_state ->
+      #   HttpClient.fetch_handler(agent_id, method, args, luerl_state)
+      # end,
+      # json_decode: &Json.decode(agent_id, &1, &2),
+      # json_encode: &Json.encode(agent_id, &1, &2),
+    })
     {:ok, file} = File.read(file_path)
     document = Jason.decode!(file)
     log = "log from init"
@@ -113,5 +128,16 @@ defmodule Sandman.Document do
   end
   defp write_file(document, %{file_path: file_path}) do
     :ok = File.write(file_path, Jason.encode!(document))
+  end
+
+  # luacallbacks
+  def handle_call({:handle_lua_call, :print, arg}, _sender, state = %{document: document}) do
+    formatted = arg
+    |> Enum.map(&LuaMapper.to_printable/1)
+    |> Enum.join(" ")
+    # logs should be appended here and raise a doc changed event;
+    log(state, formatted)
+    # append
+    {:reply, {:ok, [true]}, state}
   end
 end

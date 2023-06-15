@@ -54,14 +54,23 @@ defmodule SandmanWeb.LiveView.App do
   end
 
   def handle_event("code-changed", %{"blockId" => block_id, "value" => code}, socket = %{assigns: %{doc_pid: doc_pid}}) do
-    # persist document here
     Document.change_code(doc_pid, block_id, code)
     {:noreply, socket}
   end
 
   def handle_event("add-block", %{"block-id" => block_id}, socket = %{assigns: %{doc_pid: doc_pid}}) do
-    # persist document here
     Document.add_block(doc_pid, block_id)
+    {:noreply, socket}
+  end
+
+  def handle_event("run-block", %{"block-id" => block_id}, socket = %{assigns: %{doc_pid: doc_pid}}) do
+    Document.run_block(doc_pid, block_id)
+    {:noreply, socket}
+  end
+
+  def handle_event("run-to-block", %{"block-id" => block_id}, socket = %{assigns: %{doc_pid: doc_pid}}) do
+    # persist document here
+    Document.run_to_block(doc_pid, block_id)
     {:noreply, socket}
   end
 

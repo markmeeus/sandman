@@ -43,8 +43,9 @@ defmodule SandmanWeb.LiveView.Document do
     <%= Enum.map(@document["blocks"], fn block ->%>
         <div class="my-1 pt-1 pb-5 px-5 border-b-2">
           <div class="flex flex-row fs-2 mb-1 text-sm">
-          <button><span><%="▶"%></span> Run</button><button class="mx-2">
-          <span><%="▶▶"%></span>From top</button></div>
+          <button phx-click="run-block" phx-value-block-id={block["id"]}><span><%="▶"%></span> Run</button>
+          <button phx-click="run-to-block" phx-value-block-id={block["id"]}><span><%=" ▶▶"%></span> Run to</button>
+          </div>
           <div class="rounded-t p-2" style="background-color: rgb(30, 30, 30);">
             <div id={"monaco-#{block["id"]}"} phx-hook="MonacoHook" data-block-id={block["id"]} phx-update="ignore"><%= block["code"] %></div>
           </div>
