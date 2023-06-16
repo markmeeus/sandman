@@ -48,6 +48,20 @@ let liveSocket = new LiveSocket("/live", Socket, {
   }
 })
 
+// disable backspace navigation
+function isTextBox(element) {
+  var tagName = element.tagName.toLowerCase();
+  if (tagName !== "input") return false;
+
+  var typeAttr = element.getAttribute('type').toLowerCase();
+  return typeAttr === 'text';
+}
+
+window.onkeydown = function(e) {
+	if (e.keyCode == 8 && !isTextBox(e.target)) e.preventDefault();
+}
+
+
 // Show progress bar on live navigation and form submits
 topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
 window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
