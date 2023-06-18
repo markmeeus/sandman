@@ -51,7 +51,7 @@ let liveSocket = new LiveSocket("/live", Socket, {
 // disable backspace navigation
 function isTextBox(element) {
   var tagName = element.tagName.toLowerCase();
-  if (tagName !== "input") return false;
+  if ((tagName !== "input")&&(tagName !== "textarea")) return false;
 
   var typeAttr = element.getAttribute('type').toLowerCase();
   return typeAttr === 'text';
