@@ -59,8 +59,12 @@ defmodule Sandman.Document do
         {res, luerl_state}
       end,
       fetch: fn method, args, luerl_state ->
+        # this is running in the luerl_server
+        # TODO; refactor this so that req can be stored before request is being sent
         {result, luerl_state} = HttpClient.fetch_handler(doc_id, method, args, luerl_state)
-        GenServer.call(self_pid, {:handle_lua_call, :print, [inspect(result.req)]})
+        # send the result to the document
+        GenServer.cast(self_pid, {:record_http_request, result})
+        # return with lua script
         {result.lua_result, luerl_state}
       end,
       # json_decode: &Json.decode(agent_id, &1, &2),
@@ -73,12 +77,13 @@ defmodule Sandman.Document do
       doc_id: doc_id,
       document: document,
       file_path: file_path,
-      luerl_server_pid: luerl_server_pid
+      luerl_server_pid: luerl_server_pid,
+      requests: []
     }}
   end
 
-  def handle_call(:get, _sender, state = %{document: document}) do
-    {:reply, %{document: document}, state}
+  def handle_call(:get, _sender, state = %{document: document, requests: requests}) do
+    {:reply, %{document: document, requests: requests}, state}
   end
 
   def handle_cast({:add_block, :after, "-"}, state  = %{document: document, doc_id: doc_id}) do
@@ -94,7 +99,7 @@ defmodule Sandman.Document do
     {:noreply, state = %{ state | document: document}}
   end
 
-  def handle_cast({:add_block, :after, after_block_id}, state  = %{document: document, doc_id: doc_id}) do
+  def handle_cast({:add_block, :after, after_block_id}, state = %{document: document, doc_id: doc_id}) do
     new_block = %{
       "type" => "lua",
       "code" => "",
@@ -108,6 +113,12 @@ defmodule Sandman.Document do
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
     write_file(document, state)
     {:noreply, state = %{ state | document: document}}
+  end
+
+  def handle_cast({:record_http_request, req_res}, state = %{doc_id: doc_id, requests: requests}) do
+    new_state = Map.put(state, :requests, requests ++ [req_res])
+    PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :request_recorded)
+    {:noreply, new_state}
   end
 
   def handle_cast({:remove_block, block_id}, state  = %{document: document, doc_id: doc_id}) do

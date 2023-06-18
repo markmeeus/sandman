@@ -13,7 +13,7 @@ defmodule SandmanWeb.LiveView.App do
         <div id="document-log-container" class="h-screen">
           <div id="document-container" style="overflow:scroll;" phx-hook="MaintainDimensions">
             <div id="document-root">
-              <SandmanWeb.LiveView.Document.render document={@document.document} code="ola code" />
+              <SandmanWeb.LiveView.Document.render requests={@document.requests} document={@document.document} code="ola code" />
             </div>
           </div>
           <div class="gutter gutter-vertical" id="doc-log-gutter" phx-update="ignore"></div>
@@ -93,6 +93,10 @@ defmodule SandmanWeb.LiveView.App do
   end
 
   def handle_info(:document_changed, socket = %{assigns: %{doc_pid: doc_pid}}) do
+    {:noreply, assign(socket, :document, Document.get(doc_pid))}
+  end
+
+  def handle_info(:request_recorded, socket = %{assigns: %{doc_pid: doc_pid}}) do
     {:noreply, assign(socket, :document, Document.get(doc_pid))}
   end
 
