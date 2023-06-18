@@ -59,7 +59,9 @@ defmodule Sandman.Document do
         {res, luerl_state}
       end,
       fetch: fn method, args, luerl_state ->
-        HttpClient.fetch_handler(doc_id, method, args, luerl_state)
+        {result, luerl_state} = HttpClient.fetch_handler(doc_id, method, args, luerl_state)
+        GenServer.call(self_pid, {:handle_lua_call, :print, [inspect(result.req)]})
+        {result.lua_result, luerl_state}
       end,
       # json_decode: &Json.decode(agent_id, &1, &2),
       # json_encode: &Json.encode(agent_id, &1, &2),

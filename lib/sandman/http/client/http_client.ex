@@ -3,7 +3,7 @@ defmodule SandMan.HttpClient do
   alias Sandman.LuaMapper
 
   def fetch_handler(doc_id, method, args, luerl_state) do
-    {res, err} = args
+    result = args
     |> case  do
       [url] -> [doc_id, method, url, [], nil]
       [url, headers] -> [doc_id, method, url, headers, nil]
@@ -16,33 +16,40 @@ defmodule SandMan.HttpClient do
         {nil, msg}
       args ->
         :erlang.apply(__MODULE__, :fetch, args)
-          |> LuaMapper.reverse_map()
-          |> case do
+         |> case do
+            {:ok, result} ->
+              result
             {:error, msg} ->
-              {nil, msg}
-            res ->
-              {res, nil}
+              %{lua_result: [nil, msg]}
           end
     end
-    {[res, err], luerl_state}
+    {result, luerl_state}
   end
 
   def fetch(doc_id, method, url, headers, body) do
     headers = map_headers(doc_id, headers)
-    case Finch.build(method_atom(method), url, headers, body) |> IO.inspect |> Finch.request(Sandman.Finch) do
-      {:ok, resp} ->
-        headers = Enum.reduce(resp.headers, %{}, fn {k, v}, headers ->
+    # TODO: finch build can fail as well
+    req  = Finch.build(method_atom(method), url, headers, body)
+    case Finch.request(req, Sandman.Finch) do
+      {:ok, res} ->
+        headers = Enum.reduce(res.headers, %{}, fn {k, v}, headers ->
           case headers[k] do
             nil -> Map.put(headers, String.downcase(k), [v])
             arr -> Map.put(headers, String.downcase(k), arr ++ [v])
           end
         end)
-        %{
-          body: resp.body,
-          headers: headers,
-          status: resp.status
-        }
+        {:ok, %{
+          req: req,
+          res: res,
+          lua_result: [LuaMapper.reverse_map(%{
+            body: res.body,
+            headers: headers,
+            status: res.status
+          }), nil]
+        }}
+
       {:error, exc = %Mint.TransportError{}} ->
+        # TODO: put error here as wel
         {:error, Exception.message(exc)}
 
       {:error, exc} -> {:error, inspect(exc)}
