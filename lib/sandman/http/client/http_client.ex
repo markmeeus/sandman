@@ -16,12 +16,6 @@ defmodule SandMan.HttpClient do
         {nil, msg}
       args ->
         :erlang.apply(__MODULE__, :fetch, args)
-         |> case do
-            {:ok, result} ->
-              result
-            {:error, msg} ->
-              %{lua_result: [nil, msg]}
-          end
     end
     {result, luerl_state}
   end
@@ -29,7 +23,21 @@ defmodule SandMan.HttpClient do
   def fetch(doc_id, method, url, headers, body) do
     headers = map_headers(doc_id, headers)
     # TODO: finch build can fail as well
-    req  = Finch.build(method_atom(method), url, headers, body)
+    try do
+      Finch.build(method, url, headers, body)
+      |> send_request()
+    rescue
+      e in ArgumentError -> %{
+        req: nil,
+        res: nil,
+        error: e,
+        lua_result: [nil, Exception.message(e)]
+      }
+    end
+  end
+
+
+  defp send_request(req) do
     case Finch.request(req, Sandman.Finch) do
       {:ok, res} ->
         headers = Enum.reduce(res.headers, %{}, fn {k, v}, headers ->
@@ -38,24 +46,39 @@ defmodule SandMan.HttpClient do
             arr -> Map.put(headers, String.downcase(k), arr ++ [v])
           end
         end)
-        {:ok, %{
+        %{
           req: req,
           res: res,
+          error: nil,
           lua_result: [LuaMapper.reverse_map(%{
             body: res.body,
             headers: headers,
             status: res.status
           }), nil]
-        }}
+        }
 
       {:error, exc = %Mint.TransportError{}} ->
-        # TODO: put error here as wel
-        {:error, Exception.message(exc)}
+        %{
+          req: req,
+          res: nil,
+          error: exc,
+          lua_result: [nil, Exception.message(exc)]
+        }
 
-      {:error, exc} -> {:error, inspect(exc)}
-      err ->
-        IO.inspect("Implement this error and return to lua")
-        {:error, inspect(err)}
+      {:error, exc} ->
+        %{
+          req: req,
+          res: nil,
+          error: exc,
+          lua_result: [nil, inspect(exc)]
+        }
+      unexpected ->
+        %{
+          req: req,
+          res: nil,
+          error: unexpected,
+          lua_result: [nil, "unexpected Finch result (you should not see this):" <> inspect(unexpected)]
+        }
     end
   end
 
@@ -80,11 +103,4 @@ defmodule SandMan.HttpClient do
     end)
   end
 
-  defp method_atom("get"), do: :get
-  defp method_atom("post"), do: :post
-  defp method_atom("head"), do: :head
-  defp method_atom("patch"), do: :patch
-  defp method_atom("delete"), do: :delete
-  defp method_atom("options"), do: :options
-  defp method_atom("put"), do: :put
 end

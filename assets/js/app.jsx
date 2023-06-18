@@ -49,16 +49,20 @@ let liveSocket = new LiveSocket("/live", Socket, {
 })
 
 // disable backspace navigation
-function isTextBox(element) {
+function isTextInput(element) {
   var tagName = element.tagName.toLowerCase();
-  if ((tagName !== "input")&&(tagName !== "textarea")) return false;
 
-  var typeAttr = element.getAttribute('type').toLowerCase();
-  return typeAttr === 'text';
+	if(tagName === "input") {
+		// backspace allowed on input type="text"
+		var typeAttr = element.getAttribute('type').toLowerCase();
+		return typeAttr === 'text';
+	}
+
+	if(tagName === "textarea") return true;
 }
 
 window.onkeydown = function(e) {
-	if (e.keyCode == 8 && !isTextBox(e.target)) e.preventDefault();
+	if (e.keyCode == 8 && !isTextInput(e.target)) e.preventDefault();
 }
 
 
