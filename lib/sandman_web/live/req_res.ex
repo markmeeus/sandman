@@ -61,18 +61,10 @@ defmodule SandmanWeb.LiveView.RequestResponse do
     {:ok, socket}
   end
 
-  def handle_event("switch_tab", %{"tab" => tab}, socket) do
-    # switching subtab to headers, better to keep separate state
-    {:noreply, assign(socket, tab: tab, sub_tab: "Headers")}
-  end
-  def handle_event("switch_sub_tab", %{"tab" => sub_tab}, socket) do
-    {:noreply, assign(socket, sub_tab: sub_tab)}
-  end
-
   def request(assigns) do
       ~H"""
       <div class="flex flex-col mt-4">
-        <a href="#" phx-click={toggle_hidden("#request-headers")} >Response</a>
+        <a href="#" phx-click={toggle_hidden("#request-headers")} >Headers</a>
         <div id="request-headers" class="hidden">
           Request headers
         </div>
@@ -86,13 +78,13 @@ defmodule SandmanWeb.LiveView.RequestResponse do
   def response(assigns) do
       ~H"""
       <div class="flex flex-col mt-4" >
-        <a href="#" phx-click={toggle_hidden("#response-headers")} >Response</a>
+        <a href="#" phx-click={toggle_hidden("#response-headers")} >Headers</a>
         <div id="response-headers" class="hidden">
-          Hidden response headers
+          Response headers
         </div>
         <a href="#" phx-click={toggle_hidden("#response-body")} >Body</a>
         <div id="response-body" class="hidden">
-          Hidden response body
+          Response body
         </div>
       </div>
       """

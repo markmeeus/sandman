@@ -10,31 +10,31 @@ defmodule SandmanWeb.LiveView.App do
   def render(assigns) do
     ~H"""
       <div id="app-wrapper" class="flex flex-row" phx-hook="HomeHook">
-        <div id="document-log-container" class="h-screen">
-          <div id="document-container" style="overflow:scroll;" phx-hook="MaintainDimensions">
+        <div id="document-log-container" class="h-screen" phx-hook="MaintainWidth">
+          <div id="document-container" style="overflow:scroll;" phx-hook="MaintainHeight">
             <div id="document-root">
               <SandmanWeb.LiveView.Document.render requests={@document.requests} document={@document.document} code="ola code" />
             </div>
           </div>
           <div class="gutter gutter-vertical" id="doc-log-gutter" phx-update="ignore"></div>
-          <div id="log-container" class="overscroll-contain" phx-hook="MaintainDimensions" style="overflow:scroll; background-color: #E8E8E8">
+          <div id="log-container" class="overscroll-contain" phx-hook="MaintainHeight" style="overflow:scroll; background-color: #E8E8E8">
             <SandmanWeb.LiveView.Log.render logs={@streams.logs} />
           </div>
         </div>
         <div class="gutter gutter-horizontal" id="doc-req-gutter" phx-update="ignore"></div>
-        <div id="req-res-container" style="overflow:scroll;">
-        <SandmanWeb.LiveView.RequestResponse.render tab="Request" sub_tab="Headers" req_res = {
-          %{
-            req: %{
-              headers: "REQ headers",
-              body: "REQ body"
-            },
-            res: %{
-              headers: "RESP headers",
-              body: "RESP body"
-            },
-          }
-        }/>
+        <div id="req-res-container" style="overflow:scroll;" phx-hook="MaintainWidth">
+          <SandmanWeb.LiveView.RequestResponse.render tab={@tab} sub_tab="Headers" req_res = {
+            %{
+              req: %{
+                headers: "REQ headers",
+                body: "REQ body"
+              },
+              res: %{
+                headers: "RESP headers",
+                body: "RESP body"
+              },
+            }
+          }/>
         </div>
       </div>
     """
@@ -50,6 +50,7 @@ defmodule SandmanWeb.LiveView.App do
     |> assign(:doc_pid, doc_pid)
     |> assign(:document, document)
     |> assign(:log_count, 0)
+    |> assign(:tab, "Request")
     |> stream(:logs, [])
 
     {:ok, socket}
@@ -86,6 +87,11 @@ defmodule SandmanWeb.LiveView.App do
   def handle_event("update", %{"_target" => ["title"], "title" => title}, socket = %{assigns: %{doc_pid: doc_pid}}) do
     Document.update_title(doc_pid, title)
     {:noreply, socket}
+  end
+
+  def handle_event("switch_tab", %{"tab" => tab}, socket) do
+    # switching subtab to headers, better to keep separate state
+    {:noreply, assign(socket, tab: tab)}
   end
 
   def handle_info(:document_loaded, socket = %{assigns: %{doc_pid: doc_pid}}) do

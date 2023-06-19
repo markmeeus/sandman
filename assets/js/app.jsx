@@ -23,9 +23,6 @@ import "phoenix_html"
 // Establish Phoenix Socket and LiveView configuration.
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
-import React from "react";
-import { createRoot } from 'react-dom/client';
-import Document from './components/document';
 import topbar from "../vendor/topbar"
 
 import hotkeys from 'hotkeys-js';
@@ -43,7 +40,8 @@ let liveSocket = new LiveSocket("/live", Socket, {
 		HomeHook,
 		MonacoHook,
 		DocumentHook,
-		MaintainDimensions,
+		MaintainHeight: MaintainDimensions.MaintainHeight,
+		MaintainWidth: MaintainDimensions.MaintainWidth,
 		TitleForm
   }
 })

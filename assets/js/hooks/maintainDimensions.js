@@ -1,12 +1,21 @@
-const MaintainDimensions = {
+const MaintainHeight = {
   beforeUpdate() {
     this.prevHeight = this.el.style.height;
-    this.prevWidth = this.el.style.Width;
   },
   updated() {
     this.el.style.height = this.prevHeight;
+  }
+}
+
+const MaintainWidth = {
+  beforeUpdate() {
+    this.prevWidth = this.el.style.width;
+  },
+  updated() {
     this.el.style.width = this.prevWidth;
   }
 }
 
-export default MaintainDimensions;
+export default {
+  MaintainHeight, MaintainWidth
+};
