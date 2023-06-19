@@ -31,34 +31,19 @@ defmodule SandmanWeb.LiveView.RequestResponse do
             <% end) %>
           <% end %>
         </nav> --%>
-
-        <%= case @tab do %>
-          <% "Request" -> %>
-            <.request req={@req_res.req} sub_tab={@sub_tab}/>
-          <% "Response" -> %>
-          <.response res={@req_res.res} sub_tab={@sub_tab}/>
-        <%end%>
+        <%= case @req_res do %>
+          <% nil -> %>
+            No request selected
+          <% req_res -> %>
+            <%= case @tab do %>
+              <% "Request" -> %>
+                <.request req={@req_res.req} sub_tab={@sub_tab}/>
+              <% "Response" -> %>
+              <.response res={@req_res.res} sub_tab={@sub_tab}/>
+            <%end%>
+        <% end %>
       </div>
     """
-  end
-
-  def mount(_params, _session, socket) do
-    Process.send_after(self(), :update, 3000)
-    req_res = %{
-      req: %{
-        headers: "REQ headers",
-        body: "REQ body"
-      },
-      res: %{
-        headers: "RESP headers",
-        body: "RESP body"
-      },
-    }
-    socket = socket
-    |> assign(:req_res, req_res)
-    |> assign(tab: "Response")
-    |> assign(sub_tab: "Preview")
-    {:ok, socket}
   end
 
   def request(assigns) do
@@ -66,11 +51,11 @@ defmodule SandmanWeb.LiveView.RequestResponse do
       <div class="flex flex-col mt-4">
         <a href="#" phx-click={toggle_hidden("#request-headers")} >Headers</a>
         <div id="request-headers" class="hidden">
-          Request headers
+          <%= inspect(@req.headers) %>
         </div>
         <a href="#" phx-click={toggle_hidden("#request-body")} >Body</a>
         <div id="request-body" class="hidden">
-          Request body
+          <%= @req.body %>
         </div>
       </div>
       """
@@ -80,11 +65,11 @@ defmodule SandmanWeb.LiveView.RequestResponse do
       <div class="flex flex-col mt-4" >
         <a href="#" phx-click={toggle_hidden("#response-headers")} >Headers</a>
         <div id="response-headers" class="hidden">
-          Response headers
+          <%= inspect(@res.headers) %>
         </div>
         <a href="#" phx-click={toggle_hidden("#response-body")} >Body</a>
         <div id="response-body" class="hidden">
-          Response body
+          <%= inspect(@res.body) %>
         </div>
       </div>
       """
