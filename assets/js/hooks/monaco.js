@@ -37,7 +37,7 @@ const MonacoHook = {
         alwaysConsumeMouseWheel: false,
         enabled: false,
       },
-      fontSize: '14px',
+      fontSize: '12px',
       fontWeight: "bold",
       theme: 'vs-dark',
       renderLineHighlight: "none",

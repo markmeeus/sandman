@@ -46,8 +46,18 @@ defmodule Sandman.Document do
     GenServer.cast(pid, {:update_title, title})
   end
 
+  def run_block(pid, block_id) do
+    GenServer.cast(pid, {:run_block, block_id})
+  end
+
   def run_to_block(pid, block_id) do
     GenServer.cast(pid, {:run_to_block, block_id})
+  end
+
+  # request id is %{block_id: block_id, index }
+  def get_request_by_id(requests, {block_id, index}) do
+    request = (requests[block_id] || []) |> Enum.at(index)
+    request
   end
 
   def init([doc_id, file_path]) do
@@ -78,7 +88,8 @@ defmodule Sandman.Document do
       document: document,
       file_path: file_path,
       luerl_server_pid: luerl_server_pid,
-      requests: []
+      requests: %{},
+      current_block_id: nil
     }}
   end
 
@@ -115,8 +126,9 @@ defmodule Sandman.Document do
     {:noreply, state = %{ state | document: document}}
   end
 
-  def handle_cast({:record_http_request, req_res}, state = %{doc_id: doc_id, requests: requests}) do
-    new_state = Map.put(state, :requests, requests ++ [req_res])
+  def handle_cast({:record_http_request, req_res}, state = %{doc_id: doc_id, requests: requests, current_block_id: block_id}) do
+    new_state = update_in(state.requests[block_id], fn val -> val ++ [req_res] end)
+    #new_state = Map.put(state, :requests, requests ++ [req_res])
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :request_recorded)
     {:noreply, new_state}
   end
@@ -145,6 +157,16 @@ defmodule Sandman.Document do
     {:noreply, state = %{ state | document: document}}
   end
 
+  def handle_cast({:run_block, block_id}, state = %{document: document, luerl_server_pid: luerl_server_pid}) do
+    block = Enum.find(document["blocks"], & &1["id"] == block_id)
+    LuerlServer.run_code(luerl_server_pid, {:run_block}, block["code"])
+
+    state = put_in(state.requests[block_id], [])
+    state = put_in(state.current_block_id, block_id)
+
+    {:noreply, state}
+  end
+
   def handle_cast({:run_to_block, block_id}, state = %{document: document, luerl_server_pid: luerl_server_pid}) do
     Enum.each(document["blocks"], fn block ->
       # TODO this is a cast, so we need to send the tail with the response tag?
@@ -159,11 +181,21 @@ defmodule Sandman.Document do
   def handle_info({:lua_response, {:run_to_block, to_block_id, result_for_block_id}, response}, state = %{doc_id: doc_id}) do
     case response do
       {:error, err, formatted} ->
-        log(doc_id, "Error executing block: #{to_block_id}\n" <> formatted)
+        log(doc_id, "Error: " <> formatted)
       _ -> nil
     end
     {:noreply, state}
   end
+
+  def handle_info({:lua_response, {:run_block}, response}, state = %{doc_id: doc_id}) do
+    case response do
+      {:error, err, formatted} ->
+        log(doc_id, "Error: " <> formatted)
+      _ -> nil
+    end
+    {:noreply, put_in(state.current_block_id, nil)}
+  end
+
   defp write_file(document, %{file_path: file_path}) do
     :ok = File.write(file_path, Jason.encode!(document))
   end

@@ -23,7 +23,7 @@ defmodule SandmanWeb.LiveView.App do
         </div>
         <div class="gutter gutter-horizontal" id="doc-req-gutter" phx-update="ignore"></div>
         <div id="req-res-container" style="overflow:scroll;" phx-hook="MaintainWidth">
-          <SandmanWeb.LiveView.RequestResponse.render tab={@tab} sub_tab="Headers" req_res = {List.first(@document.requests)}/>
+          <SandmanWeb.LiveView.RequestResponse.render tab={@tab} sub_tab="Headers" request_id = {@request_id} requests={@document.requests}/>
         </div>
       </div>
     """
@@ -40,6 +40,7 @@ defmodule SandmanWeb.LiveView.App do
     |> assign(:document, document)
     |> assign(:log_count, 0)
     |> assign(:tab, "Request")
+    |> assign(:request_id, nil)
     |> stream(:logs, [])
 
     {:ok, socket}
@@ -83,6 +84,11 @@ defmodule SandmanWeb.LiveView.App do
     {:noreply, assign(socket, tab: tab)}
   end
 
+  def handle_event("select-request", %{"block-id" => block_id, "request-index" => request_index}, socket) do
+    {request_index, _} = Integer.parse(request_index)
+    {:noreply, assign(socket, request_id: {block_id, request_index})}
+  end
+
   def handle_info(:document_loaded, socket = %{assigns: %{doc_pid: doc_pid}}) do
     {:noreply, assign(socket, :document, Document.get(doc_pid))}
   end
@@ -92,7 +98,8 @@ defmodule SandmanWeb.LiveView.App do
   end
 
   def handle_info(:request_recorded, socket = %{assigns: %{doc_pid: doc_pid}}) do
-    {:noreply, assign(socket, :document, Document.get(doc_pid))}
+    doc = Document.get(doc_pid)
+    {:noreply, assign(socket, :document, doc)}
   end
 
   def handle_info({:log, log}, socket = %{assigns: %{doc_pid: doc_pid, log_count: log_count}}) do

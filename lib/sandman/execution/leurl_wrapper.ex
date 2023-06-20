@@ -20,7 +20,7 @@ defmodule Sandman.LuerlWrapper do
 
     luerl_state = :luerl.set_table(["http"], [], luerl_state)
     luerl_state = Enum.reduce(["get", "post", "put", "delete", "patch", "head"], luerl_state, fn method, luerl_state ->
-      :luerl.set_table(["http", String.downcase(method)], &handlers.fetch.(method, &1, &2), luerl_state)
+      :luerl.set_table(["http", String.downcase(method)], &handlers.fetch.(String.upcase(method), &1, &2), luerl_state)
     end)
     :luerl.set_table(["http", "send"], fn args, luerl_state ->
       case args do
@@ -49,7 +49,6 @@ defmodule Sandman.LuerlWrapper do
   end
 
   def decode(term, luerl_state) do
-    IO.inspect({"decoding", term})
     :luerl_new.decode(term, luerl_state)
   end
 
@@ -60,14 +59,12 @@ defmodule Sandman.LuerlWrapper do
           {:ok, res, luerl_state}
 
         {:error, error, luerl_state} ->
-          IO.inspect({"FORMATTING parse error:", format_parse_error(error)})
           {:error, error, luerl_state, format_parse_error(error)}
         {:lua_error, error, luerl_state} ->
           #lua error
           {:error, error, luerl_state, format_lua_error(error, luerl_state)}
       end
     rescue exception ->
-      IO.inspect({"WARN: CAUGHT EXCEPTION:", exception})
       {:error, exception, luerl_state, format_exception(exception, luerl_state)}
     end
   end
@@ -100,7 +97,6 @@ defmodule Sandman.LuerlWrapper do
           {:error, error, luerl_state, format_lua_error(error, luerl_state)}
       end
     rescue exception ->
-     IO.inspect({"WARN CAUGHT EXCEPTION", exception})
      {:error, exception, luerl_state, format_exception(exception, luerl_state)}
     end
   end

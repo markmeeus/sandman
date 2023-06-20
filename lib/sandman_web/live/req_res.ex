@@ -1,7 +1,9 @@
 defmodule SandmanWeb.LiveView.RequestResponse do
   # In Phoenix v1.6+ apps, the line is typically: use MyAppWeb, :live_view
   use Phoenix.Component
+
   alias Phoenix.LiveView.JS
+  alias Sandman.Document
 
   @spec render(any) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
@@ -31,15 +33,15 @@ defmodule SandmanWeb.LiveView.RequestResponse do
             <% end) %>
           <% end %>
         </nav> --%>
-        <%= case @req_res do %>
+        <%= case get_req_res(@requests, @request_id) do %>
           <% nil -> %>
             No request selected
           <% req_res -> %>
             <%= case @tab do %>
               <% "Request" -> %>
-                <.request req={@req_res.req} sub_tab={@sub_tab}/>
+                <.request req={req_res.req} sub_tab={@sub_tab}/>
               <% "Response" -> %>
-              <.response res={@req_res.res} sub_tab={@sub_tab}/>
+              <.response res={req_res.res} sub_tab={@sub_tab}/>
             <%end%>
         <% end %>
       </div>
@@ -87,4 +89,8 @@ defmodule SandmanWeb.LiveView.RequestResponse do
     )
   end
 
+  def get_req_res(_, nil), do: nil
+  def get_req_res(requests, request_id) do
+    Document.get_request_by_id(requests, request_id)
+  end
 end

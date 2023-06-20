@@ -56,7 +56,7 @@ defmodule Sandman.LuerlServer do
       end
 
     # luerl_state = LuerlWrapper.collect_garbage(luerl_state)
-    IO.inspect({"sending, resp", response})
+
     # send lua return to document
     send(document_pid, {:lua_response, response_tag, response})
     {:noreply, %{state | luerl_state: luerl_state}, :hibernate}
