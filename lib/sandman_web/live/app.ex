@@ -22,8 +22,10 @@ defmodule SandmanWeb.LiveView.App do
           </div>
         </div>
         <div class="gutter gutter-horizontal" id="doc-req-gutter" phx-update="ignore"></div>
-        <div id="req-res-container" style="overflow:scroll;" phx-hook="MaintainWidth">
-          <SandmanWeb.LiveView.RequestResponse.render tab={@tab} sub_tab="Headers" request_id = {@request_id} requests={@document.requests}/>
+        <div id="req-res-container" class="h-screen" style="overflow:scroll;" phx-hook="MaintainWidth">
+
+            <SandmanWeb.LiveView.RequestResponse.render tab={@tab} sub_tab="Headers" request_id = {@request_id} requests={@document.requests}/>
+
         </div>
       </div>
     """

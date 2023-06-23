@@ -81,7 +81,7 @@ defmodule SandmanWeb.LiveView.Document do
     ~H"""
       <div class="flex flex-col">
         <div class="flex flex-row-reverse text-xs text-red-700 rounded-b pb-1 px-1" style="background-color: rgb(238, 238, 238);">
-          <%= err %>
+          <%= format_request(@req)%>: <%= err %>
         </div>
       </div>
     """
@@ -90,9 +90,12 @@ defmodule SandmanWeb.LiveView.Document do
   defp render_request(assigns) do
     ~H"""
       <div class="flex flex-col">
-        <a class="flex flex-row-reverse text-xs text-blue-700 rounded-b pb-1 px-1" style="background-color: rgb(238, 238, 238);" href="#"
-          phx-click="select-request" phx-value-block-id={@block_id} phx-value-request-index={@request_index}>
-          <%= format_request(@req) %>
+        <a class="flex flex-row-reverse text-xs rounded-b pb-1 px-1 pt-1" style="background-color: rgb(238, 238, 238);"
+            href="#" phx-click="select-request" phx-value-block-id="6d8d705e-048a-47d5-a823-733c2fbc1565" phx-value-request-index="0">
+          <div >
+            <span style="color: rgb(50, 138, 50);background-color: rgb(238, 238, 238);" class="rounded font-bold px-1"><%=String.upcase(to_string(@req.req.method))%></span> <span>http://localhost:4000/</span>
+              <.format_response res={@req.res} />
+          </div>
         </a>
       </div>
     """
@@ -103,7 +106,6 @@ defmodule SandmanWeb.LiveView.Document do
     |> add_port(req.scheme, req.port)
     |> add_path(req.path)
     |> add_query(req.query)
-    |> add_response(res)
   end
 
   defp requests_for_block(requests, block_id) do
@@ -112,13 +114,19 @@ defmodule SandmanWeb.LiveView.Document do
 
   defp add_port(formatted, :http, 80), do: formatted
   defp add_port(formatted, :https, 443), do: formatted
-  defp add_port(formatted, _, port), do: "#{formatted}://#{port}"
+  defp add_port(formatted, _, port), do: "#{formatted}:#{port}"
 
   defp add_path(formatted, path), do: "#{formatted}#{path}"
 
   defp add_query(formatted, nil), do: formatted
   defp add_query(formatted, q), do: "#{formatted}?#{q}"
 
-  defp add_response(formatted, nil), do: "#{formatted}"
-  defp add_response(formatted, %{status: status}), do: "#{formatted} #{status}"
+  defp format_response(nil), do: nil
+  defp format_response(assigns) do
+     ~H"""
+     <span style="color: rgb(50, 138, 50);background-color: rgb(238, 238, 238);"  class="rounded font-bold px-1">
+        <%= @res.status %>
+      </span>
+     """
+  end
 end

@@ -8,7 +8,7 @@ defmodule SandmanWeb.LiveView.RequestResponse do
   @spec render(any) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
-      <div class="text-black font-mono mx-10 p-4 text-xs"
+      <div class="text-black font-mono mx-2 p-2 text-xs"
           style="background-color: white"}>
           <div>
           <div class="block">
@@ -51,12 +51,12 @@ defmodule SandmanWeb.LiveView.RequestResponse do
   def request(assigns) do
       ~H"""
       <div class="flex flex-col mt-4">
-        <a href="#" phx-click={toggle_hidden("#request-headers")} >Headers</a>
-        <div id="request-headers" class="hidden">
-          <%= inspect(@req.headers) %>
+        <a href="#" phx-click={toggle_hidden("#request-headers")} class="rounded px-2 py-1" style="background-color:#EEE">Headers</a>
+        <div id="request-headers" class="hidden pt-2">
+          <.headers headers={@req.headers} />
         </div>
-        <a href="#" phx-click={toggle_hidden("#request-body")} >Body</a>
-        <div id="request-body" class="hidden">
+        <a href="#" phx-click={toggle_hidden("#request-body")} class="rounded mt-2 px-2 py-1" style="background-color:#EEE">Body</a>
+        <div id="request-body" class="hidden pt-2">
           <%= @req.body %>
         </div>
       </div>
@@ -65,16 +65,37 @@ defmodule SandmanWeb.LiveView.RequestResponse do
   def response(assigns) do
       ~H"""
       <div class="flex flex-col mt-4" >
-        <a href="#" phx-click={toggle_hidden("#response-headers")} >Headers</a>
-        <div id="response-headers" class="hidden">
-          <%= inspect(@res.headers) %>
+        <a href="#" phx-click={toggle_hidden("#response-headers")} class="rounded px-2 py-1" style="background-color:#EEE" >Headers</a>
+        <div id="response-headers" class="hidden pt-2">
+          <.headers headers={@res.headers} />
         </div>
-        <a href="#" phx-click={toggle_hidden("#response-body")} >Body</a>
-        <div id="response-body" class="hidden">
-          <%= inspect(@res.body) %>
+        <a href="#" phx-click={toggle_hidden("#response-body")} class="rounded mt-2 px-2 py-1" style="background-color:#EEE">Body</a>
+        <div id="response-body" class="hidden pt-2">
+          <.body body={@res.body}/>>
         </div>
       </div>
       """
+  end
+
+  def headers(assigns) do
+    ~H"""
+    <table class="table-fixed">
+      <tbody>
+        <%= for {n, v} <- @headers do %>
+          <tr class="border-2">
+            <td class="border-r-2 px-2"><%= n %></td>
+            <td class="px-4"><%= v %>:</td>
+          </tr>
+        <%end%>
+      </tbody>
+    </table>
+    """
+  end
+
+  def body(assigns) do
+    ~H"""
+    <%= @body %>
+    """
   end
 
   def toggle_hidden(js \\ %JS{}, el) do
