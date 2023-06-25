@@ -52,11 +52,11 @@ defmodule SandmanWeb.LiveView.RequestResponse do
       ~H"""
       <div class="flex flex-col mt-4">
         <a href="#" phx-click={toggle_hidden("#request-headers")} class="rounded px-2 py-1" style="background-color:#EEE">Headers</a>
-        <div id="request-headers" class="hidden pt-2">
+        <div id="request-headers" class="pt-2">
           <.headers headers={@req.headers} />
         </div>
         <a href="#" phx-click={toggle_hidden("#request-body")} class="rounded mt-2 px-2 py-1" style="background-color:#EEE">Body</a>
-        <div id="request-body" class="hidden pt-2">
+        <div id="request-body" class="pt-2">
           <%= @req.body %>
         </div>
       </div>
@@ -66,12 +66,12 @@ defmodule SandmanWeb.LiveView.RequestResponse do
       ~H"""
       <div class="flex flex-col mt-4" >
         <a href="#" phx-click={toggle_hidden("#response-headers")} class="rounded px-2 py-1" style="background-color:#EEE" >Headers</a>
-        <div id="response-headers" class="hidden pt-2">
+        <div id="response-headers" class="pt-2">
           <.headers headers={@res.headers} />
         </div>
         <a href="#" phx-click={toggle_hidden("#response-body")} class="rounded mt-2 px-2 py-1" style="background-color:#EEE">Body</a>
-        <div id="response-body" class="hidden pt-2">
-          <.body body={@res.body}/>>
+        <div id="response-body" class="pt-2">
+          <.body body={@res.body}/>
         </div>
       </div>
       """

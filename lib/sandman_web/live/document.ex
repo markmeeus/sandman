@@ -53,25 +53,6 @@ defmodule SandmanWeb.LiveView.Document do
           <%= for {req, index} <- Enum.with_index(requests_for_block(@requests, block["id"])) do%>
             <%= render_request(%{req: req, block_id: block["id"], request_index: index}) %>
           <% end %>
-
-
-          <div class="flex flex-col">
-            <div class="flex flex-row-reverse text-xs rounded-b pb-1 px-1" style="background-color: rgb(238, 238, 238);">
-            <a href="#" class="mt-1 text-emerald-600">&nbsp;<%="2xx"%></a>
-            <a href="#" class="mt-1">3 requests</a>
-          </div>
-          <div class="flex flex-row-reverse text-xs rounded-b pb-1 px-1" style="background-color: rgb(238, 238, 238);">
-
-          <a href="#" class="mt-1 text-emerald-600">&nbsp;302</a>
-          <a href="#" class="mt-1">1 request</a></div>
-          <div class="flex flex-row-reverse text-xs rounded-b pb-1 px-1" style="background-color: rgb(238, 238, 238);">
-          <a href="#" class="mt-1 text-red-700">&nbsp;500</a>
-          <a href="#" class="mt-1"><%= "GET https://test.com"%></a></div></div>
-          <div class="flex flex-row">
-            <button class="pt-1 text-sm" phx-click="add-block" phx-value-block-id={block["id"]}>Add</button>
-            <div class="grow"/>
-            <button class="pt-1 text-sm" phx-click="remove-block" phx-value-block-id={block["id"]}>Remove</button>
-          </div>
         </div>
       <% end %>
     """
@@ -93,7 +74,8 @@ defmodule SandmanWeb.LiveView.Document do
         <a class="flex flex-row-reverse text-xs rounded-b pb-1 px-1 pt-1" style="background-color: rgb(238, 238, 238);"
             href="#" phx-click="select-request" phx-value-block-id="6d8d705e-048a-47d5-a823-733c2fbc1565" phx-value-request-index="0">
           <div >
-            <span style="color: rgb(50, 138, 50);background-color: rgb(238, 238, 238);" class="rounded font-bold px-1"><%=String.upcase(to_string(@req.req.method))%></span> <span>http://localhost:4000/</span>
+            <span style="color: rgb(50, 138, 50);background-color: rgb(238, 238, 238);" class="rounded font-bold px-1">
+              <%=String.upcase(to_string(@req.req.method))%></span> <span><%= format_request(@req) %></span>
               <.format_response res={@req.res} />
           </div>
         </a>
