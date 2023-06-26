@@ -13,7 +13,9 @@ defmodule Sandman.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: Sandman.PubSub},
       # Start Finch
-      {Finch, name: Sandman.Finch},
+      {Finch, name: Sandman.Finch, pools: %{
+        default: [conn_opts: [transport_opts: [verify: :verify_none]]] #TODO ohoh, misschien aparte unsecure pool?
+      }},
       # Start the Endpoint (http/https)
       SandmanWeb.Endpoint,
       # Start a worker by calling: Sandman.Worker.start_link(arg)

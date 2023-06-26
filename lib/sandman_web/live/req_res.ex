@@ -84,7 +84,7 @@ defmodule SandmanWeb.LiveView.RequestResponse do
         <%= for {n, v} <- @headers do %>
           <tr class="border-2">
             <td class="border-r-2 px-2"><%= n %></td>
-            <td class="px-4"><%= v %>:</td>
+            <td class="px-4"><%= v %></td>
           </tr>
         <%end%>
       </tbody>
