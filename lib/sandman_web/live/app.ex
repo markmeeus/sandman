@@ -91,7 +91,10 @@ defmodule SandmanWeb.LiveView.App do
     {:noreply, assign(socket, request_id: {block_id, request_index})}
   end
 
-  def handle_event("clear-log", _, socket) do
+  def handle_event("clear-log", _, socket = %{assigns: %{log_count: log_count}}) do
+    socket = socket
+    |> assign(:log_count, log_count + 1)
+    |> stream(:logs, [])
     {:noreply, stream(socket, :logs, [])}
   end
 
