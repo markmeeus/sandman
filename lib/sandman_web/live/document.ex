@@ -18,13 +18,13 @@ defmodule SandmanWeb.LiveView.Document do
           type="text"
           id="title"
           name="title"
-          value={@document["title"] || "new script"}
+          value={@document.title || "new script"}
           spellcheck="false"
           autocomplete="off"
           class="w-full text-center border-0 p-0 font-semibold"
         />
       </form>
-      <%= case @document["blocks"] do
+      <%= case @document.blocks do
         [] -> render_empty_state(assigns)
         _ -> render_blocks(assigns)
       end %>
@@ -40,18 +40,18 @@ defmodule SandmanWeb.LiveView.Document do
   def render_blocks(assigns) do
     ~H"""
     <button class="pt-1 text-sm" phx-click="add-block" phx-value-block-id="-">Add block</button>
-    <%= for block <- @document["blocks"] do%>
+    <%= for block <- @document.blocks do%>
         <div class="my-1 pt-1 pb-5 px-5 border-b-2">
           <div class="flex flex-row fs-2 mb-1 text-sm">
-          <button phx-click="run-block" phx-value-block-id={block["id"]}><span><%="▶"%></span> Run</button>
-          <button phx-click="run-to-block" phx-value-block-id={block["id"]}><span><%=" ▶▶"%></span> Run to</button>
+          <button phx-click="run-block" phx-value-block-id={block.id}><span><%="▶"%></span> Run</button>
+          <button phx-click="run-to-block" phx-value-block-id={block.id}><span><%=" ▶▶"%></span> Run to</button>
           </div>
-          <div class="rounded-t p-2" style="background-color: rgb(30, 30, 30);" phx-update="ignore" id={"monaco-wrapper-#{block["id"]}"}>
-            <div id={"monaco-#{block["id"]}"} phx-hook="MonacoHook" data-block-id={block["id"]} ><%= block["code"] %></div>
+          <div class="rounded-t p-2" style="background-color: rgb(30, 30, 30);" phx-update="ignore" id={"monaco-wrapper-#{block.id}"}>
+            <div id={"monaco-#{block.id}"} phx-hook="MonacoHook" data-block-id={block.id} ><%= block.code %></div>
           </div>
 
-          <%= for {req, index} <- Enum.with_index(requests_for_block(@requests, block["id"])) do%>
-            <%= render_request(%{req: req, block_id: block["id"], request_index: index}) %>
+          <%= for {req, index} <- Enum.with_index(requests_for_block(@requests, block.id)) do%>
+            <%= render_request(%{req: req, block_id: block.id, request_index: index}) %>
           <% end %>
         </div>
       <% end %>

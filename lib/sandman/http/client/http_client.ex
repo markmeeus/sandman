@@ -1,4 +1,4 @@
-defmodule SandMan.HttpClient do
+defmodule Sandman.HttpClient do
   import Sandman.Logger
   alias Sandman.LuaMapper
 

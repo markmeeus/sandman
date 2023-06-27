@@ -20,7 +20,11 @@ defmodule Sandman.Application do
       SandmanWeb.Endpoint,
       # Start a worker by calling: Sandman.Worker.start_link(arg)
       # {Sandman.Worker, arg}
-      {Desktop.Window,
+    ]
+
+    desktop_env = Application.get_env(:sandman, :desktop)
+    children = if desktop_env[:open_window] do
+      children ++ [{Desktop.Window,
       [
           app: :sandman,
           id: MainApp,
@@ -28,9 +32,10 @@ defmodule Sandman.Application do
           title: "Sandman",
           size: { 1000, 600 },
           menubar: MenuBar
-      ]}
-    ]
-
+      ]}]
+    else
+      children
+    end
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Sandman.Supervisor]

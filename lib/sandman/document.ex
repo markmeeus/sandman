@@ -3,7 +3,8 @@ defmodule Sandman.Document do
   alias Phoenix.PubSub
   alias Sandman.LuerlServer
   alias Sandman.LuaMapper
-  alias SandMan.HttpClient
+  alias Sandman.HttpClient
+  alias Sandman.DocumentEncoder
 
   use GenServer, restart: :transient
 
@@ -81,7 +82,7 @@ defmodule Sandman.Document do
       # json_encode: &Json.encode(agent_id, &1, &2),
     })
     {:ok, file} = File.read(file_path)
-    document = Jason.decode!(file)
+    document = DocumentEncoder.decode(file)
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_loaded)
     {:ok, %{
       doc_id: doc_id,
@@ -99,12 +100,13 @@ defmodule Sandman.Document do
 
   def handle_cast({:add_block, :after, "-"}, state  = %{document: document, doc_id: doc_id}) do
     new_block = %{
-      "type" => "lua",
-      "code" => "",
-      "id" => UUID.uuid4()
+      type: "lua",
+      code: "",
+      id: UUID.uuid4()
     }
-    new_blocks = [new_block] ++ (document["blocks"] || [])
-    document = Map.put(document, "blocks", new_blocks)
+    new_blocks = [new_block] ++ (document.blocks || [])
+    IO.inspect({"adding blcoks", new_blocks})
+    document = Map.put(document, :blocks, new_blocks)
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
     write_file(document, state)
     {:noreply, state = %{ state | document: document}}
@@ -112,15 +114,15 @@ defmodule Sandman.Document do
 
   def handle_cast({:add_block, :after, after_block_id}, state = %{document: document, doc_id: doc_id}) do
     new_block = %{
-      "type" => "lua",
-      "code" => "",
-      "id" => UUID.uuid4()
+      type: "lua",
+      code: "",
+      id: UUID.uuid4()
     }
-    new_blocks = Enum.reduce(document["blocks"], [], fn
-      block = %{"id" => ^after_block_id}, acc -> acc ++ [block, new_block]
+    new_blocks = Enum.reduce(document.blocks, [], fn
+      block = %{id: ^after_block_id}, acc -> acc ++ [block, new_block]
       block, acc -> acc ++ [block]
     end)
-    document = Map.put(document, "blocks", new_blocks)
+    document = Map.put(document, :blocks, new_blocks)
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
     write_file(document, state)
     {:noreply, state = %{ state | document: document}}
@@ -134,19 +136,19 @@ defmodule Sandman.Document do
   end
 
   def handle_cast({:remove_block, block_id}, state  = %{document: document, doc_id: doc_id}) do
-    new_blocks = Enum.filter(document["blocks"], & &1["id"] != block_id)
-    document = Map.put(document, "blocks", new_blocks)
+    new_blocks = Enum.filter(document.blocks, & &1[:id] != block_id)
+    document = Map.put(document, :blocks, new_blocks)
     write_file(document, state)
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
     {:noreply, state = %{ state | document: document}}
   end
 
   def handle_cast({:change_code, block_id, code}, state = %{document: document}) do
-    new_blocks = Enum.map(document["blocks"], fn
-      block = %{"id" => ^block_id} -> Map.put(block, "code", code)
+    new_blocks = Enum.map(document.blocks, fn
+      block = %{id: ^block_id} -> Map.put(block, :code, code)
       block -> block
     end)
-    document = Map.put(document, "blocks", new_blocks)
+    document = Map.put(document, :blocks, new_blocks)
     write_file(document, state)
     {:noreply, state = %{ state | document: document}}
   end
@@ -158,8 +160,8 @@ defmodule Sandman.Document do
   end
 
   def handle_cast({:run_block, block_id}, state = %{document: document, luerl_server_pid: luerl_server_pid}) do
-    block = Enum.find(document["blocks"], & &1["id"] == block_id)
-    LuerlServer.run_code(luerl_server_pid, {:run_block}, block["code"])
+    block = Enum.find(document.blocks, & &1[:id] == block_id)
+    LuerlServer.run_code(luerl_server_pid, {:run_block}, block.code)
 
     state = put_in(state.requests[block_id], [])
     state = put_in(state.current_block_id, block_id)
@@ -168,12 +170,12 @@ defmodule Sandman.Document do
   end
 
   def handle_cast({:run_to_block, block_id}, state = %{document: document, luerl_server_pid: luerl_server_pid}) do
-    Enum.each(document["blocks"], fn block ->
+    Enum.each(document.blocks, fn block ->
       # TODO this is a cast, so we need to send the tail with the response tag?
       # or maybe only the block id's to run?
       # currently it will run all blocks in correct order because the mailbox is in order
       # but it should actually stop processing if a single block fails
-      LuerlServer.run_code(luerl_server_pid, {:run_to_block, block_id, block["id"] }, block["code"])
+      LuerlServer.run_code(luerl_server_pid, {:run_to_block, block_id, block.id }, block.code)
     end)
     {:noreply, state}
   end
@@ -197,7 +199,7 @@ defmodule Sandman.Document do
   end
 
   defp write_file(document, %{file_path: file_path}) do
-    :ok = File.write(file_path, Jason.encode!(document))
+    :ok = File.write(file_path, DocumentEncoder.encode(document))
   end
 
   # luacallbacks
