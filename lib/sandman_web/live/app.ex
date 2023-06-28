@@ -94,8 +94,8 @@ defmodule SandmanWeb.LiveView.App do
   def handle_event("clear-log", _, socket = %{assigns: %{log_count: log_count}}) do
     socket = socket
     |> assign(:log_count, log_count + 1)
-    |> stream(:logs, [])
-    {:noreply, stream(socket, :logs, [])}
+    |> stream(:logs, [], reset: true)
+    {:noreply, socket}
   end
 
   def handle_info(:document_loaded, socket = %{assigns: %{doc_pid: doc_pid}}) do
