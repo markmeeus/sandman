@@ -90,7 +90,7 @@ defmodule Sandman.Document do
       file_path: file_path,
       luerl_server_pid: luerl_server_pid,
       requests: %{},
-      current_block_id: nil
+      current_block_id: nil,
     }}
   end
 
@@ -161,7 +161,16 @@ defmodule Sandman.Document do
 
   def handle_cast({:run_block, block_id}, state = %{document: document, luerl_server_pid: luerl_server_pid}) do
     block = Enum.find(document.blocks, & &1[:id] == block_id)
-    LuerlServer.run_code(luerl_server_pid, {:run_block}, block.code)
+    last_block_id = document.blocks
+      |> Enum.split_while(fn bl -> bl.id != block.id end)
+      |> elem(0)
+      |> List.last()
+      |> case do
+        nil -> nil
+        block -> block.id
+      end
+
+    LuerlServer.run_code(luerl_server_pid, last_block_id, block.id, {:run_block}, block.code)
 
     state = put_in(state.requests[block_id], [])
     state = put_in(state.current_block_id, block_id)
@@ -184,6 +193,8 @@ defmodule Sandman.Document do
     case response do
       {:error, err, formatted} ->
         log(doc_id, "Error: " <> formatted)
+      :no_state_for_block ->
+        log(doc_id, "no state fr block")
       _ -> nil
     end
     {:noreply, state}
@@ -193,6 +204,8 @@ defmodule Sandman.Document do
     case response do
       {:error, err, formatted} ->
         log(doc_id, "Error: " <> formatted)
+      :no_state_for_block ->
+          log(doc_id, "This block cannot be run right now. Did you run the previous block?")
       _ -> nil
     end
     {:noreply, put_in(state.current_block_id, nil)}

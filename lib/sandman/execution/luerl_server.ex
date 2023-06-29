@@ -12,19 +12,19 @@ defmodule Sandman.LuerlServer do
     GenServer.stop(pid, stop_reason)
   end
 
-  def run_code(pid, response_tag, code) do
-    GenServer.cast(pid, {:run_code, response_tag, code})
+  def run_code(pid, state_id, new_state_id, response_tag, code) do
+    GenServer.cast(pid, {:run_code, state_id, new_state_id, response_tag, code})
   end
 
-  def call_function(pid, response_tag, function_path, args) do
-    GenServer.cast(pid, {:call_function, response_tag, function_path, args})
+  def call_function(pid, state_id, new_state_id, response_tag, function_path, args) do
+    GenServer.cast(pid, {:call_function, state_id, new_state_id, response_tag, function_path, args})
   end
 
   @impl true
   def init({document_pid, handlers}) do
-    luerl_state = LuerlWrapper.init(handlers)
     state = %{
-      luerl_state: luerl_state,
+      luerl_states: %{}, #every block has it's own state
+      handlers: handlers,
       document_pid: document_pid
     }
 
@@ -39,35 +39,45 @@ defmodule Sandman.LuerlServer do
 
   @impl true
 
-  def handle_cast({:run_code, response_tag, code},
-        state = %{luerl_state: luerl_state, document_pid: document_pid}
+  def handle_cast({:run_code, state_id, new_state_id, response_tag, code},
+        state = %{luerl_states: luerl_states, document_pid: document_pid, handlers: handlers}
       ) do
+    luerl_state = case {state_id, get_luerl_state(luerl_states, state_id, handlers)}  do
+        {nil, luerl_state} -> luerl_state # nil always returns a new valid state
+        {_, nil} -> :no_state_for_block # if asking state for a block, it should be there!
+        {_, luerl_state} -> luerl_state
+    end
 
     {response, luerl_state} =
-      case LuerlWrapper.run_code(code, luerl_state) do
-        {:ok, [], luerl_state} ->
-          {[], luerl_state}
+      case luerl_state do
+        :no_state_for_block -> {:no_state_for_block, nil}
+        _ ->
+          case LuerlWrapper.run_code(code, luerl_state) do
+            {:ok, [], luerl_state} ->
+              {[], luerl_state}
 
-        {:ok, [response], luerl_state} ->
-          {LuerlWrapper.decode(response, luerl_state), luerl_state}
+            {:ok, [response], luerl_state} ->
+              {LuerlWrapper.decode(response, luerl_state), luerl_state}
 
-        {:error, err, _, formatted} ->
-          {{:error, err, formatted}, luerl_state}
+            {:error, err, _, formatted} ->
+              {{:error, err, formatted}, luerl_state}
+          end
       end
 
     # luerl_state = LuerlWrapper.collect_garbage(luerl_state)
 
     # send lua return to document
     send(document_pid, {:lua_response, response_tag, response})
-    {:noreply, %{state | luerl_state: luerl_state}, :hibernate}
+    luerl_states = save_luerl_state(luerl_states, new_state_id, luerl_state)
+    {:noreply, %{state | luerl_states: luerl_states}, :hibernate}
   end
 
+  #this is not used..., also not tested...
   def handle_cast(
-        {:call_function, response_tag, function_path, args},
-        state = %{luerl_state: luerl_state, document_pid: document_pid}
+        {:call_function, state_id, new_state_id, response_tag, function_path, args, handlers: handlers},
+        state = %{luerl_states: luerl_states, document_pid: document_pid}
       ) do
-    IO.inspect({"calling function:", function_path})
-
+    luerl_state = get_luerl_state(luerl_states, state_id, handlers)
     {response, luerl_state} =
       case LuerlWrapper.call_function(function_path, args, luerl_state) do
         {:ok, [], luerl_state} ->
@@ -95,7 +105,16 @@ defmodule Sandman.LuerlServer do
     # )
 
     send(document_pid, {:lua_response, response_tag, response})
+    luerl_states = save_luerl_state(luerl_states, new_state_id, luerl_state)
     {:noreply, %{state | luerl_state: luerl_state}, :hibernate}
+  end
+
+  def get_luerl_state(luerl_states, nil, handlers), do: LuerlWrapper.init(handlers)
+  def get_luerl_state(luerl_states, state_id, _), do: luerl_state = luerl_states[state_id]
+
+  def save_luerl_state(luerl_states, nil, _), do: luerl_states
+  def save_luerl_state(luerl_states, state_id, luerl_state) do
+    Map.put(luerl_states, state_id, luerl_state)
   end
 
   defp via_tuple(document_id),
