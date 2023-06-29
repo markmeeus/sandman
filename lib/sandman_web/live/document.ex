@@ -42,14 +42,12 @@ defmodule SandmanWeb.LiveView.Document do
     <button class="pt-1 text-sm" phx-click="add-block" phx-value-block-id="-">Add block</button>
     <%= for block <- @document.blocks do%>
         <div class="my-1 pt-1 pb-5 px-5 border-b-2">
-          <div class="flex flex-row fs-2 mb-1 text-sm">
-          <button phx-click="run-block" phx-value-block-id={block.id}><span><%="▶"%></span> Run</button>
-          <button phx-click="run-to-block" phx-value-block-id={block.id}><span><%=" ▶▶"%></span> Run to</button>
-          </div>
           <div class="rounded-t p-2" style="background-color: rgb(30, 30, 30);" phx-update="ignore" id={"monaco-wrapper-#{block.id}"}>
             <div id={"monaco-#{block.id}"} phx-hook="MonacoHook" data-block-id={block.id} ><%= block.code %></div>
           </div>
-
+          <div class="flex flex-row fs-2 mb-1 text-sm">
+            <button phx-click="run-block" phx-value-block-id={block.id}><span><%="▶"%></span> Run</button>
+          </div>
           <%= for {req, index} <- Enum.with_index(requests_for_block(@requests, block.id)) do%>
             <%= render_request(%{req: req, block_id: block.id, request_index: index}) %>
           <% end %>

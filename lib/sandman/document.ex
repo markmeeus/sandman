@@ -51,10 +51,6 @@ defmodule Sandman.Document do
     GenServer.cast(pid, {:run_block, block_id})
   end
 
-  def run_to_block(pid, block_id) do
-    GenServer.cast(pid, {:run_to_block, block_id})
-  end
-
   # request id is %{block_id: block_id, index }
   def get_request_by_id(requests, {block_id, index}) do
     request = (requests[block_id] || []) |> Enum.at(index)
@@ -175,28 +171,6 @@ defmodule Sandman.Document do
     state = put_in(state.requests[block_id], [])
     state = put_in(state.current_block_id, block_id)
 
-    {:noreply, state}
-  end
-
-  def handle_cast({:run_to_block, block_id}, state = %{document: document, luerl_server_pid: luerl_server_pid}) do
-    Enum.each(document.blocks, fn block ->
-      # TODO this is a cast, so we need to send the tail with the response tag?
-      # or maybe only the block id's to run?
-      # currently it will run all blocks in correct order because the mailbox is in order
-      # but it should actually stop processing if a single block fails
-      LuerlServer.run_code(luerl_server_pid, {:run_to_block, block_id, block.id }, block.code)
-    end)
-    {:noreply, state}
-  end
-
-  def handle_info({:lua_response, {:run_to_block, to_block_id, result_for_block_id}, response}, state = %{doc_id: doc_id}) do
-    case response do
-      {:error, err, formatted} ->
-        log(doc_id, "Error: " <> formatted)
-      :no_state_for_block ->
-        log(doc_id, "no state fr block")
-      _ -> nil
-    end
     {:noreply, state}
   end
 
