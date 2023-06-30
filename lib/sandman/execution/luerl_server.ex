@@ -12,6 +12,10 @@ defmodule Sandman.LuerlServer do
     GenServer.stop(pid, stop_reason)
   end
 
+  def reset_states(pid, state_ids) do
+    GenServer.cast(pid, {:reset, state_ids})
+  end
+
   def run_code(pid, state_id, new_state_id, response_tag, code) do
     GenServer.cast(pid, {:run_code, state_id, new_state_id, response_tag, code})
   end
@@ -42,6 +46,7 @@ defmodule Sandman.LuerlServer do
   def handle_cast({:run_code, state_id, new_state_id, response_tag, code},
         state = %{luerl_states: luerl_states, document_pid: document_pid, handlers: handlers}
       ) do
+
     luerl_state = case {state_id, get_luerl_state(luerl_states, state_id, handlers)}  do
         {nil, luerl_state} -> luerl_state # nil always returns a new valid state
         {_, nil} -> :no_state_for_block # if asking state for a block, it should be there!
@@ -94,19 +99,16 @@ defmodule Sandman.LuerlServer do
 
       end
 
-    #luerl_state = LuerlWrapper.collect_garbage(luerl_state)
-
-    # IO.inspect(
-    #   {"state to binary took:",
-    #    :timer.tc(fn ->
-    #      IO.inspect({"luerl_state to binary:", byte_size(:erlang.term_to_binary(luerl_state))})
-    #      :ok
-    #    end)}
-    # )
-
     send(document_pid, {:lua_response, response_tag, response})
     luerl_states = save_luerl_state(luerl_states, new_state_id, luerl_state)
-    {:noreply, %{state | luerl_state: luerl_state}, :hibernate}
+    {:noreply, %{state | luerl_states: luerl_states}, :hibernate}
+  end
+
+  def handle_cast({:reset, state_ids}, state = %{luerl_states: luerl_states}) do
+    new_states = Enum.reduce(state_ids, luerl_states, fn state_id, states ->
+      Map.delete(states, state_id)
+    end)
+    {:noreply, Map.put(state, :luerl_states, new_states) }
   end
 
   def get_luerl_state(luerl_states, nil, handlers), do: LuerlWrapper.init(handlers)

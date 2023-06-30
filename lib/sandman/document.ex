@@ -157,15 +157,23 @@ defmodule Sandman.Document do
 
   def handle_cast({:run_block, block_id}, state = %{document: document, luerl_server_pid: luerl_server_pid}) do
     block = Enum.find(document.blocks, & &1[:id] == block_id)
-    last_block_id = document.blocks
+    {prev_blocks, next_blocks} =  document.blocks
       |> Enum.split_while(fn bl -> bl.id != block.id end)
-      |> elem(0)
+
+    last_block_id = prev_blocks
       |> List.last()
       |> case do
         nil -> nil
         block -> block.id
       end
+    blocks_to_reset = case next_blocks do
+      nil -> []
+      [_] -> []
+      [_ | next_blocks] -> next_blocks
+    end
+    |> Enum.map(& &1.id)
 
+    LuerlServer.reset_states(luerl_server_pid, blocks_to_reset)
     LuerlServer.run_code(luerl_server_pid, last_block_id, block.id, {:run_block}, block.code)
 
     state = put_in(state.requests[block_id], [])

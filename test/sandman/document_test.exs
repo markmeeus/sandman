@@ -34,4 +34,15 @@ defmodule Sandman.DocumentTest do
     Process.sleep(1000)
     assert_receive({:log, %{text: "This block cannot be run right now. Did you run the previous block?", type: "log"}})
   end
+
+  test "it clears the state for all later blocks when running a previous block",  %{doc_id: doc_id, doc_pid: doc_pid} do
+    Document.run_block(doc_pid, "b805b47a-fb65-4751-981e-32e260d7c513")
+    Document.run_block(doc_pid, "b805b47a-fb65-4751-981e-32e260d7c514")
+    Document.run_block(doc_pid, "b805b47a-fb65-4751-981e-32e260d7c515")
+    # running first block again, 3d block cannot be run
+    Document.run_block(doc_pid, "b805b47a-fb65-4751-981e-32e260d7c513")
+    Document.run_block(doc_pid, "b805b47a-fb65-4751-981e-32e260d7c515")
+    Process.sleep(100)
+    assert_receive({:log, %{text: "This block cannot be run right now. Did you run the previous block?", type: "log"}})
+  end
 end
