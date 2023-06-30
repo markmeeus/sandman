@@ -21,9 +21,10 @@ defmodule SandmanWeb.LiveView.Document do
           value={@document.title || "new script"}
           spellcheck="false"
           autocomplete="off"
-          class="w-full text-center border-0 p-0 font-semibold"
+          class="w-full text-center border-0 p-0 font-semibold mt-2"
         />
       </form>
+
       <%= case @document.blocks do
         [] -> render_empty_state(assigns)
         _ -> render_blocks(assigns)
@@ -39,18 +40,32 @@ defmodule SandmanWeb.LiveView.Document do
   end
   def render_blocks(assigns) do
     ~H"""
-    <button class="pt-1 text-sm" phx-click="add-block" phx-value-block-id="-">Add block</button>
+    <div class="group h-5">
+      <div class="flex flex-row">
+        <div class="flex-grow"/>
+        <button class="pt-1 mr-3 text-sm hidden group-hover:block" phx-click="add-block" phx-value-block-id="-"><span class="font-bold">+</span> Insert block</button>
+        <div class="flex-grow"/>
+      </div>
+    </div>
     <%= for block <- @document.blocks do%>
-        <div class="my-1 pt-1 pb-5 px-5 border-b-2">
+        <div class="my-1 pt-1 pb-1 px-5 border-b-2">
           <div class="rounded-t p-2" style="background-color: rgb(30, 30, 30);" phx-update="ignore" id={"monaco-wrapper-#{block.id}"}>
             <div id={"monaco-#{block.id}"} phx-hook="MonacoHook" data-block-id={block.id} ><%= block.code %></div>
           </div>
-          <div class="flex flex-row fs-2 mb-1 text-sm">
-            <button phx-click="run-block" phx-value-block-id={block.id}><span><%="▶"%></span> Run</button>
+          <div class="group h-5">
+            <div class="flex flex-row fs-2 mb-1 text-sm absolute">
+              <button phx-click="run-block" phx-value-block-id={block.id}><span><%="▶"%></span> Run</button>
+            </div>
+            <div class="flex flex-row">
+              <div class="flex-grow"/>
+              <button class="pt-1 mr-3 text-sm hidden group-hover:block" phx-click="add-block" phx-value-block-id={block.id}><span class="font-bold">+</span> Insert block</button>
+              <button class="pt-1 text-sm hidden group-hover:block" phx-click="remove-block" phx-value-block-id={block.id}><span class="font-bold">-</span> Remove block</button>
+              <div class="flex-grow"/>
+            </div>
+            <%= for {req, index} <- Enum.with_index(requests_for_block(@requests, block.id)) do%>
+              <%= render_request(%{req: req, block_id: block.id, request_index: index}) %>
+            <% end %>
           </div>
-          <%= for {req, index} <- Enum.with_index(requests_for_block(@requests, block.id)) do%>
-            <%= render_request(%{req: req, block_id: block.id, request_index: index}) %>
-          <% end %>
         </div>
       <% end %>
     """
