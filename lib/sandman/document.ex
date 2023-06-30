@@ -4,8 +4,8 @@ defmodule Sandman.Document do
   alias Sandman.LuerlServer
   alias Sandman.LuaMapper
   alias Sandman.HttpClient
+  alias Sandman.Encoders.Json
   alias Sandman.DocumentEncoder
-
   use GenServer, restart: :transient
 
   import Sandman.Logger
@@ -74,8 +74,8 @@ defmodule Sandman.Document do
         # return with lua script
         {result.lua_result, luerl_state}
       end,
-      # json_decode: &Json.decode(agent_id, &1, &2),
-      # json_encode: &Json.encode(agent_id, &1, &2),
+      json_decode: &Json.decode(doc_id, &1, &2),
+      json_encode: &Json.encode(doc_id, &1, &2),
     })
     {:ok, file} = File.read(file_path)
     document = DocumentEncoder.decode(file)

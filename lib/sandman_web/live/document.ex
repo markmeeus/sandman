@@ -52,19 +52,20 @@ defmodule SandmanWeb.LiveView.Document do
           <div class="rounded-t p-2" style="background-color: rgb(30, 30, 30);" phx-update="ignore" id={"monaco-wrapper-#{block.id}"}>
             <div id={"monaco-#{block.id}"} phx-hook="MonacoHook" data-block-id={block.id} ><%= block.code %></div>
           </div>
-          <div class="group h-5">
-            <div class="flex flex-row fs-2 mb-1 text-sm absolute">
+          <div class="group min-h-5">
+            <div class="flex flex-row fs-2 mb-1 text-sm sticky">
               <button phx-click="run-block" phx-value-block-id={block.id}><span><%="▶"%></span> Run</button>
             </div>
+            <%= for {req, index} <- Enum.with_index(requests_for_block(@requests, block.id)) do%>
+              <%= render_request(%{req: req, block_id: block.id, request_index: index}) %>
+            <% end %>
             <div class="flex flex-row">
               <div class="flex-grow"/>
               <button class="pt-1 mr-3 text-sm hidden group-hover:block" phx-click="add-block" phx-value-block-id={block.id}><span class="font-bold">+</span> Insert block</button>
               <button class="pt-1 text-sm hidden group-hover:block" phx-click="remove-block" phx-value-block-id={block.id}><span class="font-bold">-</span> Remove block</button>
               <div class="flex-grow"/>
             </div>
-            <%= for {req, index} <- Enum.with_index(requests_for_block(@requests, block.id)) do%>
-              <%= render_request(%{req: req, block_id: block.id, request_index: index}) %>
-            <% end %>
+
           </div>
         </div>
       <% end %>

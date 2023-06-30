@@ -33,8 +33,8 @@ defmodule Sandman.LuerlServer do
     }
 
     Process.flag(:max_heap_size, %{
-      # 100MB, arbritrary .... maybe in settings sometime?
-      size: 10 * 1024 * 1024,
+      # 1GB, arbritrary .... maybe in settings sometime?
+      size: 1024 * 1024 * 1024,
       kill: true
     })
 
