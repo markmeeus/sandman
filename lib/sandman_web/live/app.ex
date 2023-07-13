@@ -4,10 +4,20 @@ defmodule SandmanWeb.LiveView.App do
     container: {:div, class: "h-full"}
 
   alias Sandman.Document
+  alias Sandman.FileAccess
+
   alias Phoenix.PubSub
 
   @spec render(any) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
+    if(assigns[:doc_pid]) do
+      render_app(assigns)
+    else
+      render_select_file(assigns)
+    end
+  end
+
+  def render_app(assigns) do
     ~H"""
       <div id="app-wrapper" class="flex flex-row" phx-hook="HomeHook">
         <div id="document-log-container" class="h-screen" phx-hook="MaintainWidth">
@@ -29,23 +39,43 @@ defmodule SandmanWeb.LiveView.App do
     """
   end
 
+  def render_select_file(assigns) do
+    ~H"""
+    <div>
+      <div phx-click="new_file">New File</div>
+      <div phx-click="open_file">Open File</div>
+    </div>
+    """
+  end
+
   def mount(_params, _session, socket) do
-    # start_doc
-    doc_id = UUID.uuid4()
-    PubSub.subscribe(Sandman.PubSub, "document:#{doc_id}")
-    {:ok, doc_pid} = Document.start_link(doc_id, "/Users/markmeeus/Documents/projects/github/sandman/doc/test.json")
-    document= Document.get(doc_pid)
-    socket = socket
-    |> assign(:doc_pid, doc_pid)
-    |> assign(:document, document)
-    |> assign(:log_count, 0)
-    |> assign(:tab, "Request")
-    |> assign(:request_id, nil)
-    |> stream(:logs, [])
 
     {:ok, socket}
   end
 
+  def handle_event("open_file", _, socket) do
+    # start_doc
+    doc_id = UUID.uuid4()
+    PubSub.subscribe(Sandman.PubSub, "document:#{doc_id}")
+
+    case FileAccess.select_file() do
+      file_name when is_bitstring(file_name) ->
+        IO.inspect({"received file", file_name})
+        {:ok, doc_pid} = Document.start_link(doc_id, file_name)
+        document= Document.get(doc_pid)
+        socket = socket
+        |> assign(:doc_pid, doc_pid)
+        |> assign(:document, document)
+        |> assign(:log_count, 0)
+        |> assign(:tab, "Request")
+        |> assign(:request_id, nil)
+        |> stream(:logs, [])
+        {:noreply, socket}
+      other ->
+        {:noreply, socket} # no file selected
+
+    end
+  end
 
   def handle_event("code-changed", %{"blockId" => block_id, "value" => code}, socket = %{assigns: %{doc_pid: doc_pid}}) do
     Document.change_code(doc_pid, block_id, code)
