@@ -19,8 +19,8 @@ defmodule Sandman.FileAccess do
     |> Desktop.Window.webview()
 
     file_dialog = case mode do
-      :open -> :wxFileDialog.new(webview)
-      :new -> :wxFileDialog.new(webview, [style: 2])
+      :open -> :wxFileDialog.new(webview) #, [wildCard: "*.lua"]) => laat niet toe iets anders te kiezen...
+      :new -> :wxFileDialog.new(webview, [style: 2, defaultFile: "new_script.lua"])
     end
      #[style: 2]) # 2 is wxFD_SAVE ....
 
