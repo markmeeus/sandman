@@ -54,26 +54,31 @@ defmodule SandmanWeb.LiveView.App do
   end
 
   def handle_event("open_file", _, socket) do
-    # start_doc
+    {:noreply, start_document(:open, socket)}
+  end
+
+  def handle_event("new_file", _, socket) do
+    {:noreply, start_document(:new, socket)}
+  end
+
+  defp start_document(mode, socket) do
+        # start_doc
     doc_id = UUID.uuid4()
     PubSub.subscribe(Sandman.PubSub, "document:#{doc_id}")
 
-    case FileAccess.select_file() do
+    case FileAccess.select_file(mode) do
       file_name when is_bitstring(file_name) ->
-        IO.inspect({"received file", file_name})
         {:ok, doc_pid} = Document.start_link(doc_id, file_name)
         document= Document.get(doc_pid)
-        socket = socket
+        socket
         |> assign(:doc_pid, doc_pid)
         |> assign(:document, document)
         |> assign(:log_count, 0)
         |> assign(:tab, "Request")
         |> assign(:request_id, nil)
         |> stream(:logs, [])
-        {:noreply, socket}
       other ->
-        {:noreply, socket} # no file selected
-
+        socket # no file selected
     end
   end
 

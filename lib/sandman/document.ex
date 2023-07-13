@@ -64,6 +64,7 @@ defmodule Sandman.Document do
       json_decode: &Json.decode(doc_id, &1, &2),
       json_encode: &Json.encode(doc_id, &1, &2),
     })
+    File.touch!(file_path, :erlang.universaltime())
     {:ok, file} = File.read(file_path)
     document = DocumentEncoder.decode(file)
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_loaded)

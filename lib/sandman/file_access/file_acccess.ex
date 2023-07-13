@@ -12,11 +12,17 @@ defmodule Sandman.FileAccess do
     # )
     # |> IO.inspect()
 
-  def select_file do
+  def select_file(mode) do
     :wx.set_env(Desktop.Env.wx_env())
-    file_dialog = GenServer.whereis(MainApp)
+    webview = MainApp
+    |> GenServer.whereis()
     |> Desktop.Window.webview()
-    |> :wxFileDialog.new() #[style: 2]) # 2 is wxFD_SAVE ....
+
+    file_dialog = case mode do
+      :open -> :wxFileDialog.new(webview)
+      :new -> :wxFileDialog.new(webview, [style: 2])
+    end
+     #[style: 2]) # 2 is wxFD_SAVE ....
 
     :wxFileDialog.showModal(file_dialog)
     :filename.join(
