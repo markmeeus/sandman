@@ -28,7 +28,7 @@ defmodule Sandman.Application do
     res = Supervisor.start_link(children, opts)
 
     # start the first window with menu bar
-    Sandman.WindowSupervisor.start_child(menubar: MenuBar)
+    Sandman.WindowSupervisor.start_child()
     # return the supervisor ret value
     res
   end

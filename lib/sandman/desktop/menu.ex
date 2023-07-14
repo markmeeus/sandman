@@ -10,7 +10,7 @@ defmodule MenuBar do
   @impl true
   def handle_event(command, menu) do
     case command do
-      <<"new_window">> -> Sandman.WindowSupervisor.start_child(menubar: MenuBar)
+      <<"new_window">> -> Sandman.WindowSupervisor.start_child()
       <<"quit">> -> Desktop.Window.quit()
       <<"help">> -> :wx_misc.launchDefaultBrowser('https://google.com')
       <<"about">> -> :not_implemented
