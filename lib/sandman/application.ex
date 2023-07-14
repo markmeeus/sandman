@@ -18,28 +18,19 @@ defmodule Sandman.Application do
       }},
       # Start the Endpoint (http/https)
       SandmanWeb.Endpoint,
+      Sandman.WindowSupervisor,
       # Start a worker by calling: Sandman.Worker.start_link(arg)
       # {Sandman.Worker, arg}
     ]
-
-    desktop_env = Application.get_env(:sandman, :desktop)
-    children = if desktop_env[:open_window] do
-      children ++ [{Desktop.Window,
-      [
-          app: :sandman,
-          id: MainApp,
-          url: &SandmanWeb.Endpoint.url/0,
-          title: "Sandman",
-          size: { 1000, 600 },
-          menubar: MenuBar
-      ]}]
-    else
-      children
-    end
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Sandman.Supervisor]
-    Supervisor.start_link(children, opts)
+    res = Supervisor.start_link(children, opts)
+
+    # start the first window with menu bar
+    Sandman.WindowSupervisor.start_child(menubar: MenuBar)
+    # return the supervisor ret value
+    res
   end
 
   # Tell Phoenix to update the endpoint configuration

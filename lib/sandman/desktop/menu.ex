@@ -1,5 +1,5 @@
 defmodule MenuBar do
-  use Desktop.Menu
+  use Desktop.Menu, server: false
 
   @impl true
   def mount(menu) do
@@ -10,7 +10,7 @@ defmodule MenuBar do
   @impl true
   def handle_event(command, menu) do
     case command do
-      <<"open">> -> :not_implemented
+      <<"new_window">> -> Sandman.WindowSupervisor.start_child(menubar: MenuBar)
       <<"quit">> -> Desktop.Window.quit()
       <<"help">> -> :wx_misc.launchDefaultBrowser('https://google.com')
       <<"about">> -> :not_implemented
@@ -20,11 +20,16 @@ defmodule MenuBar do
   end
 
   @impl true
+  def handle_info(_, menu) do
+    {:noreply, menu}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <menubar>
       <menu label="File">
-          <item onclick="open"><%= "Open" %></item>
+          <item onclick="new_window"><%= "New window" %></item>
           <hr/>
           <item onclick="quit"><%= "Quit" %></item>
       </menu>
