@@ -28,7 +28,10 @@ defmodule Sandman.Application do
     res = Supervisor.start_link(children, opts)
 
     # start the first window with menu bar
-    Sandman.WindowSupervisor.start_child()
+    desktop_env = Application.get_env(:sandman, :desktop)
+    children = if desktop_env[:open_window] do # not in test for instance
+      Sandman.WindowSupervisor.start_child()
+    end
     # return the supervisor ret value
     res
   end

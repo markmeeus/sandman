@@ -12,7 +12,7 @@ defmodule Sandman.DocumentEncoder do
   end
 
   defp write_title(encoded, %{title: title}) when is_binary(title) do
-    encoded <> "#{title}\n\n"
+    encoded <> "#{title}\n"
   end
   defp write_title(encoded, _) do
     encoded
@@ -24,7 +24,7 @@ defmodule Sandman.DocumentEncoder do
   defp write_blocks(encoded, [block | rest]) do
     encoded
     |> write_block(block)
-    |> write_blocks( rest)
+    |> write_blocks(rest)
   end
   defp write_blocks(encoded, [block]) do
     write_block(encoded,block)
@@ -34,7 +34,7 @@ defmodule Sandman.DocumentEncoder do
   end
 
   defp write_block(encoded, block) do
-    encoded <> "-- ::sandman::block::#{block.type}::#{block.id}\n#{block.code}\n\n"
+    encoded <> "\n<!-- sandman:{\"block\":\"#{block.id}\"} -->\n\n```lua\n#{block.code}\n```\n"
   end
 
   defp read_title(document, encoded) do
@@ -46,29 +46,39 @@ defmodule Sandman.DocumentEncoder do
   end
 
   defp read_blocks(document, encoded) do
-    block_header_regex = ~r/^-- ::sandman::block::(?<type>[a-z]{3})::(?<id>[0-9A-Fa-f]{8}[-]?[0-9A-Fa-f]{4}[-]?[0-9A-Fa-f]{4}[-]?[0-9A-Fa-f]{4}[-]?[0-9A-Fa-f]{12})$/
-
     {blocks, current_block} = Enum.reduce(String.split(encoded, "\n"), {[], nil}, fn line, {blocks, current_block} ->
-      case (Regex.named_captures(block_header_regex, line)) do
-        %{"id" => id, "type" => type} -> case current_block do # this is a header, is there a current block? then add to collection
-          nil -> {blocks, %{type: type, id: id, code: ""}}
-          current_block -> { blocks ++ [finalize_block(current_block)], %{type: type, id: id, code: ""} }
+
+      case read_block_header(line) do
+        {:ok, %{"block" => id}} -> case current_block do
+          # this is a header, is there no current block? then create one
+          nil -> {blocks, %{type: "lua", id: id, code: ""}}
+          current_block ->
+            # there is a current block, let's treat this a normal line
+            add_line_to_current_block({blocks, current_block}, line)
         end
 
-        nil -> case current_block do # this is a regular line, is there a current block?
-            nil -> {blocks, nil}
-            block -> {blocks, Map.put(block, :code, block.code <> line <> "\n")} # add line to current code
+        nil -> case current_block do # not a header line
+            nil -> {blocks, nil} # this wil later add to md current block
+            block ->
+              add_line_to_current_block({blocks, current_block}, line)
         end
       end
     end)
-    blocks = case current_block do
-      nil -> blocks
-      block -> blocks ++ [finalize_block(current_block)]
-    end
+
     Map.put(document, :blocks, blocks)
   end
 
-  defp finalize_block(block = %{code: code}) do
-    Map.put(block, :code, String.trim(code))
+  defp read_block_header(line) do
+    block_header_regex = ~r/^<!-- sandman:(?<json>.*)-->$/
+    case (Regex.named_captures(block_header_regex, line)) do
+      %{"json" => json} -> Jason.decode(json)
+      nil -> nil
+    end
+  end
+
+  defp add_line_to_current_block({blocks, cb = %{code: ""}}, "```lua"), do: {blocks, cb}
+  defp add_line_to_current_block({blocks, cb}, "```"), do: {blocks ++ [cb], nil} #end of block
+  defp add_line_to_current_block({blocks, cb}, line) do
+    {blocks, Map.put(cb, :code, String.trim(cb.code <> "\n" <> line))} #end of block
   end
 end

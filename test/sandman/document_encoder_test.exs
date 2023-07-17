@@ -12,11 +12,18 @@ defmodule Sandman.DocumentEncoderTest do
 #       ]
 #     }
 #     assert DocumentEncoder.encode(document) == """
-# My doc title
-# -- sandman-block-949f07b8-3a6a-4270-a1b7-4a68582fa7af:lua
+# # My doc title
+
+# <!-- sandman:{"block":"949f07b8-3a6a-4270-a1b7-4a68582fa7a3"} -->
+
+  # ```lua
 # ABC
 # DEF
-# -- sandman-block-949f07b8-3a6a-4270-a1b7-4a68582fa7a3:md
+# ```
+
+# <!-- sandman:{"block":"949f07b8-3a6a-4270-a1b7-4a68582fa7a4"} -->
+
+# ```lua
 # test code
 # """
 #   end
@@ -31,11 +38,10 @@ defmodule Sandman.DocumentEncoderTest do
     assert DocumentEncoder.decode(encoded) == %{title: "", blocks: []}
   end
 
-  test "writed title" do
+  test "write title" do
     document = %{title: "this is a title"}
     assert DocumentEncoder.encode(document) == """
 this is a title
-
 """
   end
 
@@ -51,42 +57,57 @@ this is a title
     assert DocumentEncoder.encode(document) == """
 this is a title
 
--- ::sandman::block::lua::867b6036-67a6-4afd-9857-050f21e24618
-ola pola
+<!-- sandman:{"block":"867b6036-67a6-4afd-9857-050f21e24618"} -->
 
+```lua
+ola pola
+```
 """
   end
   test "writes multiple blocks" do
     document = %{title: "this is a title", blocks: [
-      %{id: "867b6036-67a6-4afd-9857-050f21e24618", code: "ola pola", type: "lua"},
-      %{id: "867b6036-67a6-4afd-9857-050f21e24619", code: "ola\npola", type: "mkd"}
+      %{id: "867b6036-67a6-4afd-9857-050f21e24618", code: "ola pola"},
+      %{id: "867b6036-67a6-4afd-9857-050f21e24619", code: "ola\npola"}
     ]}
     assert DocumentEncoder.encode(document) == """
 this is a title
 
--- ::sandman::block::lua::867b6036-67a6-4afd-9857-050f21e24618
-ola pola
+<!-- sandman:{"block":"867b6036-67a6-4afd-9857-050f21e24618"} -->
 
--- ::sandman::block::mkd::867b6036-67a6-4afd-9857-050f21e24619
+```lua
+ola pola
+```
+
+<!-- sandman:{"block":"867b6036-67a6-4afd-9857-050f21e24619"} -->
+
+```lua
 ola
 pola
-
+```
 """
   end
 
   test "reads multiple blocks" do
     encoded = """
 this is a title
--- ::sandman::block::lua::867b6036-67a6-4afd-9857-050f21e24618
+
+<!-- sandman:{"block":"867b6036-67a6-4afd-9857-050f21e24618"} -->
+
+```lua
 ola pola1
--- ::sandman::block::mkd::867b6036-67a6-4afd-9857-050f21e24619
+```
+
+<!-- sandman:{"block":"867b6036-67a6-4afd-9857-050f21e24619"} -->
+
+```lua
 ola
 pola
 2
+```
 """
     document = %{title: "this is a title", blocks: [
       %{id: "867b6036-67a6-4afd-9857-050f21e24618", code: "ola pola1", type: "lua"},
-      %{id: "867b6036-67a6-4afd-9857-050f21e24619", code: "ola\npola\n2", type: "mkd"}
+      %{id: "867b6036-67a6-4afd-9857-050f21e24619", code: "ola\npola\n2", type: "lua"}
     ]}
 
     assert DocumentEncoder.decode(encoded) == document
