@@ -21,7 +21,7 @@ defmodule SandmanWeb.LiveView.Document do
           value={@document.title || "new script"}
           spellcheck="false"
           autocomplete="off"
-          class="w-full text-center border-0 p-0 font-semibold mt-2"
+          class="w-full border-0 p-0 px-5 font-semibold text-lg mt-2"
         />
       </form>
 
