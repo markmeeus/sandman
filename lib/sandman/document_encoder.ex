@@ -12,7 +12,7 @@ defmodule Sandman.DocumentEncoder do
   end
 
   defp write_title(encoded, %{title: title}) when is_binary(title) do
-    encoded <> "#{title}\n"
+    encoded <> "# #{title}\n"
   end
   defp write_title(encoded, _) do
     encoded
@@ -39,8 +39,9 @@ defmodule Sandman.DocumentEncoder do
 
   defp read_title(document, encoded) do
     title = case String.split(encoded, "\n") do
-      [title] -> title
-      [title | _] -> title
+      ["# " <> title] -> title
+      ["# " <> title | _] -> title
+      _ -> "<untitled>"
     end
     Map.put(document, :title, title)
   end

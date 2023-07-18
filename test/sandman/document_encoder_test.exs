@@ -35,19 +35,19 @@ defmodule Sandman.DocumentEncoderTest do
 
   test "reads empty document" do
     encoded = ""
-    assert DocumentEncoder.decode(encoded, &(&1)) == %{title: "", blocks: []}
+    assert DocumentEncoder.decode(encoded, &(&1)) == %{title: "<untitled>", blocks: []}
   end
 
   test "write title" do
     document = %{title: "this is a title"}
     assert DocumentEncoder.encode(document) == """
-this is a title
+# this is a title
 """
   end
 
   test "reads title" do
     encoded = """
-this is a title
+# this is a title
 """
     assert DocumentEncoder.decode(encoded, &(&1)) == %{title: "this is a title", blocks: []}
   end
@@ -55,7 +55,7 @@ this is a title
   test "writes a block" do
     document = %{title: "this is a title", blocks: [%{id: "867b6036-67a6-4afd-9857-050f21e24618", code: "ola pola", type: "lua"}]}
     assert DocumentEncoder.encode(document) == """
-this is a title
+# this is a title
 
 ```lua
 ola pola
@@ -68,7 +68,7 @@ ola pola
       %{id: "867b6036-67a6-4afd-9857-050f21e24619", code: "ola\npola"}
     ]}
     assert DocumentEncoder.encode(document) == """
-this is a title
+# this is a title
 
 ```lua
 ola pola
@@ -83,7 +83,7 @@ pola
 
   test "reads multiple blocks" do
     encoded = """
-this is a title
+# this is a title
 
 ```lua
 ola pola1
