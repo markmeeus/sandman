@@ -96,6 +96,7 @@ defmodule SandmanWeb.LiveView.Document do
     """
   end
 
+  defp format_request(%{req: nil}), do: "" # this happens with invalid requests. The error should say enough
   defp format_request(%{req: req, res: res}) do
     "#{String.upcase(to_string(req.method))} #{req.scheme}://#{req.host}"
     |> add_port(req.scheme, req.port)
