@@ -40,12 +40,7 @@ defmodule SandmanWeb.LiveView.App do
   end
 
   def render_select_file(assigns) do
-    ~H"""
-    <div>
-      <div phx-click="new_file">New File</div>
-      <div phx-click="open_file">Open File</div>
-    </div>
-    """
+    Sandman.NewOrOpen.render(assigns)
   end
 
   def mount(_params, _session, socket) do
