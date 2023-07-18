@@ -66,7 +66,7 @@ defmodule Sandman.Document do
     })
     File.touch!(file_path, :erlang.universaltime())
     {:ok, file} = File.read(file_path)
-    document = DocumentEncoder.decode(file)
+    document = DocumentEncoder.decode(file, fn _ -> UUID.uuid4() end)
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_loaded)
     {:ok, %{
       doc_id: doc_id,

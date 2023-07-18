@@ -35,7 +35,7 @@ defmodule Sandman.DocumentEncoderTest do
 
   test "reads empty document" do
     encoded = ""
-    assert DocumentEncoder.decode(encoded) == %{title: "", blocks: []}
+    assert DocumentEncoder.decode(encoded, &(&1)) == %{title: "", blocks: []}
   end
 
   test "write title" do
@@ -49,15 +49,13 @@ this is a title
     encoded = """
 this is a title
 """
-    assert DocumentEncoder.decode(encoded) == %{title: "this is a title", blocks: []}
+    assert DocumentEncoder.decode(encoded, &(&1)) == %{title: "this is a title", blocks: []}
   end
 
   test "writes a block" do
     document = %{title: "this is a title", blocks: [%{id: "867b6036-67a6-4afd-9857-050f21e24618", code: "ola pola", type: "lua"}]}
     assert DocumentEncoder.encode(document) == """
 this is a title
-
-<!-- sandman:{"block":"867b6036-67a6-4afd-9857-050f21e24618"} -->
 
 ```lua
 ola pola
@@ -72,13 +70,9 @@ ola pola
     assert DocumentEncoder.encode(document) == """
 this is a title
 
-<!-- sandman:{"block":"867b6036-67a6-4afd-9857-050f21e24618"} -->
-
 ```lua
 ola pola
 ```
-
-<!-- sandman:{"block":"867b6036-67a6-4afd-9857-050f21e24619"} -->
 
 ```lua
 ola
@@ -91,13 +85,9 @@ pola
     encoded = """
 this is a title
 
-<!-- sandman:{"block":"867b6036-67a6-4afd-9857-050f21e24618"} -->
-
 ```lua
 ola pola1
 ```
-
-<!-- sandman:{"block":"867b6036-67a6-4afd-9857-050f21e24619"} -->
 
 ```lua
 ola
@@ -106,10 +96,10 @@ pola
 ```
 """
     document = %{title: "this is a title", blocks: [
-      %{id: "867b6036-67a6-4afd-9857-050f21e24618", code: "ola pola1", type: "lua"},
-      %{id: "867b6036-67a6-4afd-9857-050f21e24619", code: "ola\npola\n2", type: "lua"}
+      %{id: 1, code: "ola pola1", type: "lua"},
+      %{id: 2, code: "ola\npola\n2", type: "lua"}
     ]}
 
-    assert DocumentEncoder.decode(encoded) == document
+    assert DocumentEncoder.decode(encoded, &(&1 + 1)) == document
   end
 end
