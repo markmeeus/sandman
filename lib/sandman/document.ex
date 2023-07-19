@@ -10,8 +10,8 @@ defmodule Sandman.Document do
 
   import Sandman.Logger
 
-  def start_link(doc_id, file_path) do
-    GenServer.start_link(__MODULE__, [doc_id, file_path])
+  def start_link(doc_id, file_path, block_id_fn \\ fn _ -> UUID.uuid4() end ) do
+    GenServer.start_link(__MODULE__, [doc_id, file_path, block_id_fn])
   end
 
   def get(pid) do
@@ -44,7 +44,7 @@ defmodule Sandman.Document do
     request
   end
 
-  def init([doc_id, file_path]) do
+  def init([doc_id, file_path, doc_id_fn]) do
     #TODO: load doc from file
     self_pid = self()
     {:ok, luerl_server_pid} = LuerlServer.start_link(self_pid, %{
@@ -66,7 +66,7 @@ defmodule Sandman.Document do
     })
     File.touch!(file_path, :erlang.universaltime())
     {:ok, file} = File.read(file_path)
-    document = DocumentEncoder.decode(file, fn _ -> UUID.uuid4() end)
+    document = DocumentEncoder.decode(file, doc_id_fn)
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_loaded)
     {:ok, %{
       doc_id: doc_id,
