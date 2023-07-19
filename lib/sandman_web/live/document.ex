@@ -48,7 +48,7 @@ defmodule SandmanWeb.LiveView.Document do
       </div>
     </div>
     <%= for block <- @document.blocks do%>
-        <div class="my-1 pt-1 pb-1 px-5 border-b-2">
+        <div class="my-1 pt-1 pb-1 px-5 border-b-2 no-select">
           <div class="rounded-t p-2" style="background-color: rgb(30, 30, 30);" phx-update="ignore" id={"monaco-wrapper-#{block.id}"}>
             <div id={"monaco-#{block.id}"} phx-hook="MonacoHook" data-block-id={block.id} ><%= block.code %></div>
           </div>

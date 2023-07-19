@@ -12,7 +12,7 @@ defmodule Sandman.NewOrOpen do
 
   def render(assigns) do
     ~H"""
-    <div class="h-screen flex items-center justify-center">
+    <div class="no-select h-screen flex items-center justify-center">
       <div>
         <h2 class="text-sm font-medium text-gray-500">Create a new file, or open an existing one</h2>
         <ul role="list" class="p-10 mt-3 grid grid-cols-1 gap-5">

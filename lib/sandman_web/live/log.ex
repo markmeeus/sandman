@@ -9,7 +9,7 @@ defmodule SandmanWeb.LiveView.Log do
   @spec render(any) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
-      <div id="log-bar" class="flex flex-row-reverse text-xs p-1" style="background-color:#EEE">
+      <div id="log-bar" class="no-select flex flex-row-reverse text-xs p-1" style="background-color:#EEE">
         <button class="mr-2" phx-click={JS.dispatch("clearLog") |> JS.push("clear-log")} >clear</button>
         <div class="grow">Log</div>
       </div>

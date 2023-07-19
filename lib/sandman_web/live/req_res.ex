@@ -13,7 +13,7 @@ defmodule SandmanWeb.LiveView.RequestResponse do
           <div>
           <div class="block">
             <div class="border-b border-gray-200">
-              <nav class="-mb-px flex space-x-2" aria-label="Tabs">
+              <nav class="-mb-px flex space-x-2 no-select" aria-label="Tabs">
                 <%= Enum.map(["Request", "Response"], fn item -> %>
                   <SandmanWeb.TabBar.item event="switch_tab" item={item} selected={item == @tab}/>
                 <% end) %>
@@ -35,7 +35,7 @@ defmodule SandmanWeb.LiveView.RequestResponse do
         </nav> --%>
         <%= case get_req_res(@requests, @request_id) do %>
           <% nil -> %>
-            No request selected
+            <div class="no-select">No request selected</div>
           <% req_res -> %>
             <%= case @tab do %>
               <% "Request" -> %>
@@ -51,11 +51,13 @@ defmodule SandmanWeb.LiveView.RequestResponse do
   def request(assigns) do
       ~H"""
       <div class="flex flex-col mt-4">
-        <a href="#" phx-click={toggle_hidden("#request-headers")} class="rounded px-2 py-1" style="background-color:#EEE">Headers</a>
+        <a href="#" phx-click={toggle_hidden("#request-headers")} class="no-select rounded px-2 py-1"
+          style="background-color:#EEE">Headers</a>
         <div id="request-headers" class="pt-2">
           <.headers headers={@req.headers} />
         </div>
-        <a href="#" phx-click={toggle_hidden("#request-body")} class="rounded mt-2 px-2 py-1" style="background-color:#EEE">Body</a>
+        <a href="#" phx-click={toggle_hidden("#request-body")} class="no-select rounded mt-2 px-2 py-1"
+          style="background-color:#EEE">Body</a>
         <div id="request-body" class="pt-2">
           <%= @req.body %>
         </div>
@@ -65,11 +67,11 @@ defmodule SandmanWeb.LiveView.RequestResponse do
   def response(assigns) do
       ~H"""
       <div class="flex flex-col mt-4" >
-        <a href="#" phx-click={toggle_hidden("#response-headers")} class="rounded px-2 py-1" style="background-color:#EEE" >Headers</a>
+        <a href="#" phx-click={toggle_hidden("#response-headers")} class="no-select rounded px-2 py-1" style="background-color:#EEE" >Headers</a>
         <div id="response-headers" class="pt-2">
           <.headers headers={@res.headers} />
         </div>
-        <a href="#" phx-click={toggle_hidden("#response-body")} class="rounded mt-2 px-2 py-1" style="background-color:#EEE">Body</a>
+        <a href="#" phx-click={toggle_hidden("#response-body")} class="no-select rounded mt-2 px-2 py-1" style="background-color:#EEE">Body</a>
         <div id="response-body" class="pt-2">
           <.body body={@res.body}/>
         </div>
@@ -83,7 +85,7 @@ defmodule SandmanWeb.LiveView.RequestResponse do
       <tbody>
         <%= for {n, v} <- @headers do %>
           <tr class="border-2">
-            <td class="border-r-2 px-2"><%= n %></td>
+            <td class="border-r-2 px-2"><%= n %><span style="color:transparent">:</span></td>
             <td class="px-4"><%= v %></td>
           </tr>
         <%end%>

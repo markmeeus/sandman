@@ -4,7 +4,7 @@ defmodule Sandman.FileAccess do
 
     file_dialog = case mode do
       :open -> :wxFileDialog.new(:wx.null)#, [wildCard: "*.lua"]) => laat niet toe iets anders te kiezen...
-      :new -> :wxFileDialog.new(:wx.null, [style: 2, defaultFile: "new_script.lua"])
+      :new -> :wxFileDialog.new(:wx.null, [style: 2, defaultFile: "new_script.md"])
     end
      #[style: 2]) # 2 is wxFD_SAVE ....
 
