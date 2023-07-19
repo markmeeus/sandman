@@ -48,7 +48,7 @@ defmodule Sandman.MixProject do
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
-      { :uuid, "~> 1.1" },
+      {:uuid, "~> 1.1" },
       {:luerl, git: "git@github.com:markmeeus/luerl.git", ref: "f512321"},
       {:hammer, "~> 6.1"},
     ]

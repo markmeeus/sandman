@@ -6,9 +6,12 @@ defmodule Sandman.Document do
   alias Sandman.HttpClient
   alias Sandman.Encoders.Json
   alias Sandman.DocumentEncoder
+
   use GenServer, restart: :transient
 
   import Sandman.Logger
+
+  @write_interval 5000
 
   def start_link(doc_id, file_path, block_id_fn \\ fn _ -> UUID.uuid4() end ) do
     GenServer.start_link(__MODULE__, [doc_id, file_path, block_id_fn])
@@ -89,10 +92,9 @@ defmodule Sandman.Document do
       id: UUID.uuid4()
     }
     new_blocks = [new_block] ++ (document.blocks || [])
-    IO.inspect({"adding blcoks", new_blocks})
     document = Map.put(document, :blocks, new_blocks)
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
-    write_file(document, state)
+    write_file(state)
     {:noreply, state = %{ state | document: document}}
   end
 
@@ -108,7 +110,7 @@ defmodule Sandman.Document do
     end)
     document = Map.put(document, :blocks, new_blocks)
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
-    write_file(document, state)
+    write_file(state)
     {:noreply, state = %{ state | document: document}}
   end
 
@@ -122,7 +124,7 @@ defmodule Sandman.Document do
   def handle_cast({:remove_block, block_id}, state  = %{document: document, doc_id: doc_id}) do
     new_blocks = Enum.filter(document.blocks, & &1[:id] != block_id)
     document = Map.put(document, :blocks, new_blocks)
-    write_file(document, state)
+    write_file(state)
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
     {:noreply, state = %{ state | document: document}}
   end
@@ -133,13 +135,13 @@ defmodule Sandman.Document do
       block -> block
     end)
     document = Map.put(document, :blocks, new_blocks)
-    write_file(document, state)
+    write_file(state)
     {:noreply, state = %{ state | document: document}}
   end
 
   def handle_cast({:update_title, title}, state = %{document: document}) do
     document = Map.put(document, :title, title)
-    write_file(document, state)
+    write_file(state)
     {:noreply, state = %{ state | document: document}}
   end
 
@@ -170,6 +172,10 @@ defmodule Sandman.Document do
     {:noreply, state}
   end
 
+  def handle_info(:write_file, state = %{document: document, file_path: file_path}) do
+    :ok = File.write(file_path, DocumentEncoder.encode(document))
+    {:noreply, state}
+  end
   def handle_info({:lua_response, {:run_block}, response}, state = %{doc_id: doc_id}) do
     case response do
       {:error, err, formatted} ->
@@ -181,8 +187,11 @@ defmodule Sandman.Document do
     {:noreply, put_in(state.current_block_id, nil)}
   end
 
-  defp write_file(document, %{file_path: file_path}) do
-    :ok = File.write(file_path, DocumentEncoder.encode(document))
+  defp write_file(%{file_path: file_path}) do
+    self_pid = self()
+    Debouncer.immediate(file_path, fn ->
+      send(self_pid, :write_file)
+    end, @write_interval)
   end
 
   # luacallbacks
