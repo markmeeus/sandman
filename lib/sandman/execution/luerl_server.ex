@@ -53,19 +53,19 @@ defmodule Sandman.LuerlServer do
         {_, luerl_state} -> luerl_state
     end
 
-    {response, luerl_state} =
+    {response, luerl_states} =
       case luerl_state do
         :no_state_for_block -> {:no_state_for_block, nil}
         _ ->
           case LuerlWrapper.run_code(code, luerl_state) do
             {:ok, [], luerl_state} ->
-              {[], luerl_state}
+              {[], save_luerl_state(luerl_states, new_state_id, luerl_state)}
 
             {:ok, [response], luerl_state} ->
-              {LuerlWrapper.decode(response, luerl_state), luerl_state}
+              {LuerlWrapper.decode(response, luerl_state), save_luerl_state(luerl_states, new_state_id, luerl_state)}
 
             {:error, err, _, formatted} ->
-              {{:error, err, formatted}, luerl_state}
+              {{:error, err, formatted}, luerl_states}
           end
       end
 
@@ -73,7 +73,6 @@ defmodule Sandman.LuerlServer do
 
     # send lua return to document
     send(document_pid, {:lua_response, response_tag, response})
-    luerl_states = save_luerl_state(luerl_states, new_state_id, luerl_state)
     {:noreply, %{state | luerl_states: luerl_states}, :hibernate}
   end
 
@@ -106,7 +105,7 @@ defmodule Sandman.LuerlServer do
 
   def handle_cast({:reset, state_ids}, state = %{luerl_states: luerl_states}) do
     new_states = Enum.reduce(state_ids, luerl_states, fn state_id, states ->
-      Map.delete(states, state_id)
+      Map.drop(states, [state_id])
     end)
     {:noreply, Map.put(state, :luerl_states, new_states) }
   end

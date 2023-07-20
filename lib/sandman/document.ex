@@ -157,9 +157,9 @@ defmodule Sandman.Document do
         block -> block.id
       end
     blocks_to_reset = case next_blocks do
-      nil -> []
-      [_] -> []
-      [_ | next_blocks] -> next_blocks
+      nil -> [block]
+      [_] -> [block]
+      [_ | next_blocks] -> next_blocks ++ [block]
     end
     |> Enum.map(& &1.id)
 
