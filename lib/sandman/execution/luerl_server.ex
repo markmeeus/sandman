@@ -46,7 +46,6 @@ defmodule Sandman.LuerlServer do
   def handle_cast({:run_code, state_id, new_state_id, response_tag, code},
         state = %{luerl_states: luerl_states, document_pid: document_pid, handlers: handlers}
       ) do
-
     luerl_state = case {state_id, get_luerl_state(luerl_states, state_id, handlers)}  do
         {nil, luerl_state} -> luerl_state # nil always returns a new valid state
         {_, nil} -> :no_state_for_block # if asking state for a block, it should be there!
@@ -55,7 +54,7 @@ defmodule Sandman.LuerlServer do
 
     {response, luerl_states} =
       case luerl_state do
-        :no_state_for_block -> {:no_state_for_block, nil}
+        :no_state_for_block -> {:no_state_for_block, luerl_states}
         _ ->
           case LuerlWrapper.run_code(code, luerl_state) do
             {:ok, [], luerl_state} ->
@@ -76,7 +75,7 @@ defmodule Sandman.LuerlServer do
     {:noreply, %{state | luerl_states: luerl_states}, :hibernate}
   end
 
-  #this is not used..., also not tested...
+  #this is not used..., also not tested... needs luerl_states on error refactoring at the very least.
   def handle_cast(
         {:call_function, state_id, new_state_id, response_tag, function_path, args, handlers: handlers},
         state = %{luerl_states: luerl_states, document_pid: document_pid}
