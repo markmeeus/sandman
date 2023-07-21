@@ -15,6 +15,7 @@ defmodule Sandman.DocumentTest do
 
   defp setup_basic_doc(_), do: start_doc("test_doc.md")
   defp setup_json(_), do: start_doc("json_test.md")
+  defp setup_uri(_), do: start_doc("uri_test.md")
 
   describe "run blocks in correct order" do
     setup [:setup_basic_doc]
@@ -66,6 +67,22 @@ defmodule Sandman.DocumentTest do
 
       assert_receive({:log, %{text: "is it json? Array has 3 elements.", type: "log"}})
       assert_receive({:log, %{text: "{\"anArray\":[1,2,3],\"this\":\"json\"}", type: "log"}})
+    end
+  end
+
+  describe "uri support" do
+    setup [:setup_uri]
+    test "should parse a uri correctly", %{doc_pid: doc_pid} do
+      Document.run_block(doc_pid, "0")
+      Process.sleep(100)
+      assert_receive({:log, %{text: "host:server.com", type: "log"}})
+      assert_receive({:log, %{text: "path:/test/path", type: "log"}})
+      assert_receive({:log, %{text: "port:1234", type: "log"}})
+      assert_receive({:log, %{text: "scheme:https", type: "log"}})
+      assert_receive({:log, %{text: "userinfo:mark", type: "log"}})
+      assert_receive({:log, %{text: "queryString:qry=1&param=2", type: "log"}})
+      assert_receive({:log, %{text: "query.qry:1", type: "log"}})
+      assert_receive({:log, %{text: "query.param:2", type: "log"}})
     end
   end
 end

@@ -22,6 +22,9 @@ defmodule Sandman.LuerlWrapper do
     luerl_state = Enum.reduce(["get", "post", "put", "delete", "patch", "head"], luerl_state, fn method, luerl_state ->
       :luerl.set_table(["http", String.downcase(method)], &handlers.fetch.(String.upcase(method), &1, &2), luerl_state)
     end)
+
+
+
     :luerl.set_table(["http", "send"], fn args, luerl_state ->
       case args do
         [] -> handlers.fetch.(nil, [], luerl_state) # this is wrong, handlers will handle it
@@ -34,6 +37,9 @@ defmodule Sandman.LuerlWrapper do
     luerl_state = :luerl.set_table(["json", "encode"], handlers.json_encode, luerl_state)
     luerl_state = :luerl.set_table(["json", "decode"], handlers.json_decode, luerl_state)
 
+    luerl_state = :luerl.set_table(["sandman"], [], luerl_state)
+    luerl_state = :luerl.set_table(["sandman", "uri"], [], luerl_state)
+    luerl_state = :luerl.set_table(["sandman", "uri", "parse"], handlers.uri.parse, luerl_state)
 
     # :luerl.set_table(["server", "get"], fn args, new_luerl_state ->
     #   IO.inspect("HERE we are")
