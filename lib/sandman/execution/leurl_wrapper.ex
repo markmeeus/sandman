@@ -36,6 +36,7 @@ defmodule Sandman.LuerlWrapper do
     luerl_state = :luerl.set_table(["sandman"], [], luerl_state)
     luerl_state = :luerl.set_table(["sandman", "uri"], [], luerl_state)
     luerl_state = :luerl.set_table(["sandman", "uri", "parse"], handlers.uri.parse, luerl_state)
+    luerl_state = :luerl.set_table(["sandman", "uri", "tostring"], handlers.uri.tostring, luerl_state)
     luerl_state = :luerl.set_table(["sandman", "uri", "encode"], handlers.uri.encode, luerl_state)
     luerl_state = :luerl.set_table(["sandman", "uri", "decode"], handlers.uri.decode, luerl_state)
     luerl_state = :luerl.set_table(["sandman", "uri", "encodeComponent"], handlers.uri.encodeComponent, luerl_state)

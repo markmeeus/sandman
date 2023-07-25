@@ -18,6 +18,27 @@ defmodule Sandman.LuaSupport.Uri do
     {res, luerl_state}
   end
 
+  def tostring(doc_id, [url_map], luerl_state) do
+    {map, errors} = LuaMapper.map(url_map, %{
+      "host" => :string,
+      "path" => :string,
+      "port" => :integer,
+      "scheme" => :string,
+      "userinfo" => :string,
+      "query" => :any,
+      "queryString" => :string
+    })
+    # use query map if querystring is not available
+    map = case {map[:query_string], map[:query]} do
+      {nil, nil} -> map
+      {nil, query} -> Map.put(map, :query, URI.encode_query(query))
+      {queryString, _} -> Map.put(map, :query, queryString)
+    end
+    uri = struct(%URI{}, map)
+    res = URI.to_string(uri)
+    {[res], luerl_state}
+  end
+
   def encode(doc_id, [url], luerl_state) do
     {[URI.encode(url)], luerl_state}
   end

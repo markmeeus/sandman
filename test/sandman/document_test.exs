@@ -84,7 +84,13 @@ defmodule Sandman.DocumentTest do
       assert_receive({:log, %{text: "query.qry:1", type: "log"}})
       assert_receive({:log, %{text: "query.param:2", type: "log"}})
     end
-
+    test "should propery tostring a uri", %{doc_pid: doc_pid} do
+      Document.run_block(doc_pid, "0")
+      Process.sleep(100)
+      assert_receive({:log, %{text: "tostring:https://mark@server.com:1234/test/path?qry=1&param=2"}})
+      ## if the test belows fails, it may be the order of the params ....
+      assert_receive({:log, %{text: "tostringWithChangedParam:https://mark@server.com:1234/test/path?param=3&qry=1"}})
+    end
     test "should encode/decode", %{doc_pid: doc_pid} do
       Document.run_block(doc_pid, "0")
       Process.sleep(100)

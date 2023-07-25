@@ -69,6 +69,7 @@ defmodule Sandman.Document do
       json_encode: &Json.encode(doc_id, &1, &2),
       uri: %{
         parse: &LuaSupport.Uri.parse(doc_id, &1, &2),
+        tostring: &LuaSupport.Uri.tostring(doc_id, &1, &2),
         encode: &LuaSupport.Uri.encode(doc_id, &1, &2),
         decode: &LuaSupport.Uri.decode(doc_id, &1, &2),
         encodeComponent: &LuaSupport.Uri.encodeComponent(doc_id, &1, &2),

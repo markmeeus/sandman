@@ -11,10 +11,17 @@ print("queryString:" .. uri.queryString)
 print("scheme:" .. uri.scheme)
 print("userinfo:" .. uri.userinfo)
 
+print("tostring:" .. sandman.uri.tostring(uri))
+uri.queryString = nil
+uri.query.param = 3
+print("tostringWithChangedParam:" .. sandman.uri.tostring(uri))
+
 encoded =  sandman.uri.encode(" #$&+,/:;=?@")
 encodedComponent = sandman.uri.encodeComponent(" #$&+,/:;=?@")
 print("encoded:" .. encoded)
 print("encodedComponent:" .. encodedComponent)
 print("decoded:" .. sandman.uri.decode(encoded))
 print("decodedComponent:" .. sandman.uri.decodeComponent(encodedComponent))
+
+
 ```
