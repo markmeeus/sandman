@@ -49,7 +49,7 @@ defmodule Sandman.MixProject do
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
       {:uuid, "~> 1.1" },
-      {:luerl, git: "git@github.com:markmeeus/luerl.git", ref: "f512321"},
+      {:luerl, git: "git@github.com:markmeeus/luerl.git", ref: "6f512e9"},
       {:hammer, "~> 6.1"},
     ]
   end
