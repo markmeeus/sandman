@@ -11,7 +11,7 @@ defmodule Sandman.Encoders.Json do
           [LuaMapper.reverse_map(data)]
         {:error, err} ->
           message = Jason.DecodeError.message(err)
-          :luerl_lib.lua_error({"jJson parse error", message}, luerl_state)
+          :luerl_lib.lua_error({"Json parse error", message}, luerl_state)
       end
     {res, luerl_state}
   end
