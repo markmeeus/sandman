@@ -36,18 +36,15 @@ defmodule Sandman.LuerlWrapper do
     luerl_state = :luerl.set_table(["sandman"], [], luerl_state)
     luerl_state = :luerl.set_table(["sandman", "uri"], [], luerl_state)
     luerl_state = :luerl.set_table(["sandman", "uri", "parse"], handlers.uri.parse, luerl_state)
+    luerl_state = :luerl.set_table(["sandman", "uri", "encode"], handlers.uri.encode, luerl_state)
+    luerl_state = :luerl.set_table(["sandman", "uri", "decode"], handlers.uri.decode, luerl_state)
+    luerl_state = :luerl.set_table(["sandman", "uri", "encodeComponent"], handlers.uri.encodeComponent, luerl_state)
+    luerl_state = :luerl.set_table(["sandman", "uri", "decodeComponent"], handlers.uri.decodeComponent, luerl_state)
 
     luerl_state = :luerl.set_table(["sandman", "json"], [], luerl_state)
     luerl_state = :luerl.set_table(["sandman", "json", "encode"], handlers.json_encode, luerl_state)
     luerl_state = :luerl.set_table(["sandman", "json", "decode"], handlers.json_decode, luerl_state)
 
-    # :luerl.set_table(["server", "get"], fn args, new_luerl_state ->
-    #   IO.inspect("HERE we are")
-    #   IO.inspect(handlers)
-    #   handlers.add_route.("get", args, new_luerl_state)
-    #   |> IO.inspect
-    #   IO.inspect("done")
-    # end, luerl_state)
   end
 
   def collect_garbage(luerl_state) do

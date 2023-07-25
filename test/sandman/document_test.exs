@@ -84,5 +84,18 @@ defmodule Sandman.DocumentTest do
       assert_receive({:log, %{text: "query.qry:1", type: "log"}})
       assert_receive({:log, %{text: "query.param:2", type: "log"}})
     end
+
+    test "should encode/decode", %{doc_pid: doc_pid} do
+      Document.run_block(doc_pid, "0")
+      Process.sleep(100)
+      assert_receive({:log, %{text: "encoded:%20#$&+,/:;=?@"}})
+      assert_receive({:log, %{text: "decoded: #$&+,/:;=?@"}})
+    end
+    test "should encode/decode component", %{doc_pid: doc_pid} do
+      Document.run_block(doc_pid, "0")
+      Process.sleep(100)
+      assert_receive({:log, %{text: "encodedComponent:%20%23%24%26%2B%2C%2F%3A%3B%3D%3F%40"}})
+      assert_receive({:log, %{text: "decodedComponent: #$&+,/:;=?@"}})
+    end
   end
 end

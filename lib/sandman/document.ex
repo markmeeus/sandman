@@ -68,7 +68,11 @@ defmodule Sandman.Document do
       json_decode: &Json.decode(doc_id, &1, &2),
       json_encode: &Json.encode(doc_id, &1, &2),
       uri: %{
-        parse: &LuaSupport.Uri.parse(doc_id, &1, &2)
+        parse: &LuaSupport.Uri.parse(doc_id, &1, &2),
+        encode: &LuaSupport.Uri.encode(doc_id, &1, &2),
+        decode: &LuaSupport.Uri.decode(doc_id, &1, &2),
+        encodeComponent: &LuaSupport.Uri.encodeComponent(doc_id, &1, &2),
+        decodeComponent: &LuaSupport.Uri.decodeComponent(doc_id, &1, &2),
       }
     })
     File.touch!(file_path, :erlang.universaltime())

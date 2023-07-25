@@ -18,4 +18,19 @@ defmodule Sandman.LuaSupport.Uri do
     {res, luerl_state}
   end
 
+  def encode(doc_id, [url], luerl_state) do
+    {[URI.encode(url)], luerl_state}
+  end
+  def decode(doc_id, [url], luerl_state) do
+    {[URI.decode(url)], luerl_state}
+  end
+
+  def encodeComponent(doc_id, [url], luerl_state) do
+    res = URI.encode(url, &URI.char_unreserved?(&1))
+    {[res], luerl_state}
+  end
+  def decodeComponent(doc_id, [url], luerl_state) do
+    {[URI.decode(url)], luerl_state}
+  end
+
 end

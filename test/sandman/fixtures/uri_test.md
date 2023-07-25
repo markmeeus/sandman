@@ -10,4 +10,11 @@ print("query.param:" .. uri.query.param)
 print("queryString:" .. uri.queryString)
 print("scheme:" .. uri.scheme)
 print("userinfo:" .. uri.userinfo)
+
+encoded =  sandman.uri.encode(" #$&+,/:;=?@")
+encodedComponent = sandman.uri.encodeComponent(" #$&+,/:;=?@")
+print("encoded:" .. encoded)
+print("encodedComponent:" .. encodedComponent)
+print("decoded:" .. sandman.uri.decode(encoded))
+print("decodedComponent:" .. sandman.uri.decodeComponent(encodedComponent))
 ```
