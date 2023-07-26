@@ -22,9 +22,15 @@ function resize(editor, container) {
   editor.layout();
 }
 
+function decodeHtml(html) {
+  var txt = document.createElement("textarea");
+  txt.innerHTML = html;
+  return txt.value;
+}
+
 const MonacoHook = {
   mounted() {
-    const code = this.el.innerHTML;
+    const code = decodeHtml(this.el.innerHTML);
     const blockId = this.el.dataset.blockId;
     this.el.innerText = "";
     let editor = monaco.editor.create(this.el, {
