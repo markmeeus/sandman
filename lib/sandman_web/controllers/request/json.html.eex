@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="/assets/json.js" ></script>
+  </head>
+  <body>
+    <script type="text/javascript">
+      window.json = <%= raw(@json) %>;
+      window.showJson();
+    </script>
+  </body>
+</html>

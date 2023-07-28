@@ -42,6 +42,10 @@ defmodule Sandman.Document do
     GenServer.cast(pid, {:run_block, block_id})
   end
 
+  def get_request_by_id(pid, {block_id, index}) when is_pid(pid) do
+    GenServer.call(pid, {:get_request_by_id, {block_id, index}})
+  end
+
   # request id is %{block_id: block_id, index }
   def get_request_by_id(requests, {block_id, index}) do
     request = (requests[block_id] || []) |> Enum.at(index)
@@ -92,6 +96,10 @@ defmodule Sandman.Document do
 
   def handle_call(:get, _sender, state = %{document: document, requests: requests}) do
     {:reply, %{document: document, requests: requests}, state}
+  end
+
+  def handle_call({:get_request_by_id, {block_id, index}}, _, state = %{requests: requests}) do
+    {:reply, get_request_by_id(requests, {block_id, index}), state}
   end
 
   def handle_cast({:add_block, :after, "-"}, state  = %{document: document, doc_id: doc_id}) do

@@ -46,9 +46,22 @@ defmodule Sandman.HttpClient do
             arr -> Map.put(headers, String.downcase(k), arr ++ [v])
           end
         end)
+
+        res_content_type = Enum.find_value(res.headers, fn {name, value}->
+          if String.downcase(name) == "content-type" do
+            String.downcase(value)
+          else
+            nil
+          end
+        end)
+
+        res_is_json = String.downcase(res_content_type || "") == "application/json"
+
         %{
           req: req,
           res: res,
+          res_content_type: res_content_type,
+          res_is_json: res_is_json,
           error: nil,
           lua_result: [LuaMapper.reverse_map(%{
             body: res.body,

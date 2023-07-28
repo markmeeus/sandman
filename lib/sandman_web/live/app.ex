@@ -23,7 +23,7 @@ defmodule SandmanWeb.LiveView.App do
         <div id="document-log-container" class="h-screen" phx-hook="MaintainWidth">
           <div id="document-container" style="overflow:scroll;" phx-hook="MaintainHeight">
             <div id="document-root">
-              <SandmanWeb.LiveView.Document.render requests={@document.requests} document={@document.document} code="ola code" />
+              <SandmanWeb.LiveView.Document.render doc_pid={@doc_pid} requests={@document.requests} document={@document.document} code="ola code" />
             </div>
           </div>
           <div class="gutter gutter-vertical" id="doc-log-gutter" phx-update="ignore"></div>
@@ -33,7 +33,7 @@ defmodule SandmanWeb.LiveView.App do
         </div>
         <div class="gutter gutter-horizontal" id="doc-req-gutter" phx-update="ignore"></div>
         <div id="req-res-container" class="h-screen" style="overflow:scroll;" phx-hook="MaintainWidth">
-            <SandmanWeb.LiveView.RequestResponse.render tab={@tab} sub_tab="Headers" request_id = {@request_id} requests={@document.requests}/>
+            <SandmanWeb.LiveView.RequestResponse.render doc_pid={@doc_pid} tab={@tab} sub_tab="Headers" request_id = {@request_id} requests={@document.requests}/>
         </div>
       </div>
     """

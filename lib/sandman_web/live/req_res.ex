@@ -8,7 +8,7 @@ defmodule SandmanWeb.LiveView.RequestResponse do
   @spec render(any) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
-      <div class="text-black font-mono mx-2 p-2 text-xs"
+      <div class="text-black font-mono mx-2 p-2 text-xs h-full"
           style="background-color: white"}>
           <div>
           <div class="block">
@@ -39,9 +39,9 @@ defmodule SandmanWeb.LiveView.RequestResponse do
           <% req_res -> %>
             <%= case @tab do %>
               <% "Request" -> %>
-                <.request req={req_res.req} sub_tab={@sub_tab}/>
+                <.request doc_pid={@doc_pid} request_id={@request_id} req={req_res.req} sub_tab={@sub_tab}/>
               <% "Response" -> %>
-              <.response res={req_res.res} sub_tab={@sub_tab}/>
+                <.response doc_pid={@doc_pid} request_id={@request_id} is_json={req_res.res_is_json} res={req_res.res} sub_tab={@sub_tab}/>
             <%end%>
         <% end %>
       </div>
@@ -50,7 +50,7 @@ defmodule SandmanWeb.LiveView.RequestResponse do
 
   def request(assigns) do
       ~H"""
-      <div class="flex flex-col mt-4">
+      <div class="flex flex-col mt-4 h-full">
         <a href="#" phx-click={toggle_hidden("#request-headers")} class="no-select rounded px-2 py-1"
           style="background-color:#EEE">Headers</a>
         <div id="request-headers" class="pt-2">
@@ -65,18 +65,26 @@ defmodule SandmanWeb.LiveView.RequestResponse do
       """
   end
   def response(assigns) do
-      ~H"""
-      <div class="flex flex-col mt-4" >
-        <a href="#" phx-click={toggle_hidden("#response-headers")} class="no-select rounded px-2 py-1" style="background-color:#EEE" >Headers</a>
-        <div id="response-headers" class="pt-2">
-          <.headers headers={@res.headers} />
-        </div>
-        <a href="#" phx-click={toggle_hidden("#response-body")} class="no-select rounded mt-2 px-2 py-1" style="background-color:#EEE">Body</a>
-        <div id="response-body" class="pt-2">
-          <.body body={@res.body}/>
-        </div>
+    {block_id, request_idx} = assigns.request_id
+    ~H"""
+    <div class="flex flex-col mt-4 h-full" >
+      <a href="#" phx-click={toggle_hidden("#response-headers")} class="no-select rounded px-2 py-1" style="background-color:#EEE" >Headers</a>
+      <div id="response-headers" class="pt-2">
+        <.headers headers={@res.headers} />
       </div>
-      """
+      <a href="#" phx-click={toggle_hidden("#response-body")} class="no-select rounded mt-2 px-2 py-1" style="background-color:#EEE">Body</a>
+      <div id="response-body" class="pt-2 h-full">
+        <%= if @is_json do %>
+          <iframe id="no-sandbox" class="h-full w-full" src={"http://localhost:7000/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/request/#{request_idx}"}>
+          </iframe>
+        <% else %>
+          <iframe id="sandbox" sandbox class="h-full w-full" src={"http://localhost:7000/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/request/#{request_idx}"}>
+          </iframe>
+        <% end %>
+
+      </div>
+    </div>
+    """
   end
 
   def headers(assigns) do
