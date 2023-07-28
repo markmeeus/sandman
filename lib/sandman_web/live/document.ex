@@ -54,9 +54,6 @@ defmodule SandmanWeb.LiveView.Document do
           </div>
           <div class="px-1" >
             <%= for {req, index} <- Enum.with_index(requests_for_block(@requests, block.id)) do%>
-              <a href={"http://localhost:7000/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block.id}/request/#{index}"}>
-                link
-              </a>
               <%= render_request(%{req: req, block_id: block.id, request_index: index}) %>
             <% end %>
           </div>

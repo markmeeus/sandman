@@ -24,20 +24,21 @@ defmodule Sandman.HttpClient do
     headers = map_headers(doc_id, headers)
     # TODO: finch build can fail as well
     try do
-      Finch.build(method, url, headers, body)
-      |> send_request()
+      req = Finch.build(method, url, headers, body)
+      res = send_request(req)
     rescue
       e in ArgumentError -> %{
         req: nil,
         res: nil,
+        req_content_info: %{},
         error: e,
         lua_result: [nil, Exception.message(e)]
       }
     end
   end
 
-
   defp send_request(req) do
+    req_content_info = get_content_info_from_headers(req.headers)
     case Finch.request(req, Sandman.Finch) do
       {:ok, res} ->
         headers = Enum.reduce(res.headers, %{}, fn {k, v}, headers ->
@@ -47,21 +48,12 @@ defmodule Sandman.HttpClient do
           end
         end)
 
-        res_content_type = Enum.find_value(res.headers, fn {name, value}->
-          if String.downcase(name) == "content-type" do
-            String.downcase(value)
-          else
-            nil
-          end
-        end)
-
-        res_is_json = String.downcase(res_content_type || "") == "application/json"
-
+        res_content_info = get_content_info_from_headers(res.headers)
         %{
           req: req,
           res: res,
-          res_content_type: res_content_type,
-          res_is_json: res_is_json,
+          req_content_info: req_content_info,
+          res_content_info: res_content_info,
           error: nil,
           lua_result: [LuaMapper.reverse_map(%{
             body: res.body,
@@ -73,6 +65,8 @@ defmodule Sandman.HttpClient do
       {:error, exc = %Mint.TransportError{}} ->
         %{
           req: req,
+          req_content_info: req_content_info,
+          res_content_info: %{},
           res: nil,
           error: exc,
           lua_result: [nil, Exception.message(exc)]
@@ -82,6 +76,8 @@ defmodule Sandman.HttpClient do
         %{
           req: req,
           res: nil,
+          req_content_info: req_content_info,
+          res_content_info: %{},
           error: exc,
           lua_result: [nil, inspect(exc)]
         }
@@ -89,6 +85,8 @@ defmodule Sandman.HttpClient do
         %{
           req: req,
           res: nil,
+          req_content_info: req_content_info,
+          res_content_info: %{},
           error: unexpected,
           lua_result: [nil, "unexpected Finch result (you should not see this):" <> inspect(unexpected)]
         }
@@ -116,4 +114,17 @@ defmodule Sandman.HttpClient do
     end)
   end
 
+  def get_content_info_from_headers(headers) do
+    content_type = Enum.find_value(headers, fn {name, value}->
+      if String.downcase(name) == "content-type" do
+        String.downcase(value)
+      else
+        nil
+      end
+    end)
+
+    is_json = (content_type || "")
+      |> String.contains?("application/json")
+    %{content_type: content_type, is_json: is_json}
+  end
 end

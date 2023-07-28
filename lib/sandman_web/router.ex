@@ -18,7 +18,8 @@ defmodule SandmanWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
-    get "/:doc_pid/:block_id/request/:id", RequestController, :show
+    get "/:doc_pid/:block_id/request/:id", RequestController, :req
+    get "/:doc_pid/:block_id/response/:id", RequestController, :res
     live "/app", LiveView.App
   end
 
