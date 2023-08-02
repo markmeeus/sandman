@@ -52,13 +52,13 @@ defmodule SandmanWeb.LiveView.RequestResponse do
     {block_id, request_idx} = assigns.request_id
     ~H"""
     <div class="flex flex-col mt-4 h-full">
-      <a href="#" phx-click={toggle_hidden("#request-headers")} class="no-select rounded px-2 py-1"
-        style="background-color:#EEE">Headers</a>
-      <div id="request-headers" class="pt-2">
+      <.toggle_block name="request-headers" title="Request" extra_toggle={nil} />
+
+      <div id="request-headers" class="">
         <.headers headers={@req.headers} />
       </div>
-      <a href="#" phx-click={toggle_hidden("#request-body")} class="no-select rounded mt-2 px-2 py-1"
-        style="background-color:#EEE">Body</a>
+
+      <.toggle_block name="request-body" title="Body" extra_toggle={"Raw"} />
       <div id="request-body" class="pt-2">
         <%= if @is_json do %>
           <iframe id="no-sandbox" class="h-full w-full" src={"http://localhost:7000/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/request/#{request_idx}"}>
@@ -75,11 +75,12 @@ defmodule SandmanWeb.LiveView.RequestResponse do
     {block_id, request_idx} = assigns.request_id
     ~H"""
     <div class="flex flex-col mt-4 h-full" >
-      <a href="#" phx-click={toggle_hidden("#response-headers")} class="no-select rounded px-2 py-1" style="background-color:#EEE" >Headers</a>
-      <div id="response-headers" class="pt-2">
+      <.toggle_block name="response-headers" title="Headers" extra_toggle={nil} />
+      <div id="response-headers" class="">
         <.headers headers={@res.headers} />
       </div>
-      <a href="#" phx-click={toggle_hidden("#response-body")} class="no-select rounded mt-2 px-2 py-1" style="background-color:#EEE">Body</a>
+
+      <.toggle_block name="response-body" title="Body" extra_toggle={"Raw"} />
       <div id="response-body" class="pt-2 h-full">
         <%= if @is_json do %>
           <iframe id="no-sandbox" class="h-full w-full" src={"http://localhost:7000/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/response/#{request_idx}"}>
@@ -115,15 +116,44 @@ defmodule SandmanWeb.LiveView.RequestResponse do
     """
   end
 
+  def toggle_block(assigns) do
+    ~H"""
+    <div class="flex flex-row rounded px-2 py-1 my-1" style="background-color:#EEE" >
+        <a href="#" phx-click={toggle_hidden("##{@name}")}
+          class="no-select "><%=@title%> <span id={"#{@name}-open"}>▼</span><span id={"#{@name}-closed"} class="hidden">▲</span></a>
+        <%= if(@extra_toggle) do %>
+          <a href="#">&nbsp;(<%=@extra_toggle%>)</a>
+        <% end %>
+
+      </div>
+    """
+  end
+
   def toggle_hidden(js \\ %JS{}, el) do
     js
     |> JS.remove_class(
       "hidden",
       to: "#{el}.hidden"
     )
+    |> JS.remove_class(
+      "hidden",
+      to: "#{el}-open.hidden"
+    )
+    |> JS.remove_class(
+      "hidden",
+      to: "#{el}-closed.hidden"
+    )
     |> JS.add_class(
       "hidden",
       to: "#{el}:not(.hidden)"
+    )
+    |> JS.add_class(
+      "hidden",
+      to: "#{el}-open:not(.hidden)"
+    )
+    |> JS.add_class(
+      "hidden",
+      to: "#{el}-closed:not(.hidden)"
     )
   end
 
