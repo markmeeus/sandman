@@ -33,7 +33,15 @@ defmodule SandmanWeb.LiveView.App do
         </div>
         <div class="gutter gutter-horizontal" id="doc-req-gutter" phx-update="ignore"></div>
         <div id="req-res-container" class="h-screen" style="overflow:scroll;" phx-hook="MaintainWidth">
-            <SandmanWeb.LiveView.RequestResponse.render doc_pid={@doc_pid} tab={@tab} sub_tab="Headers" request_id = {@request_id} requests={@document.requests}/>
+            <SandmanWeb.LiveView.RequestResponse.render
+              doc_pid={@doc_pid}
+              tab={@tab}
+              sub_tab="Headers"
+              request_id = {@request_id}
+              requests={@document.requests}
+              show_raw_req_body={@show_raw_req_body}
+              show_raw_res_body={@show_raw_res_body}
+              />
         </div>
       </div>
     """
@@ -71,7 +79,10 @@ defmodule SandmanWeb.LiveView.App do
         |> assign(:log_count, 0)
         |> assign(:tab, "Request")
         |> assign(:request_id, nil)
+        |> assign(:show_raw_res_body, false)
+        |> assign(:show_raw_req_body, false)
         |> stream(:logs, [])
+
       other ->
         socket # no file selected
     end
@@ -106,6 +117,13 @@ defmodule SandmanWeb.LiveView.App do
   def handle_event("switch_tab", %{"tab" => tab}, socket) do
     # switching subtab to headers, better to keep separate state
     {:noreply, assign(socket, tab: tab)}
+  end
+
+  def handle_event("switch_res_body_format", _, socket) do
+    {:noreply, assign(socket, show_raw_res_body: !socket.assigns.show_raw_res_body)}
+  end
+  def handle_event("switch_req_body_format", _, socket) do
+    {:noreply, assign(socket, show_raw_req_body: !socket.assigns.show_raw_req_body)}
   end
 
   def handle_event("select-request", %{"block-id" => block_id, "request-index" => request_index}, socket) do

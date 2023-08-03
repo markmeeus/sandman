@@ -10,8 +10,10 @@ defmodule SandmanWeb.RequestController do
     respond_with_body(conn, params, :response)
   end
 
-  defp respond_with_body(conn, %{"doc_pid" => doc_pid, "block_id" => block_id, "id" => request_id}, type) do
-    doc_pid = doc_pid
+  defp respond_with_body(conn, params = %{"doc_pid" => doc_pid,
+    "block_id" => block_id, "id" => request_id}, type) do
+
+      doc_pid = doc_pid
     |> Base.url_decode64!()
     |> :erlang.binary_to_term()
 
@@ -19,7 +21,15 @@ defmodule SandmanWeb.RequestController do
 
     req = Document.get_request_by_id(doc_pid, {block_id, request_id})
     {content_info, body} = get_request_info(req, type)
-    respond_for_content_info(conn, body, content_info)
+    if (params["raw"]) do
+      #conn = put_resp_header( "content-type", "text/html")
+      conn
+      |> put_layout(false)
+      |> put_root_layout(false)
+      |> render("raw_body.html", body: body)
+    else
+      respond_for_content_info(conn, body, content_info)
+    end
   end
 
   defp get_request_info(req_res, :request)  do
@@ -46,6 +56,8 @@ defmodule SandmanWeb.RequestController do
     |> put_root_layout(false)
     |> render("json.html", json: body)
   end
+
+  # this is the default 'preview' response, raw as it was sent -> to iframe
   defp respond_for_content_type(conn, content_type, body) do
     resp(conn, 200, body)
   end

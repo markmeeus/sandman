@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="/assets/json.js" ></script>
+  </head>
+  <body style="font-family: courier; font-size:0.8em;">
+    <%= @body %>
+  </body>
+</html>
