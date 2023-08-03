@@ -19,7 +19,6 @@ defmodule SandmanWeb.RequestController do
 
     req = Document.get_request_by_id(doc_pid, {block_id, request_id})
     {content_info, body} = get_request_info(req, type)
-
     respond_for_content_info(conn, body, content_info)
   end
 
@@ -31,14 +30,13 @@ defmodule SandmanWeb.RequestController do
   end
 
   defp respond_for_content_info(conn, body, content_info) do
-    content_type = content_info.content_type || "application/text"
+    content_type = content_info.content_type || "text/html" # default to text/html
 
     conn = if content_info.is_json do
         put_resp_header(conn, "content-type", "text/html")
     else
         put_resp_header(conn, "content-type", content_type)
     end
-
     respond_for_content_type(conn, String.downcase(content_type), body || "")
   end
 
