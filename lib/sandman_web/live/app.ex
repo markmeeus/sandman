@@ -77,7 +77,7 @@ defmodule SandmanWeb.LiveView.App do
         |> assign(:doc_pid, doc_pid)
         |> assign(:document, document)
         |> assign(:log_count, 0)
-        |> assign(:tab, "Request")
+        |> assign(:tab, "Response")
         |> assign(:request_id, nil)
         |> assign(:show_raw_res_body, false)
         |> assign(:show_raw_req_body, false)

@@ -16,10 +16,13 @@ defmodule SandmanWeb.LiveView.RequestResponse do
           <% nil -> %>
             <div class="no-select">No request selected</div>
           <% req_res -> %>
-            <div class="block">
+            <div class="block h-full">
               <div class="text-base font-semibold">
-                <div class="inline-block bg-green-500 rounded-lg px-3 py-1">
+                <div class="inline-block bg-gray-100 rounded-lg px-3 py-1">
                   <span><%= format_request(req_res) %></span>
+                </div>
+                <div class="inline-block bg-green-400 rounded-lg px-3 py-1">
+                  <span><%= req_res.res.status %></span>
                 </div>
               </div>
               <div class="border-b border-gray-200 mt-2">
