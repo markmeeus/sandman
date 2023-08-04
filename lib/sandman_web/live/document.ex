@@ -1,7 +1,7 @@
 defmodule SandmanWeb.LiveView.Document do
   # In Phoenix v1.6+ apps, the line is typically: use MyAppWeb, :live_view
   use Phoenix.Component
-
+  import Sandman.RequestFormatting
   alias Sandman.Document
   alias Phoenix.PubSub
 
@@ -21,7 +21,7 @@ defmodule SandmanWeb.LiveView.Document do
           value={@document.title || "new script"}
           spellcheck="false"
           autocomplete="off"
-          class="w-full border-0 p-0 px-5 font-semibold text-lg mt-2"
+          class="w-full border-0 p-0 px-5 font-semibold text-lg mt-2 leading-tight"
         />
       </form>
 
@@ -96,26 +96,10 @@ defmodule SandmanWeb.LiveView.Document do
     """
   end
 
-  defp format_request(%{req: nil}), do: "" # this happens with invalid requests. The error should say enough
-  defp format_request(%{req: req, res: res}) do
-    "#{String.upcase(to_string(req.method))} #{req.scheme}://#{req.host}"
-    |> add_port(req.scheme, req.port)
-    |> add_path(req.path)
-    |> add_query(req.query)
-  end
 
   defp requests_for_block(requests, block_id) do
     requests[block_id] || []
   end
-
-  defp add_port(formatted, :http, 80), do: formatted
-  defp add_port(formatted, :https, 443), do: formatted
-  defp add_port(formatted, _, port), do: "#{formatted}:#{port}"
-
-  defp add_path(formatted, path), do: "#{formatted}#{path}"
-
-  defp add_query(formatted, nil), do: formatted
-  defp add_query(formatted, q), do: "#{formatted}?#{q}"
 
   defp format_response(nil), do: nil
   defp format_response(assigns) do

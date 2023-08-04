@@ -1,7 +1,7 @@
 defmodule SandmanWeb.LiveView.RequestResponse do
   # In Phoenix v1.6+ apps, the line is typically: use MyAppWeb, :live_view
   use Phoenix.Component
-
+  import Sandman.RequestFormatting
   alias Phoenix.LiveView.JS
   alias Sandman.Document
 
@@ -10,39 +10,32 @@ defmodule SandmanWeb.LiveView.RequestResponse do
     ~H"""
       <div class="text-black font-mono mx-2 p-2 text-xs h-full"
           style="background-color: white"}>
-          <div>
-            <div class="block">
-            <div class="border-b border-gray-200">
-              <nav class="-mb-px flex space-x-2 no-select" aria-label="Tabs">
-                <%= Enum.map(["Request", "Response"], fn item -> %>
-                  <SandmanWeb.TabBar.item event="switch_tab" item={item} selected={item == @tab}/>
-                <% end) %>
-              </nav>
-            </div>
-          </div>
+        <div>
       </div>
-        <%!-- <nav class="-mb-px flex space-x-2" aria-label="Tabs">
-          <%= if @tab == "Request" do %>
-            <%= Enum.map(["Headers", "Body"], fn item -> %>
-              <SandmanWeb.TabBar.item event="switch_sub_tab" item={item} selected={item == @sub_tab}/>
-            <% end) %>
-          <% end %>
-          <%= if @tab == "Response" do %>
-            <%= Enum.map(["Headers", "Body", "Preview"], fn item -> %>
-              <SandmanWeb.TabBar.item event="switch_sub_tab" item={item} selected={item == @sub_tab}/>
-            <% end) %>
-          <% end %>
-        </nav> --%>
         <%= case get_req_res(@requests, @request_id) do %>
           <% nil -> %>
             <div class="no-select">No request selected</div>
           <% req_res -> %>
-            <%= case @tab do %>
-              <% "Request" -> %>
-                <.request doc_pid={@doc_pid} show_raw_body={@show_raw_req_body} request_id={@request_id} is_json={req_res.req_content_info.is_json} req={req_res.req} sub_tab={@sub_tab}/>
-              <% "Response" -> %>
-                <.response doc_pid={@doc_pid} show_raw_body={@show_raw_res_body} request_id={@request_id} is_json={req_res.res_content_info.is_json} res={req_res.res} sub_tab={@sub_tab}/>
-            <%end%>
+            <div class="block">
+              <div class="text-base font-semibold">
+                <div class="inline-block bg-green-500 rounded-lg px-3 py-1">
+                  <span><%= format_request(req_res) %></span>
+                </div>
+              </div>
+              <div class="border-b border-gray-200 mt-2">
+                <nav class="-mb-px flex space-x-2 no-select" aria-label="Tabs">
+                  <%= Enum.map(["Request", "Response"], fn item -> %>
+                    <SandmanWeb.TabBar.item event="switch_tab" item={item} selected={item == @tab}/>
+                  <% end) %>
+                </nav>
+              </div>
+              <%= case @tab do %>
+                <% "Request" -> %>
+                  <.request doc_pid={@doc_pid} show_raw_body={@show_raw_req_body} request_id={@request_id} is_json={req_res.req_content_info.is_json} req={req_res.req} sub_tab={@sub_tab}/>
+                <% "Response" -> %>
+                  <.response doc_pid={@doc_pid} show_raw_body={@show_raw_res_body} request_id={@request_id} is_json={req_res.res_content_info.is_json} res={req_res.res} sub_tab={@sub_tab}/>
+              <%end%>
+            </div>
         <% end %>
       </div>
     """
