@@ -13,11 +13,13 @@ defmodule Sandman.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: Sandman.PubSub},
       # Start Finch
+      {Finch, name: Sandman.Finch.UpdateManager},
       {Finch, name: Sandman.Finch, pools: %{
         default: [conn_opts: [transport_opts: [verify: :verify_none]]] #TODO ohoh, misschien aparte unsecure pool?
       }},
       # Start the Endpoint (http/https)
       SandmanWeb.Endpoint,
+      Sandman.UpdateManager,
       Sandman.WindowSupervisor,
       # Start a worker by calling: Sandman.Worker.start_link(arg)
       # {Sandman.Worker, arg}
@@ -29,8 +31,13 @@ defmodule Sandman.Application do
 
     # start the first window with menu bar
     desktop_env = Application.get_env(:sandman, :desktop)
-    children = if desktop_env[:open_window] do # not in test for instance
-      Sandman.WindowSupervisor.start_child()
+    if desktop_env[:open_window] do # not in test for instance
+      case Process.whereis(Sandman.WindowSupervisor) do
+        pid when is_pid(pid) ->
+          Sandman.WindowSupervisor.start_child()
+        _ ->
+          IO.inspect("Cannot start window")
+      end
     end
     # return the supervisor ret value
     res

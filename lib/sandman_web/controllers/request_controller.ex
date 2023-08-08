@@ -23,6 +23,9 @@ defmodule SandmanWeb.RequestController do
     {content_info, body} = get_request_info(req, type)
     if (params["raw"]) do
       #conn = put_resp_header( "content-type", "text/html")
+      body = body
+        |> String.split("\n", trim: false)
+        |> Enum.intersperse(Phoenix.HTML.Tag.tag(:br))
       conn
       |> put_layout(false)
       |> put_root_layout(false)
