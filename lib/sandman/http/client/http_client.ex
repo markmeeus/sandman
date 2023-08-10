@@ -43,8 +43,8 @@ defmodule Sandman.HttpClient do
       {:ok, res} ->
         headers = Enum.reduce(res.headers, %{}, fn {k, v}, headers ->
           case headers[k] do
-            nil -> Map.put(headers, String.downcase(k), [v])
-            arr -> Map.put(headers, String.downcase(k), arr ++ [v])
+            nil -> Map.put(headers, String.downcase(k), v)
+            header -> Map.put(headers, String.downcase(k), "#{header}, #{v}")
           end
         end)
 
