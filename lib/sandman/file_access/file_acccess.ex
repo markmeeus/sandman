@@ -15,7 +15,12 @@ defmodule Sandman.FileAccess do
     )
     |> case do
       [] -> nil
-      file_name -> to_string(file_name)
+      file_name ->
+        result = to_string(file_name)
+        if(mode == :new) do
+          File.write(result, Sandman.NewFileTemplate.contents)
+        end
+        result
     end
   end
 end

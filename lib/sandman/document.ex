@@ -53,7 +53,6 @@ defmodule Sandman.Document do
   end
 
   def init([doc_id, file_path, doc_id_fn]) do
-    #TODO: load doc from file
     self_pid = self()
     {:ok, luerl_server_pid} = LuerlServer.start_link(self_pid, %{
       print: fn args, luerl_state ->
