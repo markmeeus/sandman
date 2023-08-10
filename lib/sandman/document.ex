@@ -162,7 +162,7 @@ defmodule Sandman.Document do
     {:noreply, state = %{ state | document: document}}
   end
 
-  def handle_cast({:run_block, block_id}, state = %{document: document, luerl_server_pid: luerl_server_pid}) do
+  def handle_cast({:run_block, block_id}, state = %{document: document, doc_id: doc_id, luerl_server_pid: luerl_server_pid}) do
     block = Enum.find(document.blocks, & &1[:id] == block_id)
     {prev_blocks, next_blocks} =  document.blocks
       |> Enum.split_while(fn bl -> bl.id != block.id end)
@@ -185,7 +185,8 @@ defmodule Sandman.Document do
 
     state = put_in(state.requests[block_id], [])
     state = put_in(state.current_block_id, block_id)
-
+    # using request recorded, since all requests are gone now
+    PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :request_recorded)
     {:noreply, state}
   end
 
