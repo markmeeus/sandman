@@ -61,14 +61,14 @@ defmodule SandmanWeb.LiveView.RequestResponse do
         extra_toggle_event="switch_req_body_format" />
       <div id="request-body" class="pt-2">
         <%= if @show_raw_body do %>
-          <iframe id="raw" class="h-full w-full" src={"http://localhost:7000/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/request/#{request_idx}?raw=true"}>
+          <iframe id="raw" class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/request/#{request_idx}?raw=true"}>
             </iframe>
         <% else %>
           <%= if @is_json do %>
-            <iframe id="no-sandbox" class="h-full w-full" src={"http://localhost:7000/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/request/#{request_idx}"}>
+            <iframe id="no-sandbox" class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/request/#{request_idx}"}>
             </iframe>
           <% else %>
-            <iframe id="sandbox" sandbox class="h-full w-full" src={"http://localhost:7000/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/request/#{request_idx}"}>
+            <iframe id="sandbox" sandbox class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/request/#{request_idx}"}>
             </iframe>
           <% end %>
         <% end %>
@@ -91,14 +91,14 @@ defmodule SandmanWeb.LiveView.RequestResponse do
         extra_toggle_event="switch_res_body_format" />
       <div id="response-body" class="pt-2 h-full">
         <%= if @show_raw_body do %>
-          <iframe id="raw" class="h-full w-full" src={"http://localhost:7000/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/response/#{request_idx}?raw=true"}>
+          <iframe id="raw" class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/response/#{request_idx}?raw=true"}>
             </iframe>
         <% else %>
           <%= if @is_json do %>
-            <iframe id="no-sandbox" class="h-full w-full" src={"http://localhost:7000/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/response/#{request_idx}"}>
+            <iframe id="no-sandbox" class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/response/#{request_idx}"}>
             </iframe>
           <% else %>
-            <iframe id="sandbox" sandbox class="h-full w-full" src={"http://localhost:7000/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/response/#{request_idx}"}>
+            <iframe id="sandbox" sandbox class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/response/#{request_idx}"}>
             </iframe>
           <% end %>
         <% end %>

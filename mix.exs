@@ -4,12 +4,19 @@ defmodule Sandman.MixProject do
   def project do
     [
       app: :sandman,
+      package: package(),
       version: "0.1.0",
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      releases: [
+        default: [
+          applications: [runtime_tools: :permanent, ssl: :permanent],
+          steps: [:assemble, &Desktop.Deployment.generate_installer/1]
+        ],
+      ],
     ]
   end
 
@@ -51,6 +58,7 @@ defmodule Sandman.MixProject do
       {:uuid, "~> 1.1" },
       {:luerl, git: "git@github.com:markmeeus/luerl.git", ref: "6f512e9"},
       {:hammer, "~> 6.1"},
+      {:desktop_deployment, git: "git@github.com:markmeeus/deployment.git", ref: "a0ad31003dcaeba851ea3e2957ba348b41995e80", runtime: false}
     ]
   end
 
@@ -74,6 +82,20 @@ defmodule Sandman.MixProject do
         "esbuild default --minify",
         "esbuild monaco_editor --minify",
         "phx.digest"]
+    ]
+  end
+
+  def package() do
+    [
+      name: "Sandman",
+      name_long: "Sandman.",
+      description: "SandMan",
+      description_long: "SandMan",
+      icon: "priv/icon.png",
+      # https://developer.gnome.org/menu-spec/#additional-category-registry
+      category_gnome: "GNOME;WebDevelopment;",
+      category_macos: "public.app-category.developer-tools",
+      identifier: "io.myapp.app",
     ]
   end
 end
