@@ -9,6 +9,6 @@ export KERL_CONFIGURE_OPTIONS="-–disable-dynamic-ssl-lib --without-javac --wit
 export KERL_CONFIGURE_OPTIONS="-–disable-dynamic-ssl-lib --without-javac --with-ssl=/usr/local/Cellar/openssl@3/3.1.2
 
 => asdf kan
-=> dit kan ook
+=> dit kan ook (evt)
 kerl build git https://github.com/erlang/otp.git OTP-26.0.2 erlang-kerl-26
 
