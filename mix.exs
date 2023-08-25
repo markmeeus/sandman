@@ -12,7 +12,7 @@ defmodule Sandman.MixProject do
       aliases: aliases(),
       deps: deps(),
       releases: [
-        default: [
+        sandman: [
           applications: [runtime_tools: :permanent, ssl: :permanent],
           steps: [:assemble, &Desktop.Deployment.generate_installer/1]
         ],
@@ -58,7 +58,8 @@ defmodule Sandman.MixProject do
       {:uuid, "~> 1.1" },
       {:luerl, git: "git@github.com:markmeeus/luerl.git", ref: "6f512e9"},
       {:hammer, "~> 6.1"},
-      {:desktop_deployment, git: "git@github.com:markmeeus/deployment.git", ref: "a0ad31003dcaeba851ea3e2957ba348b41995e80", runtime: false}
+      #{:desktop_deployment, git: "git@github.com:markmeeus/deployment.git", ref: "93d9fe7", runtime: false}
+      {:desktop_deployment, path: "/Users/markmeeus/Documents/projects/github/deployment"}
     ]
   end
 
