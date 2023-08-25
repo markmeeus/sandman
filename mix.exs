@@ -58,8 +58,8 @@ defmodule Sandman.MixProject do
       {:uuid, "~> 1.1" },
       {:luerl, git: "git@github.com:markmeeus/luerl.git", ref: "6f512e9"},
       {:hammer, "~> 6.1"},
-      #{:desktop_deployment, git: "git@github.com:markmeeus/deployment.git", ref: "93d9fe7", runtime: false}
-      {:desktop_deployment, path: "/Users/markmeeus/Documents/projects/github/deployment"}
+      {:desktop_deployment, git: "git@github.com:markmeeus/deployment.git", ref: "78f6f9dd31752cfd8ac97c3ee9cd77d9a8960160", runtime: false}
+      #{:desktop_deployment, path: "/Users/markmeeus/Documents/projects/github/deployment"}
     ]
   end
 
@@ -89,7 +89,7 @@ defmodule Sandman.MixProject do
   def package() do
     [
       name: "Sandman",
-      name_long: "Sandman.",
+      name_long: "Sandman",
       description: "SandMan",
       description_long: "SandMan",
       icon: "priv/icon.png",
