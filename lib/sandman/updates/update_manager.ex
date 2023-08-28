@@ -6,29 +6,57 @@ defmodule Sandman.UpdateManager do
   @bucket_updates_url @bucket_url <> "/updates/"
   @version_info_url @bucket_updates_url <> "version.json"
 
+  alias Phoenix.PubSub
+
   def start_link(init_args) do
     GenServer.start_link(__MODULE__, [init_args], name: __MODULE__)
   end
 
+  def check() do
+    GenServer.cast(__MODULE__, :check)
+  end
+
+  def get_status() do
+    GenServer.call(__MODULE__, :get_status)
+  end
+
   def init(_args) do
-    {:ok, %{}, {:continue, :check_for_updates}}
+    {:ok, %{
+      status: :idle
+    }, {:continue, :check_for_updates}}
   end
 
   def handle_continue(:check_for_updates, state) do
-    case get_latest_version_info() do
-      {:unavailable, reason} -> IO.inspect("TODO: log reason")
+    # currently not auto checking
+    {:noreply, state}
+    #{:noreply, %{ state | status: check_for_update()}}
+  end
+
+  def handle_cast(:check, state) do
+    {:noreply, %{ state | status: check_for_update()}}
+  end
+
+  def handle_call(:get_status, _sender, state = %{status: status}) do
+    {:reply, status, state}
+  end
+
+  defp check_for_update() do
+    PubSub.broadcast(Sandman.PubSub, "update_manager", {:update_manager, :checking})
+    Process.sleep(5000)
+    status = case get_latest_version_info() do
+      {:unavailable, reason} -> :failed
       latest_version_info ->
         current_version = to_string(Application.spec(:sandman, :vsn))
         latest_version = latest_version_info["version"]
         case :verl.compare(latest_version, current_version) do
           :gt ->
-            IO.inspect("THERE IS A NEW VERSION: #{latest_version}")
-            download_and_verify(latest_version)
-          _ -> IO.inspect("Nothing new, carry on")
+            :update_available
+          _ ->
+            :no_update
         end
     end
-
-    {:noreply, state}
+    PubSub.broadcast(Sandman.PubSub, "update_manager", {:update_manager, status})
+    status
   end
 
   defp get_latest_version_info do
@@ -41,42 +69,4 @@ defmodule Sandman.UpdateManager do
       other -> {:unavailable, other}
     end
   end
-
-  defp download_and_verify(version) do
-    temp_dir = get_clean_updates_folder
-    lib_filename = version_to_filename(version) <> ".zip"
-    lib_url = @bucket_updates_url <> lib_filename
-    path = Path.join(temp_dir, lib_filename)
-    file = File.open!(path, [:write, :exclusive])
-
-    request = Finch.build(:get, lib_url)
-
-    Finch.stream(request, @finch, nil, fn
-      {:status, status}, _ ->
-        IO.inspect("Download assets status: #{status}")
-
-      {:headers, headers}, _ ->
-        IO.inspect("Download assets headers: #{inspect(headers)}")
-
-      {:data, data}, _ ->
-        IO.binwrite(file, data)
-    end)
-    IO.inspect("Downloaded update to #{path}")
-    File.close(file)
-  end
-
-  defp get_clean_updates_folder do
-    application_dir = Application.app_dir(:sandman, "priv")
-    temp_dir = Path.join(application_dir, "updates")
-
-    {:ok, _} = File.rm_rf(temp_dir) # delete the directory
-    :ok = File.mkdir_p(temp_dir)  # Create the directory if it doesn't exist
-
-    temp_dir
-  end
-
-  defp version_to_filename(version) do
-    String.replace(version, ".", "_")
-  end
-
 end

@@ -1,17 +1,10 @@
 defmodule Sandman.NewOrOpen do
   use Phoenix.Component
-
-  def render2(assigns) do
-    ~H"""
-    <div>
-      <div phx-click="new_file">New File</div>
-      <div phx-click="open_file">Open File</div>
-    </div>
-    """
-  end
+  alias SandmanWeb.UpdateBar
 
   def render(assigns) do
     ~H"""
+    <%= live_render(@socket, UpdateBar, id: "update_bar") %>
     <div class="no-select h-screen flex items-center justify-center">
       <div>
         <h2 class="text-sm font-medium text-gray-500">Create a new file, or open an existing one</h2>

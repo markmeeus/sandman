@@ -5,7 +5,7 @@ defmodule SandmanWeb.LiveView.App do
 
   alias Sandman.Document
   alias Sandman.FileAccess
-
+  alias SandmanWeb.UpdateBar
   alias Phoenix.PubSub
 
   @spec render(any) :: Phoenix.LiveView.Rendered.t()
@@ -19,6 +19,7 @@ defmodule SandmanWeb.LiveView.App do
 
   def render_app(assigns) do
     ~H"""
+      <%= live_render(@socket, UpdateBar, id: "update_bar") %>
       <div id="app-wrapper" class="flex flex-row" phx-hook="HomeHook">
         <div id="document-log-container" class="h-screen" phx-hook="MaintainWidth">
           <div id="document-container" style="overflow:scroll;" phx-hook="MaintainHeight">
@@ -52,7 +53,6 @@ defmodule SandmanWeb.LiveView.App do
   end
 
   def mount(_params, _session, socket) do
-
     {:ok, socket}
   end
 

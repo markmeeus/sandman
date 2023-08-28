@@ -58,7 +58,7 @@ defmodule Sandman.MixProject do
       {:uuid, "~> 1.1" },
       {:luerl, git: "git@github.com:markmeeus/luerl.git", ref: "6f512e9"},
       {:hammer, "~> 6.1"},
-      {:desktop_deployment, git: "git@github.com:markmeeus/deployment.git", ref: "78f6f9dd31752cfd8ac97c3ee9cd77d9a8960160", runtime: false}
+      {:desktop_deployment, git: "git@github.com:markmeeus/deployment.git", ref: "78f6f9dd31752cfd8ac97c3ee9cd77d9a8960160", runtime: false},
       #{:desktop_deployment, path: "/Users/markmeeus/Documents/projects/github/deployment"}
       {:verl, "~> 1.1"},
     ]

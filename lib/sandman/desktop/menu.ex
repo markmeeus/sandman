@@ -11,6 +11,7 @@ defmodule MenuBar do
   def handle_event(command, menu) do
     case command do
       <<"new_window">> -> Sandman.WindowSupervisor.start_child()
+      <<"check_updates">> -> Sandman.UpdateManager.check()
       <<"quit">> -> Desktop.Window.quit()
       <<"help">> -> :wx_misc.launchDefaultBrowser('https://google.com')
       <<"about">> -> :not_implemented
@@ -30,6 +31,7 @@ defmodule MenuBar do
     <menubar>
       <menu label="File">
           <item onclick="new_window"><%= "New window" %></item>
+          <item onclick="check_updates"><%= "Check Updates" %></item>
           <hr/>
           <item onclick="quit"><%= "Quit" %></item>
       </menu>
