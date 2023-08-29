@@ -81,7 +81,7 @@ defmodule Sandman.Http.Server do
     log(doc_id, "Received invalid status code #{status}.")
     response
     |> Map.put(:status, 500)
-    |> Map.put(:body, "Agent Error")
+    |> Map.put(:body, "Document Error")
   end
   defp check_status(response, _), do: response
 

@@ -85,28 +85,27 @@ defmodule Sandman.LuerlServer do
         {_, nil} -> :no_state_for_block # if asking state for a block, it should be there!
         {_, luerl_state} -> luerl_state
     end
-    {response, luerl_state} =
+    {response, luerl_states} =
       case luerl_state do
         :no_state_for_block -> {:no_state_for_block, luerl_states}
         _ ->
-        case LuerlWrapper.call_function(function_path, args, luerl_state) do
-          {:ok, [], luerl_state} ->
-            {[], luerl_state}
+          case LuerlWrapper.call_function(function_path, args, luerl_state) do
+            {:ok, [], luerl_state} ->
+              {[], save_luerl_state(luerl_states, new_state_id, luerl_state)}
 
-          {:ok, [response], luerl_state} ->
-            {response, save_luerl_state(luerl_states, new_state_id, luerl_state)}
-          # lua has multiple return values, only consuming first one for now
-          {:ok, [response | _], luerl_state}  ->
-            {response, save_luerl_state(luerl_states, new_state_id, luerl_state)}
+            {:ok, [response], luerl_state} ->
+              {response, save_luerl_state(luerl_states, new_state_id, luerl_state)}
+            # lua has multiple return values, only consuming first one for now
+            {:ok, [response | _], luerl_state}  ->
+              {response, save_luerl_state(luerl_states, new_state_id, luerl_state)}
 
-          {:error, err, _, formatted} ->
-            {{:error, err, formatted}, luerl_state}
+            {:error, err, _, formatted} ->
+              {{:error, err, formatted}, luerl_state}
 
-        end
+          end
       end
 
     send(document_pid, {:lua_response, response_tag, response})
-    luerl_states = save_luerl_state(luerl_states, new_state_id, luerl_state)
     {:noreply, %{state | luerl_states: luerl_states}, :hibernate}
   end
 
