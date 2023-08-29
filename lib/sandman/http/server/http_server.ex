@@ -29,7 +29,7 @@ defmodule Sandman.Http.Server do
       |> LuaMapper.reverse_map()
       log(doc_id, "Running handler for #{route.path} with #{inspect(params)}")
       # manipulates the block's state directly
-      LuerlServer.call_function(luerl_server_pid, route.block_id, route.block_id, {:http_response, replyto_pid, route},
+      LuerlServer.spawn_function(luerl_server_pid, route.block_id, route.block_id, {:http_response, replyto_pid, route},
         func, [lua_args])
     nil ->
       :not_found
