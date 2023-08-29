@@ -252,7 +252,6 @@ defmodule Sandman.Document do
       _ ->
         response = Sandman.Http.Server.map_lua_response(doc_id, response)
         req_res = Sandman.Http.Server.build_req_res(request, response)
-        IO.inspect({"This is the server req_res", req_res})
         GenServer.cast(self(), {:record_http_request, req_res, block_id})
         send(replyto_pid, {:http_response, response})
     end

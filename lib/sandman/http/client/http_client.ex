@@ -56,6 +56,7 @@ defmodule Sandman.HttpClient do
           req_content_info: req_content_info,
           res_content_info: res_content_info,
           error: nil,
+          direction: :out,
           lua_result: [LuaMapper.reverse_map(%{
             body: res.body,
             headers: headers,
@@ -70,6 +71,7 @@ defmodule Sandman.HttpClient do
           res_content_info: %{},
           res: nil,
           error: exc,
+          direction: :out,
           lua_result: [nil, Exception.message(exc)]
         }
 
@@ -80,6 +82,7 @@ defmodule Sandman.HttpClient do
           req_content_info: req_content_info,
           res_content_info: %{},
           error: exc,
+          direction: :out,
           lua_result: [nil, inspect(exc)]
         }
       unexpected ->
@@ -89,6 +92,7 @@ defmodule Sandman.HttpClient do
           req_content_info: req_content_info,
           res_content_info: %{},
           error: unexpected,
+          direction: :out,
           lua_result: [nil, "unexpected Finch result (you should not see this):" <> inspect(unexpected)]
         }
     end

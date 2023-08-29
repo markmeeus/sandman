@@ -87,9 +87,8 @@ defmodule SandmanWeb.LiveView.Document do
         <a class="flex flex-row-reverse text-xs rounded-b pb-1 px-1 pt-1" style="background-color: rgb(238, 238, 238);"
             href="#" phx-click="select-request" phx-value-block-id={@block_id} phx-value-request-index={@request_index}>
           <div >
-            <span style="color: rgb(50, 138, 50);background-color: rgb(238, 238, 238);" class="rounded font-bold px-1">
-              <%=String.upcase(to_string(@req.req.method))%></span> <span><%= format_request(@req) %></span>
-              <.format_response res={@req.res} />
+            <span><%= format_request(@req) %></span>
+            <.format_response res={@req.res} />
           </div>
         </a>
       </div>

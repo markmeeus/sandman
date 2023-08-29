@@ -2,12 +2,15 @@ defmodule Sandman.RequestFormatting do
 
   def format_request(%{req: nil}), do: "" # this happens with invalid requests. The error should say enough
 
-  def format_request(%{req: req, res: res}) do
-    "#{String.upcase(to_string(req.method))} #{req.scheme}://#{req.host}"
+  def format_request(%{req: req, res: res, direction: direction}) do
+    "#{in_or_out(direction)} #{String.upcase(to_string(req.method))} #{req.scheme}://#{req.host}"
     |> add_port(req.scheme, req.port)
     |> add_path(req.path)
     |> add_query(req.query)
   end
+
+  defp in_or_out(:in), do: "server:"
+  defp in_or_out(:out), do: "client:"
 
   defp add_port(formatted, :http, 80), do: formatted
   defp add_port(formatted, :https, 443), do: formatted

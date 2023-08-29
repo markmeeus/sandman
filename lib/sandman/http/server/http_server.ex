@@ -81,7 +81,8 @@ defmodule Sandman.Http.Server do
       req: req,
       res: response,
       res_content_info: get_content_info_from_headers(response.headers),
-      req_content_info: get_content_info_from_headers(req.headers)
+      req_content_info: get_content_info_from_headers(req.headers),
+      direction: :in
     }
   end
 
