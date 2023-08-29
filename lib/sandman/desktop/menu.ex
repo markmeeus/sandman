@@ -13,8 +13,8 @@ defmodule MenuBar do
       <<"new_window">> -> Sandman.WindowSupervisor.start_child()
       <<"check_updates">> -> Sandman.UpdateManager.check()
       <<"quit">> -> Desktop.Window.quit()
-      <<"help">> -> :wx_misc.launchDefaultBrowser('https://google.com')
-      <<"about">> -> :not_implemented
+      <<"help">> -> :wx_misc.launchDefaultBrowser('https://github.com/markmeeus/sandman-docs')
+      <<"about">> -> :wx_misc.launchDefaultBrowser('https://sandmanapp.com')
     end
 
     {:noreply, menu}
@@ -31,7 +31,7 @@ defmodule MenuBar do
     <menubar>
       <menu label="File">
           <item onclick="new_window"><%= "New window" %></item>
-          <item onclick="check_updates"><%= "Check Updates" %></item>
+          <item onclick="check_updates"><%= "Check For Updates" %></item>
           <hr/>
           <item onclick="quit"><%= "Quit" %></item>
       </menu>
