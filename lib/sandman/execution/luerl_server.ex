@@ -100,7 +100,7 @@ defmodule Sandman.LuerlServer do
               {response, save_luerl_state(luerl_states, new_state_id, luerl_state)}
 
             {:error, err, _, formatted} ->
-              {{:error, err, formatted}, luerl_state}
+              {{:error, err, formatted}, luerl_states}
 
           end
       end
