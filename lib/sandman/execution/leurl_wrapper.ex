@@ -14,7 +14,7 @@ defmodule Sandman.LuerlWrapper do
     luerl_state = :luerl.set_table(["sandman"], [], luerl_state)
 
     luerl_state = :luerl.set_table(["sandman", "server"], [], luerl_state)
-    luerl_state = :luerl.set_table(["sandman", "server", "start_internal"], handlers.start_server, luerl_state)
+    luerl_state = :luerl.set_table(["sandman", "server", "start"], handlers.start_server, luerl_state)
     luerl_state = Enum.reduce(["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD"], luerl_state, fn method, luerl_state ->
       {:ok, [], luerl_state} = :luerl_new.set_table_keys(["sandman", "server", String.downcase(method)],
         {:erl_func, &handlers.add_route.(method, &1, &2)}, luerl_state)
