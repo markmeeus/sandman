@@ -25,14 +25,18 @@ defmodule SandmanWeb.UpdateBar do
       :no_update -> {"Allready on the latest version. 👍", "bg-gray-200", true}
       :failed -> {"Failed to check for updates, please try again later.", "bg-red-200", true}
     end
+    assigns = assigns
+    |> assign(:msg_component, msg_component)
+    |> assign(:color, color)
+    |> assign(:allow_dismiss, allow_dismiss)
 
     ~H"""
-      <div class={"flex items-center gap-x-6 #{color} px-6 py-2.5 sm:px-3.5 sm:before:flex-1"}>
+      <div class={"flex items-center gap-x-6 #{@color} px-6 py-2.5 sm:px-3.5 sm:before:flex-1"}>
         <p class="text-sm leading-6 text-black">
-          <%= msg_component %>
+          <%= @msg_component %>
         </p>
           <div class="flex flex-1 justify-end">
-            <%= if(allow_dismiss) do %>
+            <%= if(@allow_dismiss) do %>
               <button type="button" class="-m-3 p-3 focus-visible:outline-offset-[-4px]" phx-click="dismiss">
                 <span class="sr-only">Dismiss</span>
                 <svg class="h-5 w-5 text-black" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

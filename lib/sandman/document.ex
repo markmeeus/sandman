@@ -52,6 +52,16 @@ defmodule Sandman.Document do
     request
   end
 
+  def handle_server_request(pid, server_id, request) do
+    GenServer.cast(pid, {:handle_server_request, self(), server_id, request})
+    receive do
+      {:http_response, response} ->
+        response
+      after 60_000 ->
+        %{ status: 504, body: "Request timeout", headers: %{"content-type" => "text/text" } }
+    end
+  end
+
   def init([doc_id, file_path, doc_id_fn]) do
     self_pid = self()
     {:ok, luerl_server_pid} = LuerlServer.start_link(self_pid, %{
@@ -67,6 +77,14 @@ defmodule Sandman.Document do
         GenServer.cast(self_pid, {:record_http_request, result})
         # return with lua script
         {result.lua_result, luerl_state}
+      end,
+      start_server: fn port, luerl_state ->
+        {:ok, res} = GenServer.call(self_pid, {:handle_lua_call, :start_server, port})
+        {res, luerl_state}
+      end,
+      add_route: fn method, args, luerl_state ->
+        {:ok, res} = GenServer.call(self_pid, {:handle_lua_call, :add_route, [method] ++ args})
+        {res, luerl_state}
       end,
       json_decode: &Json.decode(doc_id, &1, &2),
       json_encode: &Json.encode(doc_id, &1, &2),
@@ -89,6 +107,7 @@ defmodule Sandman.Document do
       file_path: file_path,
       luerl_server_pid: luerl_server_pid,
       requests: %{},
+      servers: %{},
       current_block_id: nil,
     }}
   end
@@ -99,6 +118,18 @@ defmodule Sandman.Document do
 
   def handle_call({:get_request_by_id, {block_id, index}}, _, state = %{requests: requests}) do
     {:reply, get_request_by_id(requests, {block_id, index}), state}
+  end
+
+  def handle_cast({:handle_server_request, replyto_pid, server_id, request}, state = %{doc_id: doc_id, servers: servers}) do
+    server = Map.get(servers, server_id)
+    res = Sandman.Http.Server.handle_request(state.doc_id, state.luerl_server_pid, server.routes, {replyto_pid, request})
+
+    if(res == :not_found) do
+      log(doc_id, "#{inspect(request)} => 404 Not Found")
+      send(replyto_pid, {:http_response, %{status: 404, body: "Not Found", headers: %{"content-type" => "text/text" }}})
+    end
+
+    {:noreply, state}
   end
 
   def handle_cast({:add_block, :after, "-"}, state  = %{document: document, doc_id: doc_id}) do
@@ -179,6 +210,10 @@ defmodule Sandman.Document do
     end
     |> Enum.map(& &1.id)
 
+    clean_servers = Enum.reduce(blocks_to_reset, state.servers, fn block_id, servers ->
+      clean_servers_and_routes(servers, block_id)
+    end)
+    state = put_in(state.servers, clean_servers)
     LuerlServer.reset_states(luerl_server_pid, blocks_to_reset)
     LuerlServer.run_code(luerl_server_pid, last_block_id, block.id, {:run_block}, block.code)
 
@@ -204,6 +239,22 @@ defmodule Sandman.Document do
     {:noreply, put_in(state.current_block_id, nil)}
   end
 
+  def handle_info({:lua_response, {:http_response, replyto_pid, route}, response}, state = %{doc_id: doc_id}) do
+    case response do
+      {:error, err, formatted} ->
+        log(doc_id, "Error executing route: #{route.path}\n" <> formatted)
+        send(replyto_pid, {:http_response, %{
+          body: "Error",
+          status: 500,
+          headers: %{"content-type" => "text/text" }
+        }})
+      _ ->
+        response = Sandman.Http.Server.map_lua_response(doc_id, response)
+        send(replyto_pid, {:http_response, response})
+    end
+    {:noreply, state}
+  end
+
   defp write_file(%{file_path: file_path}) do
     self_pid = self()
     Debouncer.immediate(file_path, fn ->
@@ -220,5 +271,48 @@ defmodule Sandman.Document do
     log(doc_id, formatted)
     # append
     {:reply, {:ok, [true]}, state}
+  end
+  def handle_call({:handle_lua_call, :start_server, [port]}, _sender, state) do
+    id =  UUID.uuid4()
+    ref = String.to_atom(id)
+    server_pid = Plug.Cowboy.http(Sandman.UserPlug, {self(), id} , port: port, ref: ref)
+    server = %{
+      id: id,
+      cowboy_ref: ref,
+      pid: server_pid,
+      routes: [],
+      block_id: state.current_block_id
+    }
+    new_state = %{state | servers: Map.put(state.servers, server.id, server)}
+    {:reply, {:ok, [server.id]}, new_state}
+
+  end
+  def handle_call({:handle_lua_call, :add_route, [method, server_id, path, func = {:funref, _, _}]}, _sender, state) do
+    route = %{
+      method: method,
+      path: path,
+      func: func,
+      block_id: state.current_block_id
+    }
+    #TODO: dont prepare all routes all the time
+    new_routes = Sandman.Http.Server.prepare_routes(state.servers[server_id].routes ++ [route])
+    new_state = put_in(state.servers[server_id].routes, new_routes)
+
+    {:reply, {:ok, [true]}, new_state}
+  end
+
+  defp clean_servers_and_routes(servers, block_id) do
+    Enum.reduce(servers, %{}, fn
+      {_, %{block_id: ^block_id, cowboy_ref: ref}}, servers ->
+        # this server should die
+        :ok = Plug.Cowboy.shutdown(ref)
+        servers
+      {id, server}, servers ->
+        # keeping this server, but only keep routes that are not part of this block
+        new_routes = Enum.filter(server.routes, fn route -> route.block_id != block_id end)
+        new_server = Map.put(server, :routes, new_routes)
+        Map.put(servers, server.id, new_server)
+    end)
+
   end
 end

@@ -11,21 +11,20 @@ defmodule Sandman.LuerlWrapper do
     # luerl_state = :luerl.set_table(["cron"], [], luerl_state)
     # {:ok, [], luerl_state} = :luerl_new.set_table_keys(["cron","start"], {:erl_func, handlers.cron_start}, luerl_state)
     # {:ok, [], luerl_state} = :luerl_new.set_table_keys(["cron","stop"], {:erl_func, handlers.cron_stop}, luerl_state)
-
-    # luerl_state = :luerl.set_table(["server"], [], luerl_state)
-    # luerl_state = Enum.reduce(["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD"], luerl_state, fn method, luerl_state ->
-    #   {:ok, [], luerl_state} = :luerl_new.set_table_keys(["server", String.downcase(method)], {:erl_func, &handlers.add_route.(method, &1, &2)}, luerl_state)
-    #   luerl_state
-    # end)
-
     luerl_state = :luerl.set_table(["sandman"], [], luerl_state)
+
+    luerl_state = :luerl.set_table(["sandman", "server"], [], luerl_state)
+    luerl_state = :luerl.set_table(["sandman", "server", "start_internal"], handlers.start_server, luerl_state)
+    luerl_state = Enum.reduce(["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD"], luerl_state, fn method, luerl_state ->
+      {:ok, [], luerl_state} = :luerl_new.set_table_keys(["sandman", "server", String.downcase(method)],
+        {:erl_func, &handlers.add_route.(method, &1, &2)}, luerl_state)
+      luerl_state
+    end)
 
     luerl_state = :luerl.set_table(["sandman", "http"], [], luerl_state)
     luerl_state = Enum.reduce(["get", "post", "put", "delete", "patch", "head"], luerl_state, fn method, luerl_state ->
       :luerl.set_table(["sandman", "http", String.downcase(method)], &handlers.fetch.(String.upcase(method), &1, &2), luerl_state)
     end)
-
-
 
     :luerl.set_table(["sandman", "http", "send"], fn args, luerl_state ->
       case args do
