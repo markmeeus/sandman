@@ -7,7 +7,8 @@ defmodule Sandman.UserPlug do
   end
   def call(conn, args) do
     conn = Plug.Conn.fetch_query_params(conn)
-    request = to_request(conn)
+    {:ok, body, conn} = Plug.Conn.read_body(conn)
+    request = to_request(conn, body)
     response = Sandman.Document.handle_server_request(args.document_pid, args.server_id, request)
     conn = Enum.reduce(response[:headers] || %{}, conn, fn
         {name, value}, conn when is_bitstring(value) ->
@@ -21,13 +22,14 @@ defmodule Sandman.UserPlug do
     halt(conn)
   end
 
-  def to_request(conn) do
+  def to_request(conn, body) do
     # create a request, wrap it in a gen_server, and pass the pid
     %{
       conn: conn,
       method: conn.method,
       path_info: conn.path_info,
       query: conn.query_params,
+      body: body,
       headers: Enum.into(conn.req_headers, %{})
     }
   end

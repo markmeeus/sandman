@@ -74,7 +74,7 @@ defmodule Sandman.Document do
         # TODO; refactor this so that req can be stored before request is being sent
         {result, luerl_state} = HttpClient.fetch_handler(doc_id, method, args, luerl_state)
         # send the result to the document
-        GenServer.cast(self_pid, {:record_http_request, result})
+        GenServer.cast(self_pid, {:record_http_request, result, nil})
         # return with lua script
         {result.lua_result, luerl_state}
       end,
@@ -161,7 +161,8 @@ defmodule Sandman.Document do
     {:noreply, state = %{ state | document: document}}
   end
 
-  def handle_cast({:record_http_request, req_res}, state = %{doc_id: doc_id, requests: requests, current_block_id: block_id}) do
+  def handle_cast({:record_http_request, req_res, block_id}, state = %{doc_id: doc_id, requests: requests, current_block_id: current_block_id}) do
+    block_id = block_id || current_block_id
     new_state = update_in(state.requests[block_id], fn val -> val ++ [req_res] end)
     #new_state = Map.put(state, :requests, requests ++ [req_res])
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :request_recorded)
@@ -239,7 +240,7 @@ defmodule Sandman.Document do
     {:noreply, put_in(state.current_block_id, nil)}
   end
 
-  def handle_info({:lua_response, {:http_response, replyto_pid, route}, response}, state = %{doc_id: doc_id}) do
+  def handle_info({:lua_response, {:http_response, replyto_pid, route, request, block_id}, response}, state = %{doc_id: doc_id}) do
     case response do
       {:error, err, formatted} ->
         log(doc_id, "Error executing route: #{route.path}\n" <> formatted)
@@ -250,6 +251,9 @@ defmodule Sandman.Document do
         }})
       _ ->
         response = Sandman.Http.Server.map_lua_response(doc_id, response)
+        req_res = Sandman.Http.Server.build_req_res(request, response)
+        IO.inspect({"This is the server req_res", req_res})
+        GenServer.cast(self(), {:record_http_request, req_res, block_id})
         send(replyto_pid, {:http_response, response})
     end
     {:noreply, state}

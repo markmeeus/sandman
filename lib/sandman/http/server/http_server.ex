@@ -6,6 +6,7 @@ defmodule Sandman.Http.Server do
   alias Sandman.LuerlServer
 
   import Sandman.Logger
+  import Sandman.Http.Helpers
 
   def prepare_routes(routes), do: ConnMatch.prepare_routes(routes)
 
@@ -18,18 +19,16 @@ defmodule Sandman.Http.Server do
       params = params
       |> Enum.map(fn {key, val} -> {key, URI.decode(val)} end)
       |> Enum.into(%{})
-
       lua_args = %{
         params: params,
         query: request.query,
         headers: downcase_and_list_headers(request.headers),
-        readBody: fn _ -> [ Plug.Conn.read_body(request.conn)]
-        end
+        body: request.body
       }
       |> LuaMapper.reverse_map()
       log(doc_id, "Running handler for #{route.path} with #{inspect(params)}")
       # manipulates the block's state directly
-      LuerlServer.spawn_function(luerl_server_pid, route.block_id, route.block_id, {:http_response, replyto_pid, route},
+      LuerlServer.spawn_function(luerl_server_pid, route.block_id, route.block_id, {:http_response, replyto_pid, route, request, route.block_id},
         func, [lua_args])
     nil ->
       :not_found
@@ -56,6 +55,34 @@ defmodule Sandman.Http.Server do
         response
     end
     |> put_defaults(doc_id)
+  end
+
+  @spec build_req_res(
+          atom | %{:body => any, :conn => Plug.Conn.t(), optional(any) => any},
+          atom | %{:headers => any, optional(any) => any}
+        ) :: %{
+          req: %{body: any, headers: any, host: any, method: any, port: any, scheme: any},
+          req_content_info: %{content_type: false | nil | binary, is_json: boolean},
+          res: atom | %{:headers => any, optional(any) => any},
+          res_content_info: %{content_type: false | nil | binary, is_json: boolean}
+        }
+  def build_req_res(request, response) do
+    req = %{
+      scheme: request.conn.scheme,
+      method: request.conn.method,
+      host: request.conn.host,
+      port: request.conn.port,
+      path: "/" <> Enum.join(request.conn.path_info, "/"),
+      query: request.conn.query_string,
+      headers: request.conn.req_headers,
+      body: request.body,
+    }
+    %{
+      req: req,
+      res: response,
+      res_content_info: get_content_info_from_headers(response.headers),
+      req_content_info: get_content_info_from_headers(req.headers)
+    }
   end
 
   defp put_defaults(response, doc_id) do

@@ -1,5 +1,6 @@
 defmodule Sandman.HttpClient do
   import Sandman.Logger
+  import Sandman.Http.Helpers
   alias Sandman.LuaMapper
 
   def fetch_handler(doc_id, method, args, luerl_state) do
@@ -112,19 +113,5 @@ defmodule Sandman.HttpClient do
         # val is list of strings => prepend to acc
         acc ++ Enum.map(val, fn item -> {key, item} end)
     end)
-  end
-
-  def get_content_info_from_headers(headers) do
-    content_type = Enum.find_value(headers, fn {name, value}->
-      if String.downcase(name) == "content-type" do
-        String.downcase(value)
-      else
-        nil
-      end
-    end)
-
-    is_json = (content_type || "")
-      |> String.contains?("application/json")
-    %{content_type: content_type, is_json: is_json}
   end
 end
