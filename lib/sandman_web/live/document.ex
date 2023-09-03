@@ -35,7 +35,13 @@ defmodule SandmanWeb.LiveView.Document do
 
   def render_empty_state(assigns) do
     ~H"""
-      <button class="pt-1 text-sm" phx-click="add-block" phx-value-block-id="-">Add Block</button>
+      <div class="group h-5">
+        <div class="flex flex-row">
+          <div class="flex-grow"/>
+          <button class="pt-1 mr-3 text-lg" phx-click="add-block" phx-value-block-id="-"><span class="font-bold">+</span> Insert block</button>
+          <div class="flex-grow"/>
+        </div>
+      </div>
     """
   end
   def render_blocks(assigns) do
