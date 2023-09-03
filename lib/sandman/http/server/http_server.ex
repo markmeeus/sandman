@@ -11,7 +11,7 @@ defmodule Sandman.Http.Server do
   def prepare_routes(routes), do: ConnMatch.prepare_routes(routes)
 
   def handle_request(doc_id, luerl_server_pid, routes, {replyto_pid, request}) do
-    log(doc_id, "\nHandling Incomming request ...")
+    log(doc_id, "\nHandling Incomming request ... #{Enum.join(request.path_info, "/")}" )
     #{response, luerl_state} = case
     case ConnMatch.match(request, routes) do
     {route = %{func: func}, params} ->
@@ -98,9 +98,9 @@ defmodule Sandman.Http.Server do
     # erl structure
     Enum.reduce(headers, %{}, fn
       {name, val}, acc when is_bitstring(val)->
-        Map.put(acc, String.downcase(name), [val])
+        Map.put(acc, String.downcase(name), val)
       {name, values}, acc ->
-        Map.put(acc, String.downcase(name), values)
+        Map.put(acc, String.downcase(name), Enum.join(values,","))
     end)
   end
 

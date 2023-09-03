@@ -125,7 +125,7 @@ defmodule Sandman.Document do
     res = Sandman.Http.Server.handle_request(state.doc_id, state.luerl_server_pid, server.routes, {replyto_pid, request})
 
     if(res == :not_found) do
-      log(doc_id, "#{inspect(request)} => 404 Not Found")
+      log(doc_id, "#{Enum.join(request.path_info,"/")} => 404 Not Found")
       send(replyto_pid, {:http_response, %{status: 404, body: "Not Found", headers: %{"content-type" => "text/text" }}})
     end
 
@@ -163,7 +163,7 @@ defmodule Sandman.Document do
 
   def handle_cast({:record_http_request, req_res, block_id}, state = %{doc_id: doc_id, requests: requests, current_block_id: current_block_id}) do
     block_id = block_id || current_block_id
-    new_state = update_in(state.requests[block_id], fn val -> val ++ [req_res] end)
+    new_state = update_in(state.requests[block_id], fn val -> (val || []) ++ [req_res] end)
     #new_state = Map.put(state, :requests, requests ++ [req_res])
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :request_recorded)
     {:noreply, new_state}
