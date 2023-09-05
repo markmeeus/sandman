@@ -44,7 +44,7 @@ defmodule Sandman.LuerlWrapper do
 
     luerl_state = :luerl.set_table(["sandman", "json"], [], luerl_state)
     luerl_state = :luerl.set_table(["sandman", "json", "encode"], handlers.json_encode, luerl_state)
-    luerl_state = :luerl.set_table(["sandman", "json", "decode"], handlers.json_decode, luerl_state)
+    :luerl.set_table(["sandman", "json", "decode"], handlers.json_decode, luerl_state)
 
   end
 

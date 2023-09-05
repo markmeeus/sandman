@@ -42,7 +42,7 @@ defmodule Sandman.Http.Server.ConnMatch do
       captures -> {true, captures}
     end
   end
-  defp is_match?(a, b) do
+  defp is_match?(_, _) do
    false
   end
 

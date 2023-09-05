@@ -5,12 +5,11 @@ defmodule Sandman.Logger do
   def log(doc_id, message) when  is_bitstring(message) do
     case Hammer.check_rate("log:#{doc_id}", 5000, 1000) do
       {:allow, 1000 } ->
-          trimmed_message = limit(message)
           PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", {:log, %{
             type: "log",
             text: "Max log throughput (1000/5s) exceeded ... "
           }})
-      {:allow, count } ->
+      {:allow, _count } ->
         trimmed_message = limit(message)
         PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", {:log, %{
           type: "log",

@@ -27,7 +27,6 @@ defmodule Sandman.LuerlServer do
     GenServer.cast(pid, {:spawn_function, state_id, new_state_id, response_tag, function_path, args})
   end
 
-  @impl true
   def init({document_pid, handlers}) do
     state = %{
       luerl_states: %{}, #every block has it's own state
@@ -43,8 +42,6 @@ defmodule Sandman.LuerlServer do
 
     {:ok, state}
   end
-
-  @impl true
 
   def handle_cast({:run_code, state_id, new_state_id, response_tag, code},
         state = %{luerl_states: luerl_states, document_pid: document_pid, handlers: handlers}
@@ -179,6 +176,12 @@ defmodule Sandman.LuerlServer do
       end
     {:noreply, state}
   end
+  def handle_cast({:reset, state_ids}, state = %{luerl_states: luerl_states}) do
+    new_states = Enum.reduce(state_ids, luerl_states, fn state_id, states ->
+      Map.drop(states, [state_id])
+    end)
+    {:noreply, Map.put(state, :luerl_states, new_states) }
+  end
 
   def handle_info({:spawn_result, response, response_tag, :ok, state_id, luerl_state},
     state = %{luerl_states: luerl_states, document_pid: document_pid}
@@ -189,27 +192,17 @@ defmodule Sandman.LuerlServer do
   end
 
   def handle_info({:spawn_result, response, response_tag, :error, _, _},
-    state = %{luerl_states: luerl_states, document_pid: document_pid}
+    state = %{document_pid: document_pid}
   ) do
     send(document_pid, {:lua_response, response_tag, response})
     {:noreply, state}
   end
 
-  def handle_cast({:reset, state_ids}, state = %{luerl_states: luerl_states}) do
-    new_states = Enum.reduce(state_ids, luerl_states, fn state_id, states ->
-      Map.drop(states, [state_id])
-    end)
-    {:noreply, Map.put(state, :luerl_states, new_states) }
-  end
-
-  def get_luerl_state(luerl_states, nil, handlers), do: LuerlWrapper.init(handlers)
-  def get_luerl_state(luerl_states, state_id, _), do: luerl_state = luerl_states[state_id]
+  def get_luerl_state(_, nil, handlers), do: LuerlWrapper.init(handlers)
+  def get_luerl_state(luerl_states, state_id, _), do: luerl_states[state_id]
 
   def save_luerl_state(luerl_states, nil, _), do: luerl_states
   def save_luerl_state(luerl_states, state_id, luerl_state) do
     Map.put(luerl_states, state_id, luerl_state)
   end
-
-  defp via_tuple(document_id),
-    do: {:via, Registry, {@registry, document_id}}
 end

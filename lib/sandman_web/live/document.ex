@@ -2,9 +2,6 @@ defmodule SandmanWeb.LiveView.Document do
   # In Phoenix v1.6+ apps, the line is typically: use MyAppWeb, :live_view
   use Phoenix.Component
   import Sandman.RequestFormatting
-  alias Sandman.Document
-  alias Phoenix.PubSub
-
   def mount(_params, _session, socket) do
     socket = assign(socket, :code, "some code")
     {:ok, socket}
@@ -87,6 +84,7 @@ defmodule SandmanWeb.LiveView.Document do
   end
 
   defp render_request(assigns = %{req: %{ res: nil, lua_result: [nil, err] }}) when is_bitstring(err) do
+    # TODO: deze moeten we nog fixen, die assigns zijn hier totaal gefaked!
     ~H"""
       <div class="flex flex-col">
         <div class="flex flex-row-reverse text-xs text-red-700 rounded-b pb-1 px-1" style="background-color: rgb(238, 238, 238);">

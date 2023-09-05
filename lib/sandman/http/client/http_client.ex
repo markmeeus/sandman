@@ -26,7 +26,7 @@ defmodule Sandman.HttpClient do
     # TODO: finch build can fail as well
     try do
       req = Finch.build(method, url, headers, body)
-      res = send_request(req)
+      send_request(req)
     rescue
       e in ArgumentError -> %{
         req: nil,

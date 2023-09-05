@@ -26,9 +26,6 @@ defmodule Sandman.DocumentEncoder do
     |> write_block(block)
     |> write_blocks(rest)
   end
-  defp write_blocks(encoded, [block]) do
-    write_block(encoded,block)
-  end
   defp write_blocks(encoded, _) do
     encoded
   end
@@ -47,7 +44,7 @@ defmodule Sandman.DocumentEncoder do
   end
 
   defp read_blocks(document, encoded, new_id_fn) do
-    {blocks, current_block} = Enum.reduce(String.split(encoded, "\n"), {[], nil}, fn line, {blocks, current_block} ->
+    {blocks, _current_block} = Enum.reduce(String.split(encoded, "\n"), {[], nil}, fn line, {blocks, current_block} ->
 
       case read_block_header(line) do
         :lua -> case current_block do
@@ -60,7 +57,7 @@ defmodule Sandman.DocumentEncoder do
 
         nil -> case current_block do # not a header line
             nil -> {blocks, nil} # this wil later add to md current block
-            block ->
+            _block ->
               add_line_to_current_block({blocks, current_block}, line)
         end
       end
@@ -70,7 +67,7 @@ defmodule Sandman.DocumentEncoder do
   end
 
   defp read_block_header(line) do
-    block_header_regex = ~r/^<!-- sandman:(?<json>.*)-->$/
+    #block_header_regex = ~r/^<!-- sandman:(?<json>.*)-->$/
     block_header_regex = ~r/```(?<lang>.*)$/
     case (Regex.named_captures(block_header_regex, line)) do
       %{"lang" => "lua"} -> :lua

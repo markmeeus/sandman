@@ -1,7 +1,7 @@
 defmodule Sandman.LuaMapper do
   def map(lua_table, schema, path \\ [])
   # mapping a table into a map
-  def map(lua_value, :any, path) do
+  def map(lua_value, :any, _path) do
     {map_unchecked(lua_value), []}
   end
   def map(lua_value, schema_fn, path) when is_function(schema_fn) do
@@ -50,16 +50,16 @@ defmodule Sandman.LuaMapper do
       {list ++ [mapped_val], warnings ++ child_warnings}
     end)
   end
-  def map(val, schema = [member_schema], path) when is_list(schema) and is_integer(val) do
+  def map(val, schema = [_member_schema], path) when is_list(schema) and is_integer(val) do
     {"", [{path, :unexpected_type, :table, :integer, to_lua_code(val)}]}
   end
-  def map(val, schema = [member_schema], path) when is_list(schema) and is_float(val) do
+  def map(val, schema = [_member_schema], path) when is_list(schema) and is_float(val) do
     {"", [{path, :unexpected_type, :table, :integer, to_lua_code(val)}]}
   end
-  def map(val, schema = [member_schema], path) when is_list(schema) and is_bitstring(val) do
+  def map(val, schema = [_member_schema], path) when is_list(schema) and is_bitstring(val) do
     {"", [{path, :unexpected_type, :table, :string, to_lua_code(val)}]}
   end
-  def map(val, schema = [member_schema], path) when is_list(schema) and is_boolean(val) do
+  def map(val, schema = [_member_schema], path) when is_list(schema) and is_boolean(val) do
     {"", [{path, :unexpected_type, :table, :boolean, to_lua_code(val)}]}
   end
 
@@ -102,7 +102,7 @@ defmodule Sandman.LuaMapper do
     end
     {integer, [{path, :unexpected_type, :integer, :string, to_lua_code(val)}]}
   end
-  def map(val, :integer, path) when is_number(val) do
+  def map(val, :integer, _path) when is_number(val) do
     {trunc(val), []}
   end
 
@@ -112,7 +112,7 @@ defmodule Sandman.LuaMapper do
     {"", [{path, :unexpected_type, :string, :table, to_lua_code(val)}]}
   end
 
-  def map(val, schema, path) when is_atom(schema) do
+  def map(val, schema, _path) when is_atom(schema) do
     {val, []}
   end
 
@@ -164,7 +164,7 @@ defmodule Sandman.LuaMapper do
   end
 
   def to_lua_code(termex) when is_function(termex), do: "function"
-  def to_lua_code(termex), do: "?" # dont leak any internals please
+  def to_lua_code(_termex), do: "?" # dont leak any internals please
 
   def to_printable(termex, root\\true)
   def to_printable(termex, true) when is_bitstring(termex), do: trim(termex)
@@ -186,7 +186,7 @@ defmodule Sandman.LuaMapper do
        "}")
   end
   def to_printable(termex, _) when is_function(termex), do: "function"
-  def to_printable(termex, _), do: "?" # dont leak any internals please
+  def to_printable(_termex, _), do: "?" # dont leak any internals please
 
   def trim(printable) do
     if(String.length(printable) > 1024) do

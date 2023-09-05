@@ -68,14 +68,6 @@ defmodule SandmanWeb.LiveView.App do
     {:ok, socket}
   end
 
-  def handle_event("open_file", _, socket) do
-    {:noreply, start_document(:open, socket)}
-  end
-
-  def handle_event("new_file", _, socket) do
-    {:noreply, start_document(:new, socket)}
-  end
-
   defp start_document(mode, socket) do
         # start_doc
     doc_id = UUID.uuid4()
@@ -97,9 +89,17 @@ defmodule SandmanWeb.LiveView.App do
         |> assign(:main_left_tab, :req_res)
         |> stream(:logs, [])
 
-      other ->
+      _other ->
         socket # no file selected
     end
+  end
+
+  def handle_event("open_file", _, socket) do
+    {:noreply, start_document(:open, socket)}
+  end
+
+  def handle_event("new_file", _, socket) do
+    {:noreply, start_document(:new, socket)}
   end
 
   def handle_event("code-changed", %{"blockId" => block_id, "value" => code}, socket = %{assigns: %{doc_pid: doc_pid}}) do
@@ -179,7 +179,7 @@ defmodule SandmanWeb.LiveView.App do
     {:noreply, assign(socket, :document, doc)}
   end
 
-  def handle_info({:log, log}, socket = %{assigns: %{doc_pid: doc_pid, log_count: log_count}}) do
+  def handle_info({:log, log}, socket = %{assigns: %{doc_pid: _doc_pid, log_count: log_count}}) do
     socket = socket
     |> assign(:log_count, log_count + 1)
     |> stream_insert(:logs, Map.put(log, :id, log_count))

@@ -44,7 +44,7 @@ defmodule Sandman.UpdateManager do
     PubSub.broadcast(Sandman.PubSub, "update_manager", {:update_manager, :checking})
     Process.sleep(1000)
     status = case get_latest_version_info() do
-      {:unavailable, reason} -> :failed
+      {:unavailable, _reason} -> :failed
       latest_version_info ->
         current_version = to_string(Application.spec(:sandman, :vsn))
         latest_version = latest_version_info["version"]

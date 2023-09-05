@@ -3,8 +3,6 @@ defmodule SandmanWeb.LiveView.Log do
   use Phoenix.Component
 
   alias Phoenix.LiveView.JS
-  alias Sandman.Document
-  alias Phoenix.PubSub
 
   @spec render(any) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do

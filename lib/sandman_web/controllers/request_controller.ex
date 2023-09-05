@@ -61,7 +61,7 @@ defmodule SandmanWeb.RequestController do
   end
 
   # this is the default 'preview' response, raw as it was sent -> to iframe
-  defp respond_for_content_type(conn, content_type, body) do
+  defp respond_for_content_type(conn, _content_type, body) do
     resp(conn, 200, body)
   end
 end

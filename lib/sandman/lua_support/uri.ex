@@ -2,9 +2,7 @@ defmodule Sandman.LuaSupport.Uri do
 
   alias Sandman.LuaMapper
 
-  import Sandman.Logger
-
-  def parse(doc_id, [uri], luerl_state) do
+  def parse(_doc_id, [uri], luerl_state) do
     uri = URI.parse(uri)
     res = [LuaMapper.reverse_map(%{
       host: uri.host,
@@ -18,8 +16,8 @@ defmodule Sandman.LuaSupport.Uri do
     {res, luerl_state}
   end
 
-  def tostring(doc_id, [url_map], luerl_state) do
-    {map, errors} = LuaMapper.map(url_map, %{
+  def tostring(_doc_id, [url_map], luerl_state) do
+    {map, _errors} = LuaMapper.map(url_map, %{
       "host" => :string,
       "path" => :string,
       "port" => :integer,
@@ -39,18 +37,18 @@ defmodule Sandman.LuaSupport.Uri do
     {[res], luerl_state}
   end
 
-  def encode(doc_id, [url], luerl_state) do
+  def encode(_doc_id, [url], luerl_state) do
     {[URI.encode(url)], luerl_state}
   end
-  def decode(doc_id, [url], luerl_state) do
+  def decode(_doc_id, [url], luerl_state) do
     {[URI.decode(url)], luerl_state}
   end
 
-  def encodeComponent(doc_id, [url], luerl_state) do
+  def encodeComponent(_doc_id, [url], luerl_state) do
     res = URI.encode(url, &URI.char_unreserved?(&1))
     {[res], luerl_state}
   end
-  def decodeComponent(doc_id, [url], luerl_state) do
+  def decodeComponent(_doc_id, [url], luerl_state) do
     {[URI.decode(url)], luerl_state}
   end
 

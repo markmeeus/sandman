@@ -104,7 +104,7 @@ defmodule Sandman.Http.Server do
     end)
   end
 
-  defp check_status(response = %{status: status}, doc_id) when not status in 100..999 do
+  defp check_status(response = %{status: status}, doc_id) when status not in 100..999 do
     # invalid status is server error
     log(doc_id, "Received invalid status code #{status}.")
     response

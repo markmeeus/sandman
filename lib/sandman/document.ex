@@ -120,6 +120,45 @@ defmodule Sandman.Document do
     {:reply, get_request_by_id(requests, {block_id, index}), state}
   end
 
+  # luacallbacks
+  def handle_call({:handle_lua_call, :print, arg}, _sender, state = %{doc_id: doc_id}) do
+    formatted = arg
+    |> Enum.map(&LuaMapper.to_printable/1)
+    |> Enum.join(" ")
+    # logs should be appended here and raise a doc changed event;
+    log(doc_id, formatted)
+    # append
+    {:reply, {:ok, [true]}, state}
+  end
+  def handle_call({:handle_lua_call, :start_server, [port]}, _sender, state) do
+    id =  UUID.uuid4()
+    ref = String.to_atom(id)
+    server_pid = Plug.Cowboy.http(Sandman.UserPlug, {self(), id} , port: port, ref: ref)
+    server = %{
+      id: id,
+      cowboy_ref: ref,
+      pid: server_pid,
+      routes: [],
+      block_id: state.current_block_id
+    }
+    new_state = %{state | servers: Map.put(state.servers, server.id, server)}
+    {:reply, {:ok, [server.id]}, new_state}
+
+  end
+  def handle_call({:handle_lua_call, :add_route, [method, server_id, path, func = {:funref, _, _}]}, _sender, state) do
+    route = %{
+      method: method,
+      path: path,
+      func: func,
+      block_id: state.current_block_id
+    }
+    #TODO: dont prepare all routes all the time
+    new_routes = Sandman.Http.Server.prepare_routes(state.servers[server_id].routes ++ [route])
+    new_state = put_in(state.servers[server_id].routes, new_routes)
+
+    {:reply, {:ok, [true]}, new_state}
+  end
+
   def handle_cast({:handle_server_request, replyto_pid, server_id, request}, state = %{doc_id: doc_id, servers: servers}) do
     server = Map.get(servers, server_id)
     res = Sandman.Http.Server.handle_request(state.doc_id, state.luerl_server_pid, server.routes, {replyto_pid, request})
@@ -142,7 +181,7 @@ defmodule Sandman.Document do
     document = Map.put(document, :blocks, new_blocks)
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
     write_file(state)
-    {:noreply, state = %{ state | document: document}}
+    {:noreply, %{ state | document: document}}
   end
 
   def handle_cast({:add_block, :after, after_block_id}, state = %{document: document, doc_id: doc_id}) do
@@ -158,10 +197,10 @@ defmodule Sandman.Document do
     document = Map.put(document, :blocks, new_blocks)
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
     write_file(state)
-    {:noreply, state = %{ state | document: document}}
+    {:noreply, %{ state | document: document}}
   end
 
-  def handle_cast({:record_http_request, req_res, block_id}, state = %{doc_id: doc_id, requests: requests, current_block_id: current_block_id}) do
+  def handle_cast({:record_http_request, req_res, block_id}, state = %{doc_id: doc_id, current_block_id: current_block_id}) do
     block_id = block_id || current_block_id
     new_state = update_in(state.requests[block_id], fn val -> (val || []) ++ [req_res] end)
     #new_state = Map.put(state, :requests, requests ++ [req_res])
@@ -174,7 +213,7 @@ defmodule Sandman.Document do
     document = Map.put(document, :blocks, new_blocks)
     write_file(state)
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
-    {:noreply, state = %{ state | document: document}}
+    {:noreply, %{ state | document: document}}
   end
 
   def handle_cast({:change_code, block_id, code}, state = %{document: document}) do
@@ -184,13 +223,13 @@ defmodule Sandman.Document do
     end)
     document = Map.put(document, :blocks, new_blocks)
     write_file(state)
-    {:noreply, state = %{ state | document: document}}
+    {:noreply, %{ state | document: document}}
   end
 
   def handle_cast({:update_title, title}, state = %{document: document}) do
     document = Map.put(document, :title, title)
     write_file(state)
-    {:noreply, state = %{ state | document: document}}
+    {:noreply, %{ state | document: document}}
   end
 
   def handle_cast({:run_block, block_id}, state = %{document: document, doc_id: doc_id, luerl_server_pid: luerl_server_pid}) do
@@ -231,7 +270,7 @@ defmodule Sandman.Document do
   end
   def handle_info({:lua_response, {:run_block}, response}, state = %{doc_id: doc_id}) do
     case response do
-      {:error, err, formatted} ->
+      {:error, _err, formatted} ->
         log(doc_id, "Error: " <> formatted)
       :no_state_for_block ->
           log(doc_id, "This block cannot be run right now. Did you run the previous block?")
@@ -242,7 +281,7 @@ defmodule Sandman.Document do
 
   def handle_info({:lua_response, {:http_response, replyto_pid, route, request, block_id}, response}, state = %{doc_id: doc_id}) do
     case response do
-      {:error, err, formatted} ->
+      {:error, _err, formatted} ->
         log(doc_id, "Error executing route: #{route.path}\n" <> formatted)
         send(replyto_pid, {:http_response, %{
           body: "Error",
@@ -265,52 +304,13 @@ defmodule Sandman.Document do
     end, @write_interval)
   end
 
-  # luacallbacks
-  def handle_call({:handle_lua_call, :print, arg}, _sender, state = %{document: document, doc_id: doc_id}) do
-    formatted = arg
-    |> Enum.map(&LuaMapper.to_printable/1)
-    |> Enum.join(" ")
-    # logs should be appended here and raise a doc changed event;
-    log(doc_id, formatted)
-    # append
-    {:reply, {:ok, [true]}, state}
-  end
-  def handle_call({:handle_lua_call, :start_server, [port]}, _sender, state) do
-    id =  UUID.uuid4()
-    ref = String.to_atom(id)
-    server_pid = Plug.Cowboy.http(Sandman.UserPlug, {self(), id} , port: port, ref: ref)
-    server = %{
-      id: id,
-      cowboy_ref: ref,
-      pid: server_pid,
-      routes: [],
-      block_id: state.current_block_id
-    }
-    new_state = %{state | servers: Map.put(state.servers, server.id, server)}
-    {:reply, {:ok, [server.id]}, new_state}
-
-  end
-  def handle_call({:handle_lua_call, :add_route, [method, server_id, path, func = {:funref, _, _}]}, _sender, state) do
-    route = %{
-      method: method,
-      path: path,
-      func: func,
-      block_id: state.current_block_id
-    }
-    #TODO: dont prepare all routes all the time
-    new_routes = Sandman.Http.Server.prepare_routes(state.servers[server_id].routes ++ [route])
-    new_state = put_in(state.servers[server_id].routes, new_routes)
-
-    {:reply, {:ok, [true]}, new_state}
-  end
-
   defp clean_servers_and_routes(servers, block_id) do
     Enum.reduce(servers, %{}, fn
       {_, %{block_id: ^block_id, cowboy_ref: ref}}, servers ->
         # this server should die
         :ok = Plug.Cowboy.shutdown(ref)
         servers
-      {id, server}, servers ->
+      {_id, server}, servers ->
         # keeping this server, but only keep routes that are not part of this block
         new_routes = Enum.filter(server.routes, fn route -> route.block_id != block_id end)
         new_server = Map.put(server, :routes, new_routes)

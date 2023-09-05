@@ -46,6 +46,10 @@ defmodule SandmanWeb.LiveView.RequestResponse do
 
   def request(assigns) do
     {block_id, request_idx} = assigns.request_id
+    assigns = assigns
+    |> assign(:block_id, block_id)
+    |> assign(:request_idx, request_idx)
+
     ~H"""
     <div class="flex flex-col mt-4 h-full">
       <.toggle_block name="request-headers" title="Headers"
@@ -61,14 +65,14 @@ defmodule SandmanWeb.LiveView.RequestResponse do
         extra_toggle_event="switch_req_body_format" />
       <div id="request-body" class="pt-2">
         <%= if @show_raw_body do %>
-          <iframe id="raw" class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/request/#{request_idx}?raw=true"}>
+          <iframe id="raw" class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{@block_id}/request/#{@request_idx}?raw=true"}>
             </iframe>
         <% else %>
           <%= if @is_json do %>
-            <iframe id="no-sandbox" class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/request/#{request_idx}"}>
+            <iframe id="no-sandbox" class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{@block_id}/request/#{@request_idx}"}>
             </iframe>
           <% else %>
-            <iframe id="sandbox" sandbox class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/request/#{request_idx}"}>
+            <iframe id="sandbox" sandbox class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{@block_id}/request/#{@request_idx}"}>
             </iframe>
           <% end %>
         <% end %>
@@ -78,6 +82,9 @@ defmodule SandmanWeb.LiveView.RequestResponse do
   end
   def response(assigns) do
     {block_id, request_idx} = assigns.request_id
+    assigns = assigns
+    |> assign(:block_id, block_id)
+    |> assign(:request_idx, request_idx)
     ~H"""
     <div class="flex flex-col mt-4 h-full" >
       <.toggle_block name="response-headers" title="Headers" default_open={false} extra_toggle={nil} />
@@ -91,14 +98,14 @@ defmodule SandmanWeb.LiveView.RequestResponse do
         extra_toggle_event="switch_res_body_format" />
       <div id="response-body" class="pt-2 h-full">
         <%= if @show_raw_body do %>
-          <iframe id="raw" class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/response/#{request_idx}?raw=true"}>
+          <iframe id="raw" class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{@block_id}/response/#{@request_idx}?raw=true"}>
             </iframe>
         <% else %>
           <%= if @is_json do %>
-            <iframe id="no-sandbox" class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/response/#{request_idx}"}>
+            <iframe id="no-sandbox" class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{@block_id}/response/#{@request_idx}"}>
             </iframe>
           <% else %>
-            <iframe id="sandbox" sandbox class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{block_id}/response/#{request_idx}"}>
+            <iframe id="sandbox" sandbox class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{@block_id}/response/#{@request_idx}"}>
             </iframe>
           <% end %>
         <% end %>

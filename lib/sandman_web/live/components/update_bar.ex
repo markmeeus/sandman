@@ -3,8 +3,6 @@ defmodule SandmanWeb.UpdateBar do
   use Phoenix.LiveView
 
   alias Phoenix.PubSub
-  alias Phoenix.LiveView.JS
-
 
   def mount(_params, _session, socket) do
     :wx.set_env(Desktop.Env.wx_env())

@@ -1,7 +1,5 @@
 defmodule Sandman.ErrorFormatter do
 
-  alias Sandman.LuerlWrapper
-
   def format_parse_error([{line_nr, :luerl_comp_lint, :illegal_varargs}]) do
     "Invalid Code at #{line_nr}: cannot use '...' outside a vararg function"
   end
@@ -45,7 +43,7 @@ defmodule Sandman.ErrorFormatter do
     "Error:" <> "Recursive Table" <>
     "\n" <> format_stack(stack, luerl_state) <> "\n"
   end
-  def format_exception(exception, luerl_state), do: inspect(exception)
+  def format_exception(exception, _luerl_state), do: inspect(exception)
 
   defp format_error_and_stack(error, stack, luerl_state) do
     format_error(error, luerl_state) <> "\n" <>
@@ -63,7 +61,7 @@ defmodule Sandman.ErrorFormatter do
   defp format_stack_line({"-no-name-", _, [file: "-no-file-", line: line_nr]}, _) do
     "at #{line_nr}: ()"
   end
-  defp format_stack_line({{:tref, _}, function_args, [file: _, line: line_nr]}, luerl_state) do
+  defp format_stack_line({{:tref, _}, _function_args, [file: _, line: line_nr]}, _luerl_state) do
     "at #{line_nr}:"
   end
 
@@ -71,9 +69,9 @@ defmodule Sandman.ErrorFormatter do
     #"#{function_name}(#{format_lua_terms(function_args, luerl_state)}):#{line_nr}"
     "at #{line_nr}: #{function_name || "<nil>"}(#{format_lua_terms(function_args, luerl_state)})"
   end
-  defp format_stack_line(unexpected, luerl_state) do
+  defp format_stack_line(unexpected, _luerl_state) do
     #"#{function_name}(#{format_lua_terms(function_args, luerl_state)}):#{line_nr}"
-    inspect(unexpected)
+    inspect({"unexpected error (you should not see this)", unexpected})
   end
 
 
@@ -122,10 +120,10 @@ defmodule Sandman.ErrorFormatter do
 
   defp format_error(:invalid_capture, _), do: "malformed pattern"
 
-  defp format_error({:invalid_char_class, char}, luerl_state) do
+  defp format_error({:invalid_char_class, char}, _luerl_state) do
     "malformed pattern: #{[char]}"
   end
-  defp format_error(:invalid_char_set, luerl_state), do: "malformed pattern (missing ']')"
+  defp format_error(:invalid_char_set, _luerl_state), do: "malformed pattern (missing ']')"
 
   defp format_error({:illegal_op, operator}, luerl_state) do
     "illegal operator: #{format_term(operator, luerl_state)}"
@@ -133,26 +131,26 @@ defmodule Sandman.ErrorFormatter do
   defp format_error({:no_module, module}, luerl_state) do
     "module '#{format_term(module, luerl_state)}' not found"
   end
-  defp format_error({type, message}, luerl_state) when is_bitstring(type) and is_bitstring(message) do
+  defp format_error({type, message}, _luerl_state) when is_bitstring(type) and is_bitstring(message) do
     "#{type}: \"#{message}\""
   end
-  defp format_error(err, luerl_state) when is_bitstring(err) , do: err
-  defp format_error(err, luerl_state), do: inspect(err)
+  defp format_error(err, _luerl_state) when is_bitstring(err) , do: err
+  defp format_error(err, _luerl_state), do: inspect(err)
 
   defp format_term(term, luerl_state) when is_list(term) do
     try do
       decoded = :luerl_new.decode(term, luerl_state)
       format_to_lua(decoded)
-    rescue e ->
+    rescue _e ->
       IO.inspect({"WARN, COULD NOT ENCODE ERROR TERM", term})
       inspect(term)
     end
   end
-  defp format_term(term, luerl_state), do: inspect(term)
+  defp format_term(term, _luerl_state), do: inspect(term)
 
   defp format_to_lua(decoded) when is_list(decoded) do
     "{" <> (decoded
-    |> Enum.map(fn {k, v} -> k end)
+    |> Enum.map(fn {k, _v} -> k end)
     |> Enum.join(", ")) <> "}"
   end
   defp format_to_lua(decoded), do: inspect(decoded)

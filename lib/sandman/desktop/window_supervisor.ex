@@ -31,7 +31,7 @@ defmodule Sandman.WindowSupervisor do
       Process.link(pid)
       Process.flag(:trap_exit, true)
       receive do
-        {:EXIT, pid, :normal} ->
+        {:EXIT, _pid, :normal} ->
           handle_no_windows_left()
           Process.sleep(1000)
           handle_no_windows_left()
@@ -39,7 +39,7 @@ defmodule Sandman.WindowSupervisor do
     end)
   end
 
-  def init([init_args]) do
+  def init([_init_args]) do
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 

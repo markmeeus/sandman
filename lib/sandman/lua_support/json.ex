@@ -3,7 +3,7 @@ defmodule Sandman.Encoders.Json do
   alias Sandman.LuaMapper
   import Sandman.Logger
 
-  def decode(doc_id, [json], luerl_state) do
+  def decode(_doc_id, [json], luerl_state) do
     res = json
       |> Jason.decode
       |> case do
