@@ -13,6 +13,12 @@ defmodule SandmanWeb.LiveView.Document do
   def render(assigns) do
     ~H"""
     <div phx-hook="DocumentHook" id="document">
+      <div class="group" style="position: relative; top: -8px;">
+        <div class="text-white p-2 px-6  flex flex-row fs-2 my-2 text-sm sticky" style="background-color:#1E1E1E;">
+          <button phx-click="run-all-blocks"><span><%="▶"%></span> Run All</button>
+          <div class="flex-grow"/>
+        </div>
+      </div>
       <form phx-change="update" phx-hook="TitleForm" id="title-form">
         <input
           type="text"
@@ -59,17 +65,20 @@ defmodule SandmanWeb.LiveView.Document do
             <div id={"monaco-#{block.id}"} phx-hook="MonacoHook" data-block-id={block.id} ><%= block.code %></div>
           </div>
           <div class="px-1" >
-            <%= for {req, index} <- Enum.with_index(requests_for_block(@requests, block.id)) do%>
-              <%= render_request(%{req: req, block_id: block.id, request_index: index}) %>
-            <% end %>
+            <%= if(@open_requests[block.id]) do %>
+              <%= for {req, index} <- Enum.with_index(requests_for_block(@requests, block.id)) do%>
+                <%= render_request(%{req: req, block_id: block.id, request_index: index}) %>
+              <% end %>
+            <%end%>
           </div>
           <div class="group min-h-5">
             <div class="flex flex-row fs-2 my-2 text-sm sticky">
               <button phx-click="run-block" phx-value-block-id={block.id}><span><%="▶"%></span> Run</button>
               <div class="flex-grow"/>
-                <button class="  mr-3 text-sm hidden group-hover:block" phx-click="add-block" phx-value-block-id={block.id}><span class="font-bold">+</span> Insert block</button>
-                <button class=" text-sm hidden group-hover:block" phx-click="remove-block" phx-value-block-id={block.id}><span class="font-bold">-</span> Remove block</button>
+              <button class="  mr-3 text-sm hidden group-hover:block" phx-click="add-block" phx-value-block-id={block.id}><span class="font-bold">+</span> Insert block</button>
+              <button class=" text-sm hidden group-hover:block" phx-click="remove-block" phx-value-block-id={block.id}><span class="font-bold">-</span> Remove block</button>
               <div class="flex-grow"/>
+              <%= render_block_stats(%{requests: requests_for_block(@requests, block.id), block: block, is_open: !!@open_requests[block.id]}) %>
             </div>
           </div>
         </div>
@@ -101,6 +110,21 @@ defmodule SandmanWeb.LiveView.Document do
     """
   end
 
+  defp render_block_stats(assigns = %{is_open: true}) do
+    ~H"""
+    <a href="#" class="px-1" phx-click="toggle-requests" phx-value-block-id={@block.id}>close ▲</a>
+    """
+  end
+
+  defp render_block_stats(assigns) do
+    ~H"""
+    <%= case Enum.count(@requests) do %>
+    <% 0 -> %>
+    <% count -> %>
+      <a href="#" class="px-1" phx-click="toggle-requests" phx-value-block-id={@block.id}><%=count%> requests ▼</a>
+    <% end %>
+    """
+  end
 
   defp requests_for_block(requests, block_id) do
     requests[block_id] || []

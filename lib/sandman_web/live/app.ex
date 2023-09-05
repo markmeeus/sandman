@@ -24,7 +24,7 @@ defmodule SandmanWeb.LiveView.App do
         <div id="document-log-container" class="h-screen" phx-hook="MaintainWidth">
           <div id="document-container" style="overflow:scroll;" phx-hook="MaintainHeight">
             <div id="document-root">
-              <SandmanWeb.LiveView.Document.render doc_pid={@doc_pid} requests={@document.requests} document={@document.document} code="ola code" />
+              <SandmanWeb.LiveView.Document.render doc_pid={@doc_pid} open_requests={@open_requests} requests={@document.requests} document={@document.document} code="ola code" />
             </div>
           </div>
           <div class="gutter gutter-vertical" id="doc-log-gutter" phx-update="ignore"></div>
@@ -33,7 +33,19 @@ defmodule SandmanWeb.LiveView.App do
           </div>
         </div>
         <div class="gutter gutter-horizontal" id="doc-req-gutter" phx-update="ignore"></div>
-        <div id="req-res-container" class="h-screen" style="overflow:scroll;" phx-hook="MaintainWidth">
+
+        <div id="req-res-container" class="h-screen flex-grow" style="overflow:scroll;" phx-hook="MaintainWidth">
+          <div style="background-color:#1E1E1E;">
+            <div class="">
+              <nav class="flex space-x-4" aria-label="Tabs">
+                <!-- Current: "bg-gray-100 text-gray-700", Default: "text-gray-500 hover:text-gray-700" -->
+                <a href="#" class="text-white rounded-md px-3 py-2 text-sm font-medium" aria-current="page">Request Info</a>
+                <a href="#" class="text-gray-500 hover:text-gray-700 rounded-md px-3 py-2 text-sm font-medium">Logs</a>
+                <a href="#" class="text-gray-500 hover:text-gray-700 rounded-md px-3 py-2 text-sm font-medium">Docs</a>
+              </nav>
+            </div>
+          </div>
+          <div class="pt-2 h-full">
             <SandmanWeb.LiveView.RequestResponse.render
               doc_pid={@doc_pid}
               tab={@tab}
@@ -43,6 +55,7 @@ defmodule SandmanWeb.LiveView.App do
               show_raw_req_body={@show_raw_req_body}
               show_raw_res_body={@show_raw_res_body}
               />
+          </div>
         </div>
       </div>
     """
@@ -81,6 +94,7 @@ defmodule SandmanWeb.LiveView.App do
         |> assign(:request_id, nil)
         |> assign(:show_raw_res_body, false)
         |> assign(:show_raw_req_body, false)
+        |> assign(:open_requests, %{})
         |> stream(:logs, [])
 
       other ->
@@ -107,6 +121,16 @@ defmodule SandmanWeb.LiveView.App do
     # persist document here
     Document.remove_block(doc_pid, block_id)
     {:noreply, socket}
+  end
+
+  def handle_event("toggle-requests", %{"block-id" => block_id}, socket = %{assigns: %{open_requests: open_requests}}) do
+    # persist document here
+    open_requests = case open_requests[block_id] do
+      nil -> Map.put(open_requests, block_id, block_id)
+      _ -> Map.delete(open_requests, block_id)
+    end
+
+    {:noreply, assign(socket, :open_requests, open_requests)}
   end
 
   def handle_event("update", %{"_target" => ["title"], "title" => title}, socket = %{assigns: %{doc_pid: doc_pid}}) do

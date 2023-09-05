@@ -71,6 +71,10 @@ defmodule Sandman.ErrorFormatter do
     #"#{function_name}(#{format_lua_terms(function_args, luerl_state)}):#{line_nr}"
     "at #{line_nr}: #{function_name || "<nil>"}(#{format_lua_terms(function_args, luerl_state)})"
   end
+  defp format_stack_line(unexpected, luerl_state) do
+    #"#{function_name}(#{format_lua_terms(function_args, luerl_state)}):#{line_nr}"
+    inspect(unexpected)
+  end
 
 
   defp format_lua_terms([], _), do: ""

@@ -18,7 +18,7 @@ defmodule SandmanWeb.LiveView.RequestResponse do
           <% req_res -> %>
             <div class="block h-full">
               <div class="text-base font-semibold">
-                <div class="inline-block bg-gray-100 rounded-lg px-3 py-1">
+                <div class="inline-block bg-gray-100 rounded-lg px-3 py-2">
                   <span><%= format_request(req_res) %></span>
                 </div>
                 <div class="inline-block bg-green-400 rounded-lg px-3 py-1">
