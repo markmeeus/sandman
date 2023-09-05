@@ -21,17 +21,13 @@ defmodule SandmanWeb.LiveView.App do
     ~H"""
       <%= live_render(@socket, UpdateBar, id: "update_bar") %>
       <div id="app-wrapper" class="flex flex-row" phx-hook="HomeHook">
-        <div id="document-log-container" class="h-screen" phx-hook="MaintainWidth">
-          <div id="document-container" style="overflow:scroll;" phx-hook="MaintainHeight">
+
+          <div id="document-container" style="overflow:scroll;" class="h-screen">
             <div id="document-root">
               <SandmanWeb.LiveView.Document.render doc_pid={@doc_pid} open_requests={@open_requests} requests={@document.requests} document={@document.document} code="ola code" />
             </div>
           </div>
-          <div class="gutter gutter-vertical" id="doc-log-gutter" phx-update="ignore"></div>
-          <div id="log-container" class="overscroll-contain flex flex-col " phx-hook="MaintainHeight" style="background-color: #E8E8E8">
-            <SandmanWeb.LiveView.Log.render logs={@streams.logs} />
-          </div>
-        </div>
+
         <div class="gutter gutter-horizontal" id="doc-req-gutter" phx-update="ignore"></div>
 
         <div id="req-res-container" class="h-screen flex-grow" style="overflow:scroll;" phx-hook="MaintainWidth">
@@ -39,23 +35,26 @@ defmodule SandmanWeb.LiveView.App do
             <div class="">
               <nav class="flex space-x-4" aria-label="Tabs">
                 <!-- Current: "bg-gray-100 text-gray-700", Default: "text-gray-500 hover:text-gray-700" -->
-                <a href="#" class="text-white rounded-md px-3 py-2 text-sm font-medium" aria-current="page">Request Info</a>
-                <a href="#" class="text-gray-500 hover:text-gray-700 rounded-md px-3 py-2 text-sm font-medium">Logs</a>
-                <a href="#" class="text-gray-500 hover:text-gray-700 rounded-md px-3 py-2 text-sm font-medium">Docs</a>
+                <a href="#" class={"#{tab_colors(@main_left_tab, :req_res)} px-3 py-2 text-sm font-medium"} phx-click="change-main-left-tab" phx-value-tab-id="req_res">Request Info</a>
+                <a href="#" class={"#{tab_colors(@main_left_tab, :logs)} px-3 py-2 text-sm font-medium"}  phx-click="change-main-left-tab" phx-value-tab-id="logs">Logs</a>
+                <%!-- <a href="#" class={"#{tab_colors(@main_left_tab, :docs)}  px-3 py-2 text-sm font-medium"}  phx-click="change-main-left-tab" phx-value-tab-id="docs">Docs</a> --%>
               </nav>
             </div>
           </div>
-          <div class="pt-2 h-full">
-            <SandmanWeb.LiveView.RequestResponse.render
-              doc_pid={@doc_pid}
-              tab={@tab}
-              sub_tab="Headers"
-              request_id = {@request_id}
-              requests={@document.requests}
-              show_raw_req_body={@show_raw_req_body}
-              show_raw_res_body={@show_raw_res_body}
-              />
-          </div>
+            <div class={"pt-2 h-full #{tab_visibility(@main_left_tab, :req_res)}"}>
+              <SandmanWeb.LiveView.RequestResponse.render
+                doc_pid={@doc_pid}
+                tab={@tab}
+                sub_tab="Headers"
+                request_id = {@request_id}
+                requests={@document.requests}
+                show_raw_req_body={@show_raw_req_body}
+                show_raw_res_body={@show_raw_res_body}
+                />
+            </div>
+            <div class={"pt-1 px-1 h-full #{tab_visibility(@main_left_tab, :logs)}"} >
+              <SandmanWeb.LiveView.Log.render logs={@streams.logs} />
+            </div>
         </div>
       </div>
     """
@@ -95,6 +94,7 @@ defmodule SandmanWeb.LiveView.App do
         |> assign(:show_raw_res_body, false)
         |> assign(:show_raw_req_body, false)
         |> assign(:open_requests, %{})
+        |> assign(:main_left_tab, :req_res)
         |> stream(:logs, [])
 
       other ->
@@ -155,6 +155,10 @@ defmodule SandmanWeb.LiveView.App do
     {:noreply, assign(socket, request_id: {block_id, request_index})}
   end
 
+  def handle_event("change-main-left-tab", %{"tab-id" => tab_id}, socket) do
+    {:noreply, assign(socket, :main_left_tab, String.to_existing_atom(tab_id))}
+  end
+
   def handle_event("clear-log", _, socket = %{assigns: %{log_count: log_count}}) do
     socket = socket
     |> assign(:log_count, log_count + 1)
@@ -181,5 +185,12 @@ defmodule SandmanWeb.LiveView.App do
     |> stream_insert(:logs, Map.put(log, :id, log_count))
     {:noreply, socket}
   end
+
+
+  defp tab_colors(selected_tab, selected_tab), do:  "text-white"
+  defp tab_colors(_, _), do:  "text-gray-500 hover:text-gray-300"
+
+  defp tab_visibility(selected_tab, selected_tab), do: "block"
+  defp tab_visibility(_, _), do: "hidden"
 
 end

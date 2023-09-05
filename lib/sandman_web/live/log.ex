@@ -9,12 +9,12 @@ defmodule SandmanWeb.LiveView.Log do
   @spec render(any) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
-      <div id="log-bar" class="no-select flex flex-row-reverse text-xs p-1" style="background-color:#EEE">
+      <div id="log-bar" class="rounded no-select flex flex-row-reverse text-xs p-1 px-2" style="background-color:#EEE">
         <button class="mr-2" phx-click={JS.dispatch("clearLog") |> JS.push("clear-log")} >clear</button>
         <div class="grow">Log</div>
       </div>
       <div id="sandman-log" class="text-black text-xs overflow-contain overflow-scroll flex-1">
-        <div id="log-wrapper" class="font-mono px-1">
+        <div id="log-wrapper" class="font-mono p-1">
           <ul id="logs" phx-update="stream">
             <li :for={{dom_id, log} <- @logs} id={dom_id}>
               <%= log.text %>
