@@ -117,6 +117,11 @@ defmodule SandmanWeb.LiveView.App do
     {:noreply, socket}
   end
 
+  def handle_event("run-all-blocks", _, socket = %{assigns: %{doc_pid: doc_pid}}) do
+    Document.run_all_blocks(doc_pid)
+    {:noreply, socket}
+  end
+
   def handle_event("remove-block", %{"block-id" => block_id}, socket = %{assigns: %{doc_pid: doc_pid}}) do
     # persist document here
     Document.remove_block(doc_pid, block_id)

@@ -42,6 +42,10 @@ defmodule Sandman.Document do
     GenServer.cast(pid, {:run_block, block_id})
   end
 
+  def run_all_blocks(pid) do
+    GenServer.cast(pid, :run_all_blocks)
+  end
+
   def get_request_by_id(pid, {block_id, index}) when is_pid(pid) do
     GenServer.call(pid, {:get_request_by_id, {block_id, index}})
   end
@@ -109,6 +113,7 @@ defmodule Sandman.Document do
       requests: %{},
       servers: %{},
       current_block_id: nil,
+      run_queue: [],
     }}
   end
 
@@ -232,35 +237,17 @@ defmodule Sandman.Document do
     {:noreply, %{ state | document: document}}
   end
 
-  def handle_cast({:run_block, block_id}, state = %{document: document, doc_id: doc_id, luerl_server_pid: luerl_server_pid}) do
-    block = Enum.find(document.blocks, & &1[:id] == block_id)
-    {prev_blocks, next_blocks} =  document.blocks
-      |> Enum.split_while(fn bl -> bl.id != block.id end)
+  def handle_cast({:run_block, block_id}, state ) do
+    {:noreply, start_block(block_id, state)}
+  end
 
-    last_block_id = prev_blocks
-      |> List.last()
-      |> case do
-        nil -> nil
-        block -> block.id
-      end
-    blocks_to_reset = case next_blocks do
-      nil -> [block]
-      [_] -> [block]
-      [_ | next_blocks] -> next_blocks ++ [block]
+  def handle_cast(:run_all_blocks, state = %{document: document}) do
+    state = case document.blocks do
+      [] -> state
+      [first | run_queue ] ->
+        state = Map.put(state, :run_queue, run_queue)
+        start_block(first.id, state)
     end
-    |> Enum.map(& &1.id)
-
-    clean_servers = Enum.reduce(blocks_to_reset, state.servers, fn block_id, servers ->
-      clean_servers_and_routes(servers, block_id)
-    end)
-    state = put_in(state.servers, clean_servers)
-    LuerlServer.reset_states(luerl_server_pid, blocks_to_reset)
-    LuerlServer.run_code(luerl_server_pid, last_block_id, block.id, {:run_block}, block.code)
-
-    state = put_in(state.requests[block_id], [])
-    state = put_in(state.current_block_id, block_id)
-    # using request recorded, since all requests are gone now
-    PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :request_recorded)
     {:noreply, state}
   end
 
@@ -269,14 +256,19 @@ defmodule Sandman.Document do
     {:noreply, state}
   end
   def handle_info({:lua_response, {:run_block}, response}, state = %{doc_id: doc_id}) do
-    case response do
+    state = put_in(state.current_block_id, nil)
+    state = case response do
       {:error, _err, formatted} ->
         log(doc_id, "Error: " <> formatted)
+        put_in(state.run_queue, [])
       :no_state_for_block ->
           log(doc_id, "This block cannot be run right now. Did you run the previous block?")
-      _ -> nil
+          put_in(state.run_queue, [])
+      _ ->
+        # in dit geval starten we een niewe
+        start_next_queued_block(state)
     end
-    {:noreply, put_in(state.current_block_id, nil)}
+    {:noreply, state}
   end
 
   def handle_info({:lua_response, {:http_response, replyto_pid, route, request, block_id}, response}, state = %{doc_id: doc_id}) do
@@ -316,6 +308,45 @@ defmodule Sandman.Document do
         new_server = Map.put(server, :routes, new_routes)
         Map.put(servers, server.id, new_server)
     end)
+  end
 
+  defp start_next_queued_block(state = %{run_queue: []}), do: state
+  defp start_next_queued_block(state = %{run_queue: [next | rest_queue]}) do
+    state = Map.put(state, :run_queue, rest_queue)
+    start_block(next.id, state)
+  end
+
+  defp start_block(block_id, state = %{document: document, doc_id: doc_id, luerl_server_pid: luerl_server_pid}) do
+    IO.inspect({"starting blpcoc", block_id, "qyey", state.run_queue})
+    block = Enum.find(document.blocks, & &1[:id] == block_id)
+    {prev_blocks, next_blocks} =  document.blocks
+      |> IO.inspect
+      |> Enum.split_while(fn bl -> bl.id != block.id end)
+
+    last_block_id = prev_blocks
+      |> List.last()
+      |> case do
+        nil -> nil
+        block -> block.id
+      end
+    blocks_to_reset = case next_blocks do
+      [_] -> [block]
+      [_ | next_blocks] -> next_blocks ++ [block]
+    end
+    |> Enum.map(& &1.id)
+
+    clean_servers = Enum.reduce(blocks_to_reset, state.servers, fn block_id, servers ->
+      clean_servers_and_routes(servers, block_id)
+    end)
+    state = put_in(state.servers, clean_servers)
+    LuerlServer.reset_states(luerl_server_pid, blocks_to_reset)
+    LuerlServer.run_code(luerl_server_pid, last_block_id, block.id, {:run_block}, block.code)
+
+    state = put_in(state.requests[block_id], [])
+    state = put_in(state.current_block_id, block_id)
+    # using request recorded, since all requests are gone now
+    # todo: refactor this
+    PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :request_recorded)
+    state
   end
 end
