@@ -9,29 +9,29 @@ defmodule SandmanWeb.LiveView.Document do
 
   def render(assigns) do
     ~H"""
-    <div phx-hook="DocumentHook" id="document">
-      <div class="group" style="position: relative; top: -8px;">
-        <div class="text-white p-2 px-6  flex flex-row fs-2 my-2 text-sm sticky" style="background-color:#1E1E1E;">
+    <div phx-hook="DocumentHook" id="document" class="h-screen" style="overflow:scroll; overscroll-behavior: none">
+        <div class="sticky top-0 z-10 text-white p-2 px-6  flex flex-row text-sm" style="background-color:#1E1E1E; ">
           <button phx-click="run-all-blocks"><span><%="▶"%></span> Run All</button>
           <div class="flex-grow"/>
         </div>
-      </div>
-      <form phx-change="update" phx-hook="TitleForm" id="title-form">
-        <input
-          type="text"
-          id="title"
-          name="title"
-          value={@document.title || "new script"}
-          spellcheck="false"
-          autocomplete="off"
-          class="w-full border-0 p-0 px-5 font-semibold text-lg mt-2 leading-tight"
-        />
-      </form>
+      <div style="overflow:scroll;">
+        <form phx-change="update" phx-hook="TitleForm" id="title-form">
+          <input
+            type="text"
+            id="title"
+            name="title"
+            value={@document.title || "new script"}
+            spellcheck="false"
+            autocomplete="off"
+            class="w-full border-0 p-0 px-5 font-semibold text-lg mt-2 leading-tight"
+          />
+        </form>
 
-      <%= case @document.blocks do
-        [] -> render_empty_state(assigns)
-        _ -> render_blocks(assigns)
-      end %>
+        <%= case @document.blocks do
+          [] -> render_empty_state(assigns)
+          _ -> render_blocks(assigns)
+        end %>
+      </div>
     </div>
     """
   end
@@ -58,6 +58,16 @@ defmodule SandmanWeb.LiveView.Document do
     </div>
     <%= for block <- @document.blocks do%>
         <div class="my-1 pt-1 pb-1 px-5 border-b-2 no-select">
+  <%!-- <div class="absolute left-0 z-10 mt-2 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
+    <div class="py-1" role="none">
+      <!-- Active: "bg-gray-100 text-gray-900", Not Active: "text-gray-700" -->
+      <a href="#" class="text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-0">Last Request</a>
+      <a href="#" class="text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-1">All Requests ></a>
+      <a href="#" class="text-gray-700 block px-4 py-2 text-sm text-right" role="menuitem" tabindex="-1" id="menu-item-2">2xx (3) ></a>
+      <a href="#" class="text-gray-700 block px-4 py-2 text-sm text-right" role="menuitem" tabindex="-1" id="menu-item-2">4xx (21)></a>
+      <a href="#" class="text-gray-700 block px-4 py-2 text-sm text-right" role="menuitem" tabindex="-1" id="menu-item-2">5xx (1)></a>
+    </div>
+  </div> --%>
           <div class="rounded-t p-2" style="background-color: rgb(30, 30, 30);" phx-update="ignore" id={"monaco-wrapper-#{block.id}"}>
             <div id={"monaco-#{block.id}"} phx-hook="MonacoHook" data-block-id={block.id} ><%= block.code %></div>
           </div>

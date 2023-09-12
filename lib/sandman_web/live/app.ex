@@ -22,8 +22,8 @@ defmodule SandmanWeb.LiveView.App do
       <%= live_render(@socket, UpdateBar, id: "update_bar") %>
       <div id="app-wrapper" class="flex flex-row" phx-hook="HomeHook">
 
-          <div id="document-container" style="overflow:scroll;" class="h-screen">
-            <div id="document-root">
+          <div id="document-container" style="overflow:clip;" class="h-screen">
+            <div id="document-root" class="h-screen">
               <SandmanWeb.LiveView.Document.render doc_pid={@doc_pid} open_requests={@open_requests} requests={@document.requests} document={@document.document} code="ola code" />
             </div>
           </div>
