@@ -1,4 +1,4 @@
-defmodule SandmanWeb.LiveView.App do
+defmodule SandmanWeb.Phoenix.LiveView.App do
   # In Phoenix v1.6+ apps, the line is typically: use MyAppWeb, :live_view
   use Phoenix.LiveView,
     container: {:div, class: "h-full"}
@@ -8,7 +8,20 @@ defmodule SandmanWeb.LiveView.App do
   alias SandmanWeb.UpdateBar
   alias Phoenix.PubSub
 
-  @spec render(any) :: Phoenix.LiveView.Rendered.t()
+  def mount(params, session, socket) do
+    socket = case params["file"] do
+      "" -> socket
+      nil -> socket
+      file_name ->
+        if(File.exists?(file_name)) do
+          open_file(file_name, socket)
+        else
+          socket
+        end
+    end
+    {:ok, socket}
+  end
+
   def render(assigns) do
     if(assigns[:doc_pid]) do
       render_app(assigns)
@@ -69,25 +82,9 @@ defmodule SandmanWeb.LiveView.App do
   end
 
   defp start_document(mode, socket) do
-        # start_doc
-    doc_id = UUID.uuid4()
-    PubSub.subscribe(Sandman.PubSub, "document:#{doc_id}")
-
     case FileAccess.select_file(mode) do
       file_name when is_bitstring(file_name) ->
-        {:ok, doc_pid} = Document.start_link(doc_id, file_name)
-        document= Document.get(doc_pid)
-        socket
-        |> assign(:doc_pid, doc_pid)
-        |> assign(:document, document)
-        |> assign(:log_count, 0)
-        |> assign(:tab, "Response")
-        |> assign(:request_id, nil)
-        |> assign(:show_raw_res_body, false)
-        |> assign(:show_raw_req_body, false)
-        |> assign(:open_requests, %{})
-        |> assign(:main_left_tab, :req_res)
-        |> stream(:logs, [])
+        open_file(file_name, socket)
 
       _other ->
         socket # no file selected
@@ -198,4 +195,23 @@ defmodule SandmanWeb.LiveView.App do
   defp tab_visibility(selected_tab, selected_tab), do: "block"
   defp tab_visibility(_, _), do: "hidden"
 
+  def open_file(file_name, socket) do
+    # start_doc
+    doc_id = UUID.uuid4()
+    PubSub.subscribe(Sandman.PubSub, "document:#{doc_id}")
+
+    {:ok, doc_pid} = Document.start_link(doc_id, file_name)
+    document= Document.get(doc_pid)
+    socket
+    |> assign(:doc_pid, doc_pid)
+    |> assign(:document, document)
+    |> assign(:log_count, 0)
+    |> assign(:tab, "Response")
+    |> assign(:request_id, nil)
+    |> assign(:show_raw_res_body, false)
+    |> assign(:show_raw_req_body, false)
+    |> assign(:open_requests, %{})
+    |> assign(:main_left_tab, :req_res)
+    |> stream(:logs, [])
+  end
 end

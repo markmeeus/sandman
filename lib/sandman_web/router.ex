@@ -1,4 +1,5 @@
 defmodule SandmanWeb.Router do
+  alias Phoenix.LiveView
   use SandmanWeb, :router
 
   pipeline :browser do
@@ -17,10 +18,10 @@ defmodule SandmanWeb.Router do
   scope "/", SandmanWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", LiveView.App
+
     get "/:doc_pid/:block_id/request/:id", RequestController, :req
     get "/:doc_pid/:block_id/response/:id", RequestController, :res
-    live "/app", LiveView.App
   end
 
   # Other scopes may use custom stacks.

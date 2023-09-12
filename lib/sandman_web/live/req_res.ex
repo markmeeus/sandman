@@ -21,9 +21,11 @@ defmodule SandmanWeb.LiveView.RequestResponse do
                 <div class="inline-block bg-gray-100 rounded-lg px-3 py-2">
                   <span><%= format_request(req_res) %></span>
                 </div>
-                <div class="inline-block bg-green-400 rounded-lg px-3 py-1">
-                  <span><%= req_res.res.status %></span>
-                </div>
+                <%= if(req_res.res) do %>
+                  <div class="inline-block bg-green-400 rounded-lg px-3 py-1">
+                    <span><%= req_res.res.status %></span>
+                  </div>
+                <% end %>
               </div>
               <div class="border-b border-gray-200 mt-2">
                 <nav class="-mb-px flex space-x-2 no-select" aria-label="Tabs">

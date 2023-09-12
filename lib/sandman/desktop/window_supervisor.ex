@@ -8,11 +8,17 @@ defmodule Sandman.WindowSupervisor do
   end
 
   def start_child() do
+    IO.inspect({"SANDMAN ARGS", System.get_env("SANDMAN_ARGS")})
+    file_to_load = System.get_env("SANDMAN_ARGS") # TODO, implement proper command line options
+
     id = String.to_atom(to_string(:rand.uniform(4294967296)))
     start_options = [
       app: :sandman,
       id: id,
-      url: &SandmanWeb.Endpoint.url/0,
+      url: fn ->
+        URI.append_query(URI.parse(SandmanWeb.Endpoint.url()), URI.encode_query(%{file: file_to_load})) |> URI.to_string
+        |> IO.inspect
+      end,
       title: "Sandman",
       size: { 1000, 600 },
       menubar: MenuBar
@@ -44,11 +50,15 @@ defmodule Sandman.WindowSupervisor do
   end
 
   defp handle_no_windows_left do
-    if (DynamicSupervisor.count_children(__MODULE__).active == 0) do
+    if (has_no_windows()) do
       # always have a window ?
       # start_child()
       # or shutdown ?
       Desktop.OS.shutdown()
     end
+  end
+
+  defp has_no_windows do
+    DynamicSupervisor.count_children(__MODULE__).active == 0
   end
 end
