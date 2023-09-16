@@ -16,7 +16,7 @@ defmodule Sandman.WindowSupervisor do
       app: :sandman,
       id: id,
       url: fn ->
-        URI.append_query(URI.parse(SandmanWeb.Endpoint.url()), URI.encode_query(%{file: file_to_load})) |> URI.to_string
+        URI.append_query(URI.parse(SandmanWeb.Endpoint.url()), URI.encode_query(%{window_id: id, file: file_to_load})) |> URI.to_string
         |> IO.inspect
       end,
       title: "Sandman",

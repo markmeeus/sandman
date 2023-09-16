@@ -19,6 +19,12 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
           socket
         end
     end
+    window_id = case params["window_id"] do
+      nil -> :browser
+      id ->
+        String.to_existing_atom(params["window_id"])
+    end
+    socket = assign(socket, :window_id, window_id)
     {:ok, socket}
   end
 
@@ -33,7 +39,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
   def render_app(assigns) do
     ~H"""
       <%= live_render(@socket, UpdateBar, id: "update_bar") %>
-      <div id="app-wrapper" class="flex flex-row" phx-hook="HomeHook">
+      <div id="app-wrapper" class="flex flex-row" phx-hook="HomeHook" data-window_id={@window_id}>
 
           <div id="document-container" style="overflow:clip;" class="h-screen">
             <div id="document-root" class="h-screen">
@@ -90,6 +96,8 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
         socket # no file selected
     end
   end
+
+  def handle_event("ctrl-key", _, socket), do: {:noreply, socket}
 
   def handle_event("open_file", _, socket) do
     {:noreply, start_document(:open, socket)}
