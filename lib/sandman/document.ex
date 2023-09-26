@@ -308,7 +308,7 @@ defmodule Sandman.Document do
     Enum.reduce(servers, %{}, fn
       {_, %{block_id: ^block_id, cowboy_ref: ref}}, servers ->
         # this server should die
-        :ok = Plug.Cowboy.shutdown(ref)
+        Plug.Cowboy.shutdown(ref)
         servers
       {_id, server}, servers ->
         # keeping this server, but only keep routes that are not part of this block
