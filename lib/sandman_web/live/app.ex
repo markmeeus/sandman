@@ -43,7 +43,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
 
           <div id="document-container" style="overflow:clip;" class="h-screen">
             <div id="document-root" class="h-screen">
-              <SandmanWeb.LiveView.Document.render doc_pid={@doc_pid} open_requests={@open_requests} requests={@document.requests} document={@document.document} code="ola code" />
+              <SandmanWeb.LiveView.Document.render doc_pid={@doc_pid} open_requests={@open_requests} requests={@document.requests} document={@document.document} code="" />
             </div>
           </div>
 
@@ -139,7 +139,6 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
       nil -> Map.put(open_requests, block_id, block_id)
       _ -> Map.delete(open_requests, block_id)
     end
-
     {:noreply, assign(socket, :open_requests, open_requests)}
   end
 
@@ -160,8 +159,14 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     {:noreply, assign(socket, show_raw_req_body: !socket.assigns.show_raw_req_body)}
   end
 
-  def handle_event("select-request", %{"block-id" => block_id, "request-index" => request_index}, socket) do
+  def handle_event("select-request", %{"block-id" => block_id, "line_nr" => line_nr, "request-index" => request_index}, socket) do
+    socket = case Integer.parse(line_nr) do
+      {line_nr, _} ->
+        push_event(socket, "monaco-update-selected", %{block_id: block_id, selected: %{line_nr: line_nr}})
+      nil -> socket
+    end
     {request_index, _} = Integer.parse(request_index)
+
     {:noreply, assign(socket, request_id: {block_id, request_index})}
   end
 
@@ -184,8 +189,10 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     {:noreply, assign(socket, :document, Document.get(doc_pid))}
   end
 
-  def handle_info(:request_recorded, socket = %{assigns: %{doc_pid: doc_pid}}) do
+  def handle_info({:request_recorded, block_id}, socket = %{assigns: %{doc_pid: doc_pid}}) do
     doc = Document.get(doc_pid)
+    stats = get_block_request_stats(doc, block_id)
+    socket = push_event(socket, "monaco-update-#{block_id}", %{stats: stats})
     {:noreply, assign(socket, :document, doc)}
   end
 
@@ -222,4 +229,16 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     |> assign(:main_left_tab, :req_res)
     |> stream(:logs, [])
   end
+
+  defp get_block_request_stats(%{requests: requests}, block_id) do
+    requests = (requests[block_id] || [])
+    Enum.reduce(requests, %{ok: [], warn: [], error: []}, fn(req, acc) ->
+      request_level = get_request_level(req)
+      Map.put(acc, request_level, acc[request_level] ++ [req.call_info])
+    end)
+  end
+
+  defp get_request_level(%{res: %{status: status}}) when status < 400, do: :ok
+  defp get_request_level(%{res: %{status: status}}) when status < 500, do: :warn
+  defp get_request_level(_), do: :error
 end

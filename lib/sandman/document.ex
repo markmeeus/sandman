@@ -1,5 +1,6 @@
 defmodule Sandman.Document do
 
+  alias Sandman.LuerlWrapper
   alias Phoenix.PubSub
   alias Sandman.LuerlServer
   alias Sandman.LuaMapper
@@ -77,8 +78,10 @@ defmodule Sandman.Document do
         # this is running in the luerl_server
         # TODO; refactor this so that req can be stored before request is being sent
         {result, luerl_state} = HttpClient.fetch_handler(doc_id, method, args, luerl_state)
+
+        call_info = LuerlWrapper.get_call_info(luerl_state)
         # send the result to the document
-        GenServer.cast(self_pid, {:record_http_request, result, nil})
+        GenServer.cast(self_pid, {:record_http_request, result, call_info, nil})
         # return with lua script
         {result.lua_result, luerl_state}
       end,
@@ -87,7 +90,8 @@ defmodule Sandman.Document do
         {res, luerl_state}
       end,
       add_route: fn method, args, luerl_state ->
-        {:ok, res} = GenServer.call(self_pid, {:handle_lua_call, :add_route, [method] ++ args})
+        call_info = LuerlWrapper.get_call_info(luerl_state)
+        {:ok, res} = GenServer.call(self_pid, {:handle_lua_call, :add_route, [method] ++ args, call_info})
         {res, luerl_state}
       end,
       json_decode: &Json.decode(doc_id, &1, &2),
@@ -150,12 +154,13 @@ defmodule Sandman.Document do
     {:reply, {:ok, [server.id]}, new_state}
 
   end
-  def handle_call({:handle_lua_call, :add_route, [method, server_id, path, func = {:funref, _, _}]}, _sender, state) do
+  def handle_call({:handle_lua_call, :add_route, [method, server_id, path, func = {:funref, _, _}], call_info}, _sender, state) do
     route = %{
       method: method,
       path: path,
       func: func,
-      block_id: state.current_block_id
+      block_id: state.current_block_id,
+      origin_call_info: call_info
     }
     #TODO: dont prepare all routes all the time
     new_routes = Sandman.Http.Server.prepare_routes(state.servers[server_id].routes ++ [route])
@@ -205,11 +210,12 @@ defmodule Sandman.Document do
     {:noreply, %{ state | document: document}}
   end
 
-  def handle_cast({:record_http_request, req_res, block_id}, state = %{doc_id: doc_id, current_block_id: current_block_id}) do
+  def handle_cast({:record_http_request, req_res, call_info, block_id}, state = %{doc_id: doc_id, current_block_id: current_block_id}) do
+    req_res = Map.put(req_res, :call_info, call_info)
     block_id = block_id || current_block_id
     new_state = update_in(state.requests[block_id], fn val -> (val || []) ++ [req_res] end)
     #new_state = Map.put(state, :requests, requests ++ [req_res])
-    PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :request_recorded)
+    PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", {:request_recorded, block_id})
     {:noreply, new_state}
   end
 
@@ -283,7 +289,9 @@ defmodule Sandman.Document do
       _ ->
         response = Sandman.Http.Server.map_lua_response(doc_id, response)
         req_res = Sandman.Http.Server.build_req_res(request, response)
-        GenServer.cast(self(), {:record_http_request, req_res, block_id})
+        call_info = route.origin_call_info
+
+        GenServer.cast(self(), {:record_http_request, req_res, call_info, block_id})
         send(replyto_pid, {:http_response, response})
     end
     {:noreply, state}
@@ -317,7 +325,6 @@ defmodule Sandman.Document do
   end
 
   defp start_block(block_id, state = %{document: document, doc_id: doc_id, luerl_server_pid: luerl_server_pid}) do
-    IO.inspect({"starting blpcoc", block_id, "qyey", state.run_queue})
     block = Enum.find(document.blocks, & &1[:id] == block_id)
     {prev_blocks, next_blocks} =  document.blocks
       |> IO.inspect
@@ -346,7 +353,7 @@ defmodule Sandman.Document do
     state = put_in(state.current_block_id, block_id)
     # using request recorded, since all requests are gone now
     # todo: refactor this
-    PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :request_recorded)
+    PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", {:request_recorded, block.id})
     state
   end
 end

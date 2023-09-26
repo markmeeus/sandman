@@ -36,6 +36,7 @@ const MonacoHook = {
     let editor = monaco.editor.create(this.el, {
     	value: code,
       language: 'lua',
+      glyphMargin: true,
     	minimap: {
     		enabled: false
     	},
@@ -59,6 +60,101 @@ const MonacoHook = {
       window.dispatchEvent(event);
       resize(editor, this.el);
     });
+
+    function addDecorations(decorations, countsPerLine, stats, statType) {
+      stats.forEach(stat => {
+        let count = countsPerLine[stat.line_nr];
+        if(count > 9){
+          count = '9p';
+        } else {
+          count = count.toString();
+        }
+        decorations.push({
+          range: new monaco.Range(stat.line_nr, 0, stat.line_nr, 0),
+          options: {
+            isWholeLine: true,
+            className: `line-has-requests ${statType}`,
+            glyphMarginClassName: `has-requests ${statType} request-count-${count}`,
+          },
+        });
+      });
+    }
+    // this.handleEvent(`monaco-highlight-id${blockId}`, ({line_number}) => {
+
+    // });
+    this.handleEvent(`monaco-update-selected`, ({block_id, selected}) => {
+      // remove old decorations
+      if(this.oldDecorationsCollection && this.oldDecorationsCollection.length > 0){
+        editor.removeDecorations(this.oldDecorationsCollection._decorationIds);
+      }
+
+      const decorations = this.oldDecorations || [];
+      decorations.forEach(({range, options}) => {
+        if(range.startLineNumber === selected.line_nr && blockId === blockId) {
+          options.className += " highlighted"
+        } else {
+          options.className = options.className.replaceAll("highlighted", "")
+        }
+      })
+
+      this.oldDecorationsCollection = editor.createDecorationsCollection(decorations);
+      this.oldDecorations = decorations;
+    });
+
+    this.handleEvent(`monaco-update-${blockId}`, ({stats}) => {
+      let countsPerLine = new Map();
+      stats.ok.forEach(stat => {
+        countsPerLine[stat.line_nr] = countsPerLine[stat.line_nr] + 1 || 1;
+      });
+      stats.warn.forEach(stat => {
+        countsPerLine[stat.line_nr] = countsPerLine[stat.line_nr] + 1 || 1;
+      });
+      stats.error.forEach(stat => {
+        countsPerLine[stat.line_nr] = countsPerLine[stat.line_nr] + 1 || 1;
+      });
+
+      const decorations = [];
+      addDecorations(decorations, countsPerLine, stats.ok, "ok");
+      addDecorations(decorations, countsPerLine, stats.warn, "warn");
+      addDecorations(decorations, countsPerLine, stats.error, "error");
+
+      if(this.oldDecorationsCollection && this.oldDecorationsCollection.length > 0){
+        editor.removeDecorations(this.oldDecorationsCollection._decorationIds);
+      }
+
+      this.oldDecorationsCollection = editor.createDecorationsCollection(decorations);
+      this.oldDecorations = decorations;
+
+      console.log(this.oldDecorations, this.oldDecorations[0]);
+      //below is the glyph I am calling
+      // var decorations = editor.createDecorationsCollection([
+      //   {
+      //     range: new monaco.Range(2, 0, 2, 0),
+      //     options: {
+      //       isWholeLine: true,
+      //       className: "line-has-requests ok",
+      //       glyphMarginClassName: "has-requests ok request-count-1",
+      //     },
+      //   },
+      //   // {
+        //   range: new monaco.Range(3, 1, 3, 1),
+        //   options: {
+        //     isWholeLine: true,
+        //     className: "line-has-requests error",
+        //     glyphMarginClassName: "has-requests error request-count-9p",
+        //   },
+        // },
+        // {
+        //   range: new monaco.Range(4, 1, 4, 1),
+        //   options: {
+        //     isWholeLine: true,
+        //     className: "line-has-requests warn",
+        //     glyphMarginClassName: "has-requests warn request-count-4",
+        //   },
+        // }
+    //   ]);
+    })
+
 
     // keep track of sizing
     trackSize(editor, this.el, () => {

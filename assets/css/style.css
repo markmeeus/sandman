@@ -29,3 +29,51 @@
   -webkit-user-select: none;
   -ms-user-select: none;
 }
+.line-has-requests {
+  height: 16px;
+}
+.line-has-requests.highlighted { border-bottom: 2px solid wheat; }
+/* .line-has-requests.highlighted.ok { border-bottom: 2px solid #494; }
+.line-has-requests.highlighted.warn { border-bottom: 2px solid #DD7; }
+.line-has-requests.highlighted.error { border-bottom: 2px solid #F77; } */
+
+.has-requests {
+  cursor: pointer;
+}
+.has-requests:after {
+  width: 16px;
+  height: 16px;
+  left: 0;
+  border-radius: 12px;
+  padding-left:4px;
+  padding-top:0px;
+  /* font-size: 10px; */
+  margin:2px;
+}
+.has-requests.request-count-1:after{content: '1';}
+.has-requests.request-count-2:after{content: '2'}
+.has-requests.request-count-3:after{content: '3'}
+.has-requests.request-count-4:after{content: '4'}
+.has-requests.request-count-5:after{content: '5'}
+.has-requests.request-count-6:after{content: '6'}
+.has-requests.request-count-7:after{content: '7'}
+.has-requests.request-count-8:after{content: '8'}
+.has-requests.request-count-9:after{content: '9'}
+.has-requests.request-count-9p:after{
+  content: '9+';
+  padding-left: 2px;
+}
+
+.has-requests.ok:after {
+  /* background-color: green; */
+  color: #494;
+}
+.has-requests.warn:after {
+  /* background-color: yellow;
+  color: #222; */
+  color: #DD7;
+}
+.has-requests.error:after {
+  /* background-color: red; */
+  color: #F77;
+}

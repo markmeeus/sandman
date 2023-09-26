@@ -104,4 +104,26 @@ defmodule Sandman.LuerlWrapper do
      {:error, exception, luerl_state, format_exception(exception, luerl_state)}
     end
   end
+
+  def get_call_info(luerl_state) do
+    luerl_state
+          |> :luerl.get_stacktrace()
+          |> case do
+            [_, call_location={_, [], [file: _, line: line_nr]}] -> %{
+                line_nr: line_nr
+              }
+            [_, call_location={_, [], [file: _, line: line_nr]} | _] -> %{
+                line_nr: line_nr
+              }
+            s ->
+              IO.inspect({"unmatched call stack", s})
+              %{
+              line_nr: 1 # this seems to be an unknown case
+            }
+          end
+  end
 end
+
+
+#[_, call_location={_, [], [file: _, line: line_nr]} | _] = [{"-no-name-", [], [file: "-no-file-", line: 8]}, {"test", [], [file: "-no-file-", line: 5]}, {{:luerl, :"-encode/2-fun-1-"}, ["https://sandmanapp.com"], [file: "luerl.erl"]}]
+#[{"-no-name-", [], [file: "-no-file-", line: 8]}, {{:luerl, :"-encode/2-fun-1-"}, ["https://sandmanapp.com"], [file: "luerl.erl"]}]

@@ -108,7 +108,7 @@ defmodule SandmanWeb.LiveView.Document do
     ~H"""
       <div class="flex flex-col">
         <a class="flex flex-row-reverse text-xs rounded-b pb-1 px-1 pt-1" style="background-color: rgb(238, 238, 238);"
-            href="#" phx-click="select-request" phx-value-block-id={@block_id} phx-value-request-index={@request_index}>
+            href="#" phx-click="select-request" phx-value-block-id={@block_id} phx-value-line_nr={@req.call_info.line_nr} phx-value-request-index={@request_index}>
           <div >
             <span><%= format_request(@req) %></span>
             <.format_response res={@req.res} />

@@ -30,9 +30,6 @@ const HomeHook = {
         }else {
           //this.pushEvent("ctrl-key", {key: event.key, code: event.code});
         }
-
-
-
       }
     });
   }
