@@ -3,11 +3,12 @@ defmodule SandmanWeb.UpdateBar do
   use Phoenix.LiveView
 
   alias Phoenix.PubSub
+  alias Sandman.UpdateManager
 
   def mount(_params, _session, socket) do
     :wx.set_env(Desktop.Env.wx_env())
     PubSub.subscribe(Sandman.PubSub, "update_manager")
-    socket = assign(socket, :status, Sandman.UpdateManager.get_status())
+    socket = assign(socket, :status, UpdateManager.get_status())
     {:ok, socket}
   end
 
@@ -48,6 +49,7 @@ defmodule SandmanWeb.UpdateBar do
   end
 
   def handle_event("dismiss", _, socket) do
+    UpdateManager.set_idle();
     {:noreply, assign(socket, :status, :idle)}
   end
   def handle_event("open-download", _, socket) do

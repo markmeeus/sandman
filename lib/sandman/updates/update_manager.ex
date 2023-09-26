@@ -20,6 +20,10 @@ defmodule Sandman.UpdateManager do
     GenServer.call(__MODULE__, :get_status)
   end
 
+  def set_idle() do
+    GenServer.cast(__MODULE__, :set_idle)
+  end
+
   def init(_args) do
     {:ok, %{
       status: :idle
@@ -35,6 +39,10 @@ defmodule Sandman.UpdateManager do
   def handle_cast(:check, state) do
     {:noreply, %{ state | status: check_for_update()}}
   end
+  def handle_cast(:set_idle, state) do
+    PubSub.broadcast(Sandman.PubSub, "update_manager", {:update_manager, :idle})
+    {:noreply, %{ state | status: :idle}}
+  end
 
   def handle_call(:get_status, _sender, state = %{status: status}) do
     {:reply, status, state}
@@ -42,7 +50,6 @@ defmodule Sandman.UpdateManager do
 
   defp check_for_update() do
     PubSub.broadcast(Sandman.PubSub, "update_manager", {:update_manager, :checking})
-    Process.sleep(1000)
     status = case get_latest_version_info() do
       {:unavailable, _reason} -> :failed
       latest_version_info ->
