@@ -10,7 +10,7 @@ defmodule SandmanWeb.LiveView.Document do
   def render(assigns) do
     ~H"""
     <div phx-hook="DocumentHook" id="document" class="h-screen" style="overflow:scroll; overscroll-behavior: none">
-        <div class="sticky top-0 z-10 text-white p-2 px-6  flex flex-row text-sm" style="background-color:#1E1E1E; ">
+        <div class="sticky top-0 z-10 text-white p-2 px-6  flex flex-row text-sm" style="background-color:#1E1E1E; border-bottom: 1px solid #444;">
           <button phx-click="run-all-blocks"><span><%="▶"%></span> Run All</button>
           <div class="flex-grow"/>
         </div>
@@ -57,7 +57,7 @@ defmodule SandmanWeb.LiveView.Document do
       </div>
     </div>
     <%= for block <- @document.blocks do%>
-        <div class="my-1 pt-1 pb-1 px-5 border-b-2 no-select">
+        <div class="my-1 pt-1 pb-1 px-5 no-select">
   <%!-- <div class="absolute left-0 z-10 mt-2 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
     <div class="py-1" role="none">
       <!-- Active: "bg-gray-100 text-gray-900", Not Active: "text-gray-700" -->
@@ -97,7 +97,7 @@ defmodule SandmanWeb.LiveView.Document do
     # TODO: deze moeten we nog fixen, die assigns zijn hier totaal gefaked!
     ~H"""
       <div class="flex flex-col">
-        <div class="flex flex-row-reverse text-xs text-red-700 rounded-b pb-1 px-1" style="background-color: rgb(238, 238, 238);">
+        <div class="flex flex-row-reverse text-xs text-red-700 rounded-b pb-1 px-1">
           <%= format_request(@req)%>: <%= err %>
         </div>
       </div>
@@ -107,7 +107,7 @@ defmodule SandmanWeb.LiveView.Document do
   defp render_request(assigns) do
     ~H"""
       <div class="flex flex-col">
-        <a class="flex flex-row-reverse text-xs rounded-b pb-1 px-1 pt-1" style="background-color: rgb(238, 238, 238);"
+        <a class="flex flex-row-reverse text-xs rounded-b pb-1 px-1 pt-1"
             href="#" phx-click="select-request" phx-value-block-id={@block_id} phx-value-line_nr={@req.call_info.line_nr} phx-value-request-index={@request_index}>
           <div >
             <span><%= format_request(@req) %></span>

@@ -5,7 +5,7 @@ defmodule SandmanWeb.TabBar do
   def item(assigns = %{selected: true}) do
     ~H"""
     <a href="#" phx-click={JS.push(@event, value: %{tab: @item})}
-      class="border-indigo-500 text-indigo-600 whitespace-nowrap border-b-2 py-2 pr-1 text-xs font-medium" aria-current="page">
+      class="border-white text-white whitespace-nowrap border-b-2 py-2 pr-1 text-xs font-medium" aria-current="page">
       <%= @item %>
     </a>
     """

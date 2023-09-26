@@ -8,17 +8,14 @@ defmodule SandmanWeb.LiveView.RequestResponse do
   @spec render(any) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
-      <div class="text-black font-mono mx-2 p-2 text-xs h-full"
-          style="background-color: white"}>
-        <div>
-      </div>
+      <div class="font-mono mx-2 p-2 text-xs h-full">
         <%= case get_req_res(@requests, @request_id) do %>
           <% nil -> %>
             <div class="no-select">No request selected</div>
           <% req_res -> %>
             <div class="block h-full">
               <div class="text-base font-semibold">
-                <div class="inline-block bg-gray-100 rounded-lg px-3 py-2">
+                <div class="inline-block rounded-lg px-3 py-2">
                   <span><%= format_request(req_res) %></span>
                 </div>
                 <%= if(req_res.res) do %>
@@ -139,7 +136,7 @@ defmodule SandmanWeb.LiveView.RequestResponse do
 
   def toggle_block(assigns) do
     ~H"""
-    <div class="flex flex-row rounded px-2 py-1 my-1" style="background-color:#EEE" >
+    <div class="flex flex-row rounded px-2 py-1 my-1" >
         <a href="#" phx-click={toggle_hidden("##{@name}")}
           class="no-select "><%=@title%>
             <%= if @default_open do%>
