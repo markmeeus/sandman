@@ -102,4 +102,22 @@ pola
 
     assert DocumentEncoder.decode(encoded, &(&1 + 1)) == document
   end
+
+
+  test "keeps newlines in text" do
+    encoded = """
+# this is a title
+
+```lua
+ola
+
+pola1
+```
+"""
+    document = %{title: "this is a title", blocks: [
+      %{id: 1, code: "ola\n\npola1", type: "lua"},
+    ]}
+
+    assert DocumentEncoder.decode(encoded, &(&1 + 1)) == document
+  end
 end

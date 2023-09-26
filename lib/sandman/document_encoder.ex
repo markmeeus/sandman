@@ -45,7 +45,6 @@ defmodule Sandman.DocumentEncoder do
 
   defp read_blocks(document, encoded, new_id_fn) do
     {blocks, _current_block} = Enum.reduce(String.split(encoded, "\n"), {[], nil}, fn line, {blocks, current_block} ->
-
       case read_block_header(line) do
         :lua -> case current_block do
           # this is a header, is there no current block? then create one
@@ -77,7 +76,10 @@ defmodule Sandman.DocumentEncoder do
 
   #defp add_line_to_current_block({blocks, cb = %{code: ""}}, "```lua"), do: {blocks, cb}
   defp add_line_to_current_block({blocks, cb}, "```"), do: {blocks ++ [cb], nil} #end of block
+  defp add_line_to_current_block({blocks, cb = %{code: ""}}, line) do
+    {blocks, Map.put(cb, :code, line)}
+  end
   defp add_line_to_current_block({blocks, cb}, line) do
-    {blocks, Map.put(cb, :code, String.trim(cb.code <> "\n" <> line))} #end of block
+    {blocks, Map.put(cb, :code, cb.code <> "\n" <> line)} #end of block
   end
 end
