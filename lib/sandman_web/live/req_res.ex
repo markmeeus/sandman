@@ -115,16 +115,18 @@ defmodule SandmanWeb.LiveView.RequestResponse do
 
   def headers(assigns) do
     ~H"""
-    <table class="table-fixed">
-      <tbody>
-        <%= for {n, v} <- @headers do %>
-          <tr class="border-2">
-            <td class="border-r-2 px-2"><%= n %><span style="color:transparent">:</span></td>
-            <td class="px-4"><%= v %></td>
-          </tr>
-        <%end%>
-      </tbody>
-    </table>
+    <div class="border-b-2 pb-2 mb-6" style="border-color: #DDD">
+      <table class="table-fixed">
+        <tbody>
+          <%= for {n, v} <- @headers do %>
+            <tr >
+              <td class="px-2"><%= n %><span style="color:transparent">:</span></td>
+              <td class="px-4"><%= v %></td>
+            </tr>
+          <%end%>
+        </tbody>
+      </table>
+    </div>
     """
   end
 

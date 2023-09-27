@@ -3,7 +3,9 @@
   <head>
     <script src="/assets/json.js" ></script>
   </head>
-  <body style="font-family: courier; font-size:0.8em;">
-    <%= @body %>
+  <body style="font-family: courier; font-size:0.8em; color:white; background-color:#222">
+    <pre>
+      <%= @body %>
+    </pre>
   </body>
 </html>
