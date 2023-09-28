@@ -2,7 +2,7 @@
   "dependencies": {
     "hotkeys-js": "^3.10.2",
     "json-formatter-js": "^2.3.4",
-    "monaco-editor": "^0.38.0",
+    "monaco-editor": "^0.43.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-markdown": "^8.0.7",
