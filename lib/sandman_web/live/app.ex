@@ -90,7 +90,13 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
   defp start_document(mode, socket) do
     case FileAccess.select_file(mode) do
       file_name when is_bitstring(file_name) ->
-        open_file(file_name, socket)
+        url = SandmanWeb.Endpoint.url()
+          |> URI.parse()
+          |> URI.append_query(URI.encode_query(%{file: file_name}))
+          |> URI.to_string()
+
+        :wx_misc.launchDefaultBrowser(url);
+        #open_file(file_name, socket)
 
       _other ->
         socket # no file selected

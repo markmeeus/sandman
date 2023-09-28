@@ -57,7 +57,7 @@ defmodule SandmanWeb.LiveView.Document do
       </div>
     </div>
     <%= for block <- @document.blocks do%>
-        <div class="my-1 pt-1 pb-1 px-5 no-select">
+        <div class="my-1 pt-2 pb-1 px-5 no-select" style="border-bottom: 2px solid #333;">
   <%!-- <div class="absolute left-0 z-10 mt-2 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
     <div class="py-1" role="none">
       <!-- Active: "bg-gray-100 text-gray-900", Not Active: "text-gray-700" -->

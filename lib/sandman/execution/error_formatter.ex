@@ -30,7 +30,9 @@ defmodule Sandman.ErrorFormatter do
   end
 
   def format_lua_error(error, luerl_state) do
+    IO.inspect(luerl_state)
     stack = :luerl.get_stacktrace(luerl_state)
+    IO.inspect(stack)
     format_error_and_stack(error, stack, luerl_state)
   end
 
