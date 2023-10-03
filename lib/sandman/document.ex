@@ -173,14 +173,9 @@ defmodule Sandman.Document do
 
     {:reply, {:ok, [true]}, new_state}
   end
-  def handle_call({:handle_lua_call, :add_route, args, call_info}, _sender, state = %{doc_id: doc_id}) do
+  def handle_call({:handle_lua_call, :add_route, _args, _call_info}, _sender, state = %{doc_id: doc_id}) do
       message = "Error adding routes, invalid arguments, expecting server, path and handler"
       {:reply, {:error , message}, state}
-  end
-  def handle_call({:handle_lua_call, call, args, call_info}, sender, state = %{doc_id: doc_id}) do
-    message = "invalid call: #{inspect(call)}, #{inspect(args)}"
-    log(doc_id, message)
-    {:reply, {:error, message}, state}
   end
   def handle_cast({:handle_server_request, replyto_pid, server_id, request}, state = %{doc_id: doc_id, servers: servers}) do
     server = Map.get(servers, server_id)

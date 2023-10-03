@@ -58,7 +58,6 @@ defmodule Sandman.ErrorFormatter do
     |> Enum.join("\n"))
   end
 
-
   #defp format_stack_line({"-no-name-", _, [file: "-no-file-", line: 1]}, _), do: ""
   defp format_stack_line({"-no-name-", _, [file: "-no-file-", line: line_nr]}, _) do
     "at #{line_nr}: ()"
@@ -73,6 +72,9 @@ defmodule Sandman.ErrorFormatter do
   defp format_stack_line({function_name, function_args, [file: _, line: line_nr]}, luerl_state) do
     #"#{function_name}(#{format_lua_terms(function_args, luerl_state)}):#{line_nr}"
     "at #{line_nr}: #{function_name || "<nil>"}(#{format_lua_terms(function_args, luerl_state)})"
+  end
+  defp format_stack_line({{_luerlmod, function_name}, function_args, _}, luerl_state) do
+    ": #{function_name || "<nil>"}(#{format_lua_terms(function_args, luerl_state)})"
   end
   defp format_stack_line(unexpected, _luerl_state) do
     #"#{function_name}(#{format_lua_terms(function_args, luerl_state)}):#{line_nr}"
@@ -147,7 +149,8 @@ defmodule Sandman.ErrorFormatter do
       decoded = :luerl_new.decode(term, luerl_state)
       format_to_lua(decoded)
     rescue _e ->
-      IO.inspect({"WARN, COULD NOT ENCODE ERROR TERM", term})
+      # this inspect(term) is a brute-force when it's not a map table
+      IO.inspect({"WARN, COULD NOT FORMAT ERROR TERM", term})
       inspect(term)
     end
   end
