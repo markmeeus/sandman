@@ -91,7 +91,12 @@ defmodule Sandman.Document do
       end,
       add_route: fn method, args, luerl_state ->
         call_info = LuerlWrapper.get_call_info(luerl_state)
-        {:ok, res} = GenServer.call(self_pid, {:handle_lua_call, :add_route, [method] ++ args, call_info})
+        res = case GenServer.call(self_pid, {:handle_lua_call, :add_route, [method] ++ args, call_info}) do
+          {:ok, res} ->
+            res
+          {:error, message} ->
+            :luerl_lib.lua_error({:badarg, method, message}, luerl_state)
+        end
         {res, luerl_state}
       end,
       json_decode: &Json.decode(doc_id, &1, &2),
@@ -168,7 +173,15 @@ defmodule Sandman.Document do
 
     {:reply, {:ok, [true]}, new_state}
   end
-
+  def handle_call({:handle_lua_call, :add_route, args, call_info}, _sender, state = %{doc_id: doc_id}) do
+      message = "Error adding routes, invalid arguments, expecting server, path and handler"
+      {:reply, {:error , message}, state}
+  end
+  def handle_call({:handle_lua_call, call, args, call_info}, sender, state = %{doc_id: doc_id}) do
+    message = "invalid call: #{inspect(call)}, #{inspect(args)}"
+    log(doc_id, message)
+    {:reply, {:error, message}, state}
+  end
   def handle_cast({:handle_server_request, replyto_pid, server_id, request}, state = %{doc_id: doc_id, servers: servers}) do
     server = Map.get(servers, server_id)
     res = Sandman.Http.Server.handle_request(state.doc_id, state.luerl_server_pid, server.routes, {replyto_pid, request})

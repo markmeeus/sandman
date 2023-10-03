@@ -58,13 +58,16 @@ defmodule Sandman.ErrorFormatter do
     |> Enum.join("\n"))
   end
 
-  # this is how we call it
-  defp format_stack_line({"-no-name-", _, [file: "-no-file-", line: 1]}, _), do: ""
+
+  #defp format_stack_line({"-no-name-", _, [file: "-no-file-", line: 1]}, _), do: ""
   defp format_stack_line({"-no-name-", _, [file: "-no-file-", line: line_nr]}, _) do
     "at #{line_nr}: ()"
   end
   defp format_stack_line({{:tref, _}, _function_args, [file: _, line: line_nr]}, _luerl_state) do
     "at #{line_nr}:"
+  end
+  defp format_stack_line({{Sandman.LuerlWrapper, _}, _function_args, _}, luerl_state) do
+    "[internal]"
   end
 
   defp format_stack_line({function_name, function_args, [file: _, line: line_nr]}, luerl_state) do
