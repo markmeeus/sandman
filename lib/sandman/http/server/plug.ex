@@ -1,15 +1,15 @@
 defmodule Sandman.UserPlug do
   import Plug.Conn
 
-  def init({document_pid, server_id}) do
+  def init({port}) do
     # initialize options
-    %{document_pid: document_pid, server_id: server_id}
+    %{port: port}
   end
   def call(conn, args) do
     conn = Plug.Conn.fetch_query_params(conn)
     {:ok, body, conn} = Plug.Conn.read_body(conn)
     request = to_request(conn, body)
-    response = Sandman.Document.handle_server_request(args.document_pid, args.server_id, request)
+    response = Sandman.Http.CowboyManager.handle_server_request(args.port, request)
     conn = Enum.reduce(response[:headers] || %{}, conn, fn
         {name, value}, conn when is_bitstring(value) ->
           %{conn | resp_headers: [{name, value}] ++ conn.resp_headers}

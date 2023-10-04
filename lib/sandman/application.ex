@@ -21,6 +21,7 @@ defmodule Sandman.Application do
       SandmanWeb.Endpoint,
       Sandman.UpdateManager,
       Sandman.WindowSupervisor,
+      Sandman.Http.CowboyManager,
       # Start a worker by calling: Sandman.Worker.start_link(arg)
       # {Sandman.Worker, arg}
     ]

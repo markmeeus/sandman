@@ -1,5 +1,6 @@
 defmodule Sandman.Document do
 
+  alias Phoenix.Endpoint.Cowboy2Adapter
   alias Sandman.LuerlWrapper
   alias Phoenix.PubSub
   alias Sandman.LuerlServer
@@ -8,6 +9,7 @@ defmodule Sandman.Document do
   alias Sandman.Encoders.Json
   alias Sandman.DocumentEncoder
   alias Sandman.LuaSupport
+  alias Sandman.Http.CowboyManager
 
   use GenServer, restart: :transient
 
@@ -146,12 +148,9 @@ defmodule Sandman.Document do
   end
   def handle_call({:handle_lua_call, :start_server, [port]}, _sender, state) do
     id =  UUID.uuid4()
-    ref = String.to_atom(id)
-    server_pid = Plug.Cowboy.http(Sandman.UserPlug, {self(), id} , port: port, ref: ref)
+    :ok = CowboyManager.connect(port, id)
     server = %{
       id: id,
-      cowboy_ref: ref,
-      pid: server_pid,
       routes: [],
       block_id: state.current_block_id
     }
@@ -314,9 +313,9 @@ defmodule Sandman.Document do
 
   defp clean_servers_and_routes(servers, block_id) do
     Enum.reduce(servers, %{}, fn
-      {_, %{block_id: ^block_id, cowboy_ref: ref}}, servers ->
-        # this server should die
-        Plug.Cowboy.shutdown(ref)
+      {_, %{block_id: ^block_id, id: id}}, servers ->
+        # let's disconnect from this server
+        CowboyManager.disconnect(id)
         servers
       {_id, server}, servers ->
         # keeping this server, but only keep routes that are not part of this block
