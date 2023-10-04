@@ -1,6 +1,7 @@
 defmodule Sandman.LuerlWrapper do
 
   import Sandman.ErrorFormatter
+  alias Sandman.LuaMapper
 
   def init(handlers) do
     luerl_state = :luerl_sandbox.init()
@@ -46,6 +47,17 @@ defmodule Sandman.LuerlWrapper do
     luerl_state = :luerl.set_table(["sandman", "json", "encode"], handlers.json_encode, luerl_state)
     :luerl.set_table(["sandman", "json", "decode"], handlers.json_decode, luerl_state)
 
+  end
+
+  def set_context(luerl_state, context) do
+    luerl_state = :luerl.set_table(["sandman", "_context"], [] , luerl_state)
+    :luerl.set_table(["sandman", "_context", "block_id"], context.block_id , luerl_state)
+  end
+  def get_context(luerl_state) do
+    {block_id, luerl_state} = :luerl.get_table(["sandman", "_context", "block_id"], luerl_state)
+    %{
+      block_id: block_id
+    }
   end
 
   def collect_garbage(luerl_state) do
@@ -106,21 +118,19 @@ defmodule Sandman.LuerlWrapper do
   end
 
   def get_call_info(luerl_state) do
-    luerl_state
-          |> :luerl.get_stacktrace()
-          |> case do
-            [_, call_location={_, [], [file: _, line: line_nr]}] -> %{
-                line_nr: line_nr
-              }
-            [_, call_location={_, [], [file: _, line: line_nr]} | _] -> %{
-                line_nr: line_nr
-              }
-            s ->
-              IO.inspect({"unmatched call stack", s})
-              %{
-              line_nr: 1 # this seems to be an unknown case
-            }
-          end
+    line_nr = luerl_state
+      |> :luerl.get_stacktrace()
+      |> Enum.reduce(0, fn
+        {_, _, [file: _, line: line_nr]}, _ -> line_nr
+        _, last_line_nr -> last_line_nr
+      end)
+
+    %{block_id: block_id} = get_context(luerl_state)
+
+    %{
+      line_nr: line_nr,
+      block_id: block_id
+    }
   end
 end
 

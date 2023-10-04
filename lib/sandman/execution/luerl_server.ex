@@ -47,9 +47,9 @@ defmodule Sandman.LuerlServer do
         state = %{luerl_states: luerl_states, document_pid: document_pid, handlers: handlers}
       ) do
     luerl_state = case {state_id, get_luerl_state(luerl_states, state_id, handlers)}  do
-        {nil, luerl_state} -> luerl_state # nil always returns a new valid state
+        {nil, luerl_state} -> set_context(luerl_state, %{ block_id: new_state_id }) # nil always returns a new valid state
         {_, nil} -> :no_state_for_block # if asking state for a block, it should be there!
-        {_, luerl_state} -> luerl_state
+        {_, luerl_state} -> set_context(luerl_state, %{ block_id: new_state_id })
     end
 
     {response, luerl_states} =
@@ -81,9 +81,9 @@ defmodule Sandman.LuerlServer do
         state = %{luerl_states: luerl_states, document_pid: document_pid}
       ) do
     luerl_state = case {state_id, get_luerl_state(luerl_states, state_id, nil)}  do
-        {nil, luerl_state} -> luerl_state # nil always returns a new valid state
+        {nil, luerl_state} -> set_context(luerl_state, %{ block_id: new_state_id }) # nil always returns a new valid state
         {_, nil} -> :no_state_for_block # if asking state for a block, it should be there!
-        {_, luerl_state} -> luerl_state
+        {_, luerl_state} -> set_context(luerl_state, %{ block_id: new_state_id })
     end
     {response, luerl_states} =
       case luerl_state do
@@ -115,9 +115,9 @@ defmodule Sandman.LuerlServer do
         state = %{luerl_states: luerl_states, document_pid: document_pid}
       ) do
     luerl_state = case {state_id, get_luerl_state(luerl_states, state_id, nil)}  do
-        {nil, luerl_state} -> luerl_state # nil always returns a new valid state
+        {nil, luerl_state} -> set_context(luerl_state, %{ block_id: new_state_id }) # nil always returns a new valid state
         {_, nil} -> :no_state_for_block # if asking state for a block, it should be there!
-        {_, luerl_state} -> luerl_state
+        {_, luerl_state} -> set_context(luerl_state, %{ block_id: new_state_id })
     end
 
       case luerl_state do
@@ -148,9 +148,9 @@ defmodule Sandman.LuerlServer do
         state = %{luerl_states: luerl_states, document_pid: document_pid, handlers: handlers}
       ) do
     luerl_state = case {state_id, get_luerl_state(luerl_states, state_id, handlers)}  do
-        {nil, luerl_state} -> luerl_state # nil always returns a new valid state
+        {nil, luerl_state} -> set_context(luerl_state, %{ block_id: new_state_id }) # nil always returns a new valid state
         {_, nil} -> :no_state_for_block # if asking state for a block, it should be there!
-        {_, luerl_state} -> luerl_state
+        {_, luerl_state} -> set_context(luerl_state, %{ block_id: new_state_id })
     end
 
       case luerl_state do
@@ -204,5 +204,9 @@ defmodule Sandman.LuerlServer do
   def save_luerl_state(luerl_states, nil, _), do: luerl_states
   def save_luerl_state(luerl_states, state_id, luerl_state) do
     Map.put(luerl_states, state_id, luerl_state)
+  end
+
+  defp set_context(luerl_state, context) do
+    LuerlWrapper.set_context(luerl_state, context)
   end
 end

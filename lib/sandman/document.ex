@@ -220,7 +220,7 @@ defmodule Sandman.Document do
 
   def handle_cast({:record_http_request, req_res, call_info, block_id}, state = %{doc_id: doc_id, current_block_id: current_block_id}) do
     req_res = Map.put(req_res, :call_info, call_info)
-    block_id = block_id || current_block_id
+    block_id = call_info.block_id
     new_state = update_in(state.requests[block_id], fn val -> (val || []) ++ [req_res] end)
     #new_state = Map.put(state, :requests, requests ++ [req_res])
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", {:request_recorded, block_id})

@@ -11,7 +11,7 @@ defmodule Sandman.LuaSupport.Uri do
       scheme: uri.scheme,
       userinfo: uri.userinfo,
       queryString: uri.query,
-      query: URI.decode_query(uri.query)
+      query: URI.decode_query(uri.query || "")
     } )]
     {res, luerl_state}
   end
