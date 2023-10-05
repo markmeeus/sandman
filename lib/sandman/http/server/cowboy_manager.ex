@@ -21,7 +21,18 @@ defmodule Sandman.Http.CowboyManager do
   end
 
   def handle_server_request(port, request) do
-    GenServer.call(__MODULE__, {:handle_server_request, port, request})
+    client_info = GenServer.call(__MODULE__, {:get_document_info, port})
+
+    case client_info  do
+      nil ->
+        %{
+          status: 503,
+          body: "Service Not Available",
+          headers: %{"content-type" => "text/text" } }
+      %{client_pid: pid, id: id} ->
+        Sandman.Document.handle_server_request(pid, id, request)
+    end
+
   end
 
   def handle_cast({:connect, client_pid, port, id}, state) do
@@ -62,13 +73,15 @@ defmodule Sandman.Http.CowboyManager do
     {:noreply, Map.put(state, :port_infos, new_port_infos) |> IO.inspect}
   end
 
-  def handle_call({:handle_server_request, port, request}, _sender, state) do
-    case state.port_infos[port] do
-      %{clients: [%{client_pid: pid, id: id} | _]} ->
-        {:reply, Sandman.Document.handle_server_request(pid, id, request), state}
+  def handle_call({:get_document_info, port}, _sender, state) do
+    pid = case state.port_infos[port] do
+      %{clients: [client_info | _]} ->
+        client_info
       _ ->
-        {:reply, %{ status: 503, body: "Service Not Available", headers: %{"content-type" => "text/text" } }}
+        nil
     end
+
+    {:reply, pid, state}
   end
 
   def handle_info({:EXIT, pid, _}, state) do
