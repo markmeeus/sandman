@@ -42,6 +42,7 @@ defmodule Sandman.Http.CowboyManager do
       nil ->
         ref = String.to_atom(id)
         {:ok, _} = Plug.Cowboy.http(Sandman.UserPlug, {port} , port: port, ref: ref)
+        send(client_pid, {:server_connected, port})
         %{
           port: port,
           clients: [client],
@@ -65,6 +66,7 @@ defmodule Sandman.Http.CowboyManager do
         [] ->
           # this cowboy may die
           :ok = Plug.Cowboy.shutdown(port_info.ref)
+          send(client_pid, {:server_disconnected, port})
           # no need to keep it in the server list
           acc
         _ -> Map.put(acc, port, port_info)

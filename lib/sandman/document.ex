@@ -268,6 +268,14 @@ defmodule Sandman.Document do
     :ok = File.write(file_path, DocumentEncoder.encode(document))
     {:noreply, state}
   end
+  def handle_info({:server_connected, port}, state = %{doc_id: doc_id}) do
+    log(doc_id, "started listening at #{port}")
+    {:noreply, state}
+  end
+  def handle_info({:server_disconnected, port}, state = %{doc_id: doc_id}) do
+    log(doc_id, "stopped listening at #{port}")
+    {:noreply, state}
+  end
   def handle_info({:lua_response, {:run_block}, response}, state = %{doc_id: doc_id}) do
     state = put_in(state.current_block_id, nil)
     state = case response do
