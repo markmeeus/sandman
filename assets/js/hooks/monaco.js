@@ -83,10 +83,14 @@ const MonacoHook = {
 
     // });
     this.handleEvent(`monaco-update-selected`, ({block_id, selected}) => {
+
       // remove old decorations
       if(this.oldDecorationsCollection && this.oldDecorationsCollection.length > 0){
         editor.removeDecorations(this.oldDecorationsCollection._decorationIds);
       }
+
+      // not for this block
+      if(blockId != block_id) return;
 
       const decorations = this.oldDecorations || [];
       decorations.forEach(({range, options}) => {
