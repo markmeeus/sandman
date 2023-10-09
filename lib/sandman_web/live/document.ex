@@ -11,11 +11,12 @@ defmodule SandmanWeb.LiveView.Document do
     ~H"""
     <div phx-hook="DocumentHook" id="document" class="h-screen" style="overflow:scroll; overscroll-behavior: none">
         <div class="sticky top-0 z-10 text-white p-2 px-6  flex flex-row text-sm" style="background-color:#1E1E1E; border-bottom: 1px solid #444;">
+          <img src="/images/icon.png" class="w-8 h-8 mr-4"/>
           <button phx-click="run-all-blocks"><span><%="▶"%></span> Run All</button>
           <div class="flex-grow"/>
         </div>
       <div style="overflow:scroll;">
-        <form phx-change="update" phx-hook="TitleForm" id="title-form">
+        <form phx-change="update" phx-hook="TitleForm" id="title-form" >
           <input
             type="text"
             id="title"
@@ -23,7 +24,7 @@ defmodule SandmanWeb.LiveView.Document do
             value={@document.title || "new script"}
             spellcheck="false"
             autocomplete="off"
-            class="w-full border-0 p-0 px-5 font-semibold text-lg mt-2 leading-tight"
+            class="w-full border-0 p-0 px-5 font-semibold text-lg mt-8 leading-tight text-center"
           />
         </form>
 
