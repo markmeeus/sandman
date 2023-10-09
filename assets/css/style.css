@@ -42,13 +42,14 @@ input#title {
 .line-has-requests {
   height: 16px;
 }
-.line-has-requests.highlighted { border-bottom: 2px solid wheat; }
+.line-has-requests.highlighted { border-bottom: 1px dotted wheat; }
 /* .line-has-requests.highlighted.ok { border-bottom: 2px solid #494; }
 .line-has-requests.highlighted.warn { border-bottom: 2px solid #DD7; }
 .line-has-requests.highlighted.error { border-bottom: 2px solid #F77; } */
 
 .has-requests {
   cursor: pointer;
+  font-size: 12px;
 }
 
 .has-requests.request-count-1:after{content: '1';}
