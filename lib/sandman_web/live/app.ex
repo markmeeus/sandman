@@ -19,12 +19,13 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
           socket
         end
     end
-    window_id = case params["window_id"] do
-      nil -> :browser
-      id ->
-        String.to_existing_atom(params["window_id"])
-    end
-    socket = assign(socket, :window_id, window_id)
+    # not sure what this was used for
+    # window_id = case params["window_id"] do
+    #   nil -> :browser
+    #   id ->
+    #     String.to_existing_atom(params["window_id"])
+    # end
+    socket = assign(socket, :window_id, :browser)
     {:ok, socket}
   end
 

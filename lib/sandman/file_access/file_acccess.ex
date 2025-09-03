@@ -1,7 +1,20 @@
 defmodule Sandman.FileAccess do
-  def select_file(mode) do
-    :wx.set_env(Desktop.Env.wx_env())
+  alias Sandman.FrontendBridge
 
+  def select_file(mode) do
+    case FrontendBridge.send("select_file", %{"mode" => to_string(mode)}) do
+      {:ok, %{"file_name" => file_name}} ->
+        file_name
+      _ ->
+        # TODO: what should happen here?  update ui?
+        nil
+    end
+  end
+
+  def select_file_old(mode) do
+    # this should be done different ....
+    # :wx.set_env(Desktop.Env.wx_env())
+    :wx.set_env(:wx.new())
     file_dialog = case mode do
       :open -> :wxFileDialog.new(:wx.null)#, [wildCard: "*.lua"]) => laat niet toe iets anders te kiezen...
       :new -> :wxFileDialog.new(:wx.null, [style: 2, defaultFile: "new_script.md"])

@@ -20,7 +20,6 @@ defmodule Sandman.Application do
       # Start the Endpoint (http/https)
       SandmanWeb.Endpoint,
       Sandman.UpdateManager,
-      Sandman.WindowSupervisor,
       Sandman.Http.CowboyManager,
       # Start a worker by calling: Sandman.Worker.start_link(arg)
       # {Sandman.Worker, arg}
@@ -28,20 +27,7 @@ defmodule Sandman.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Sandman.Supervisor]
-    res = Supervisor.start_link(children, opts)
-
-    # start the first window with menu bar
-    desktop_env = Application.get_env(:sandman, :desktop)
-    if desktop_env[:open_window] do # not in test for instance
-      case Process.whereis(Sandman.WindowSupervisor) do
-        pid when is_pid(pid) ->
-          Sandman.WindowSupervisor.start_child()
-        _ ->
-          IO.inspect("Cannot start window")
-      end
-    end
-    # return the supervisor ret value
-    res
+    Supervisor.start_link(children, opts)
   end
 
   # Tell Phoenix to update the endpoint configuration

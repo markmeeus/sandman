@@ -6,7 +6,6 @@ defmodule SandmanWeb.UpdateBar do
   alias Sandman.UpdateManager
 
   def mount(_params, _session, socket) do
-    :wx.set_env(Desktop.Env.wx_env())
     PubSub.subscribe(Sandman.PubSub, "update_manager")
     socket = assign(socket, :status, UpdateManager.get_status())
     {:ok, socket}
@@ -50,10 +49,6 @@ defmodule SandmanWeb.UpdateBar do
 
   def handle_event("dismiss", _, socket) do
     UpdateManager.set_idle();
-    {:noreply, assign(socket, :status, :idle)}
-  end
-  def handle_event("open-download", _, socket) do
-    :wx_misc.launchDefaultBrowser('https://sandmanapp.com')
     {:noreply, assign(socket, :status, :idle)}
   end
 

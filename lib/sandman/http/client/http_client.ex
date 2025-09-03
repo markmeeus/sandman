@@ -58,9 +58,9 @@ defmodule Sandman.HttpClient do
           error: nil,
           direction: :out,
           lua_result: [LuaMapper.reverse_map(%{
-            body: res.body,
-            headers: headers,
-            status: res.status
+            "body" => res.body,
+            "headers" => headers,
+            "status" => res.status
           }), nil]
         }
 

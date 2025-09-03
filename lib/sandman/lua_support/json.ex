@@ -4,16 +4,17 @@ defmodule Sandman.Encoders.Json do
   import Sandman.Logger
 
   def decode(_doc_id, [json], luerl_state) do
-    res = json
+    json
       |> Jason.decode
       |> case do
         {:ok, data} ->
-          [LuaMapper.reverse_map(data)]
+          mapped = LuaMapper.reverse_map(data)
+           {encoded, luerl_state} = :luerl.encode(mapped, luerl_state)
+          {[encoded], luerl_state}
         {:error, err} ->
           message = Jason.DecodeError.message(err)
-          :luerl_lib.lua_error({"Json parse error", message}, luerl_state)
+          {:luerl_lib.lua_error({"Json parse error", message}, luerl_state), luerl_state}
       end
-    {res, luerl_state}
   end
   def decode(doc_id, _, luerl_state) do
     log(doc_id, "Unexpected arguments in JSON.decode")
@@ -21,7 +22,8 @@ defmodule Sandman.Encoders.Json do
   end
 
   def encode(_, [data], luerl_state) do
-    json = data
+    decoded_data = :luerl.decode(data, luerl_state)
+    json = decoded_data
     |> LuaMapper.map_unchecked()
     |> Jason.encode!
     {[json], luerl_state}

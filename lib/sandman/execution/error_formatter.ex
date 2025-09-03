@@ -30,9 +30,9 @@ defmodule Sandman.ErrorFormatter do
   end
 
   def format_lua_error(error, luerl_state) do
-    IO.inspect(luerl_state)
+    #IO.inspect(luerl_state)
     stack = :luerl.get_stacktrace(luerl_state)
-    IO.inspect(stack)
+    #IO.inspect(stack)
     format_error_and_stack(error, stack, luerl_state)
   end
 
@@ -95,7 +95,7 @@ defmodule Sandman.ErrorFormatter do
   defp format_error({:illegal_index, table, key}, luerl_state) do
     table = format_term(table, luerl_state)
     key = format_term(key, luerl_state)
-    "Table #{table} does not contain key #{key}"
+    "Table #{table} does not contain key #{key}" |> IO.inspect
   end
 
 
@@ -146,7 +146,7 @@ defmodule Sandman.ErrorFormatter do
 
   defp format_term(term, luerl_state) when is_list(term) do
     try do
-      decoded = :luerl_new.decode(term, luerl_state)
+      decoded = :luerl.decode(term, luerl_state)
       format_to_lua(decoded)
     rescue _e ->
       # this inspect(term) is a brute-force when it's not a map table

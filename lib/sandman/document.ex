@@ -73,19 +73,22 @@ defmodule Sandman.Document do
     self_pid = self()
     {:ok, luerl_server_pid} = LuerlServer.start_link(self_pid, %{
       print: fn args, luerl_state ->
-        {:ok, res} = GenServer.call(self_pid, {:handle_lua_call, :print, args})
+        decoded_args = :luerl.decode_list(args, luerl_state)
+        {:ok, res} = GenServer.call(self_pid, {:handle_lua_call, :print, decoded_args})
         {res, luerl_state}
       end,
       fetch: fn method, args, luerl_state ->
         # this is running in the luerl_server
         # TODO; refactor this so that req can be stored before request is being sent
         {result, luerl_state} = HttpClient.fetch_handler(doc_id, method, args, luerl_state)
-
         call_info = LuerlWrapper.get_call_info(luerl_state)
         # send the result to the document
         GenServer.cast(self_pid, {:record_http_request, result, call_info, nil})
         # return with lua script
-        {result.lua_result, luerl_state}
+        {encoded_results, luerl_state} = Enum.reduce(result.lua_result, {[], luerl_state}, fn item, {encoded_results, luerl_state} ->
+          {item_enc, luerl_state} = :luerl.encode(item, luerl_state)
+          {encoded_results ++ [item_enc], luerl_state}
+        end)
       end,
       start_server: fn port, luerl_state ->
         {:ok, res} = GenServer.call(self_pid, {:handle_lua_call, :start_server, port})
@@ -342,7 +345,6 @@ defmodule Sandman.Document do
   defp start_block(block_id, state = %{document: document, doc_id: doc_id, luerl_server_pid: luerl_server_pid}) do
     block = Enum.find(document.blocks, & &1[:id] == block_id)
     {prev_blocks, next_blocks} =  document.blocks
-      |> IO.inspect
       |> Enum.split_while(fn bl -> bl.id != block.id end)
 
     last_block_id = prev_blocks
