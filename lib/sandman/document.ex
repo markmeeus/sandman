@@ -80,7 +80,8 @@ defmodule Sandman.Document do
       fetch: fn method, args, luerl_state ->
         # this is running in the luerl_server
         # TODO; refactor this so that req can be stored before request is being sent
-        {result, luerl_state} = HttpClient.fetch_handler(doc_id, method, args, luerl_state)
+        decoded_args = :luerl.decode_list(args, luerl_state)
+        {result, luerl_state} = HttpClient.fetch_handler(doc_id, method, decoded_args, luerl_state)
         call_info = LuerlWrapper.get_call_info(luerl_state)
         # send the result to the document
         GenServer.cast(self_pid, {:record_http_request, result, call_info, nil})
