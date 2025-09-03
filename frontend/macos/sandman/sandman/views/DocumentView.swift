@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import WebKit
 
 struct DocumentTab: Identifiable, Hashable {
     let id = UUID()
@@ -19,76 +20,35 @@ struct DocumentTab: Identifiable, Hashable {
     }
 }
 
-struct DocumentView: View {
+struct WebView: NSViewRepresentable {
     let url: URL
-    @State private var content: String = ""
-    @State private var isLoading: Bool = true
-    @State private var error: String?
 
-    var body: some View {
-        VStack(spacing: 0) {
-            if isLoading {
-                VStack {
-                    ProgressView()
-                        .scaleEffect(0.8)
-                    Text("Loading...")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if let error = error {
-                VStack(spacing: 12) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 32))
-                        .foregroundColor(.orange)
-
-                    Text("Error Loading File")
-                        .font(.headline)
-
-                    Text(error)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                ScrollView([.horizontal, .vertical]) {
-                    Text(content)
-                        .font(.system(.body, design: .monospaced))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                        .padding()
-                        .textSelection(.enabled)
-                }
-            }
-        }
-        .onAppear {
-            loadContent()
-        }
-        .onChange(of: url) { _, _ in
-            loadContent()
-        }
+    func makeNSView(context: Context) -> WKWebView {
+        let webView = WKWebView()        
+        return webView
     }
 
-    private func loadContent() {
-        isLoading = true
-        error = nil
+    func updateNSView(_ nsView: WKWebView, context: Context) {
+        nsView.load(URLRequest(url: url))
+    }
+}
 
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                let fileContent = try String(contentsOf: url, encoding: .utf8)
+struct DocumentView: View {
+    let url: URL
 
-                DispatchQueue.main.async {
-                    self.content = fileContent
-                    self.isLoading = false
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self.error = error.localizedDescription
-                    self.isLoading = false
-                }
-            }
-        }
+    private var webURL: URL {
+        var components = URLComponents()
+        components.scheme = "http"
+        components.host = "localhost"
+        components.port = 7000
+        components.queryItems = [URLQueryItem(name: "file", value: url.path)]
+
+        return components.url ?? URL(string: "http://localhost:7000")!
+    }
+
+    var body: some View {
+        WebView(url: webURL)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
