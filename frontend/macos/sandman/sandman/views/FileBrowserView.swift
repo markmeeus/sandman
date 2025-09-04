@@ -35,7 +35,13 @@ struct FileBrowserView: View {
                         item: rootItem,
                         level: 0,
                         expandedItems: $expandedItems,
-                        selectedFile: $selectedFile
+                        selectedFile: $selectedFile,
+                        onRefreshNeeded: {
+                            // Only refresh the root directory's children if they're loaded
+                            if rootItem.children != nil {
+                                rootItem.loadChildren()
+                            }
+                        }
                     )
                 }
                 .padding(.horizontal, 4)
@@ -51,6 +57,13 @@ struct FileItemView: View {
     let level: Int
     @Binding var expandedItems: Set<URL>
     @Binding var selectedFile: URL?
+    let onRefreshNeeded: () -> Void
+
+    @State private var showingNewFileAlert = false
+    @State private var showingNewFolderAlert = false
+    @State private var showingRenameAlert = false
+    @State private var newItemName = ""
+    @State private var renameItemName = ""
 
     private var isExpanded: Bool {
         expandedItems.contains(item.url)
@@ -107,6 +120,26 @@ struct FileItemView: View {
                     selectedFile = item.url
                 }
             }
+            .contextMenu {
+                if item.isDirectory {
+                    Button("New File") {
+                        newItemName = ""
+                        showingNewFileAlert = true
+                    }
+
+                    Button("New Folder") {
+                        newItemName = ""
+                        showingNewFolderAlert = true
+                    }
+
+                    Divider()
+                }
+
+                Button("Rename") {
+                    renameItemName = item.name
+                    showingRenameAlert = true
+                }
+            }
 
             // Children (if expanded)
             if isExpanded, let children = item.children {
@@ -115,10 +148,43 @@ struct FileItemView: View {
                         item: child,
                         level: level + 1,
                         expandedItems: $expandedItems,
-                        selectedFile: $selectedFile
+                        selectedFile: $selectedFile,
+                        onRefreshNeeded: {
+                            // Only refresh the current directory's children, not the whole tree
+                            if item.isDirectory && item.children != nil {
+                                item.loadChildren()
+                            }
+                        }
                     )
                 }
             }
+        }
+        .alert("New File", isPresented: $showingNewFileAlert) {
+            TextField("File name", text: $newItemName)
+            Button("Cancel", role: .cancel) { }
+            Button("Create") {
+                createNewFile()
+            }
+        } message: {
+            Text("Enter the name for the new file")
+        }
+        .alert("New Folder", isPresented: $showingNewFolderAlert) {
+            TextField("Folder name", text: $newItemName)
+            Button("Cancel", role: .cancel) { }
+            Button("Create") {
+                createNewFolder()
+            }
+        } message: {
+            Text("Enter the name for the new folder")
+        }
+        .alert("Rename", isPresented: $showingRenameAlert) {
+            TextField("Name", text: $renameItemName)
+            Button("Cancel", role: .cancel) { }
+            Button("Rename") {
+                renameItem()
+            }
+        } message: {
+            Text("Enter the new name")
         }
     }
 
@@ -131,6 +197,73 @@ struct FileItemView: View {
                 item.loadChildren()
             }
             expandedItems.insert(item.url)
+        }
+    }
+
+    private func createNewFile() {
+        guard !newItemName.isEmpty, item.isDirectory else { return }
+
+        let newFileURL = item.url.appendingPathComponent(newItemName)
+
+        do {
+            // Create empty file
+            FileManager.default.createFile(atPath: newFileURL.path, contents: Data(), attributes: nil)
+
+            // Refresh the directory contents
+            item.loadChildren()
+
+            // Expand the directory if not already expanded
+            if !isExpanded {
+                expandedItems.insert(item.url)
+            }
+        } catch {
+            print("Error creating file: \(error)")
+        }
+    }
+
+    private func createNewFolder() {
+        guard !newItemName.isEmpty, item.isDirectory else { return }
+
+        let newFolderURL = item.url.appendingPathComponent(newItemName)
+
+        do {
+            try FileManager.default.createDirectory(at: newFolderURL, withIntermediateDirectories: false, attributes: nil)
+
+            // Refresh the directory contents
+            item.loadChildren()
+
+            // Expand the directory if not already expanded
+            if !isExpanded {
+                expandedItems.insert(item.url)
+            }
+        } catch {
+            print("Error creating folder: \(error)")
+        }
+    }
+
+    private func renameItem() {
+        guard !renameItemName.isEmpty, renameItemName != item.name else { return }
+
+        let parentURL = item.url.deletingLastPathComponent()
+        let newURL = parentURL.appendingPathComponent(renameItemName)
+
+        do {
+            try FileManager.default.moveItem(at: item.url, to: newURL)
+
+            // Update the item's properties directly
+            item.url = newURL
+            item.name = renameItemName
+
+            // If this was the selected file, update the selection
+            if selectedFile != newURL {
+                selectedFile = newURL
+            }
+
+            // Only trigger parent refresh to update the directory listing
+            onRefreshNeeded()
+
+        } catch {
+            print("Error renaming item: \(error)")
         }
     }
 }

@@ -9,10 +9,10 @@ import Foundation
 
 struct FileItem: Identifiable, Hashable {
     let id = UUID()
-    let name: String
-    let url: URL
-    let isDirectory: Bool
-    let isHidden: Bool
+    var name: String
+    var url: URL
+    var isDirectory: Bool
+    var isHidden: Bool
     var children: [FileItem]?
 
     init(url: URL) {
@@ -40,14 +40,28 @@ struct FileItem: Identifiable, Hashable {
                 options: [.skipsHiddenFiles]
             )
 
-            self.children = contents
-                .map { FileItem(url: $0) }
-                .sorted { lhs, rhs in
-                    if lhs.isDirectory != rhs.isDirectory {
-                        return lhs.isDirectory
-                    }
-                    return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+            // Preserve existing items where possible to maintain IDs and state
+            let existingChildren = children ?? []
+            var newChildren: [FileItem] = []
+
+            for contentURL in contents {
+                // Try to find existing item with same URL
+                if let existingItem = existingChildren.first(where: { $0.url == contentURL }) {
+                    var updatedItem = existingItem
+                    updatedItem.refreshFromFileSystem()
+                    newChildren.append(updatedItem)
+                } else {
+                    // Create new item if it doesn't exist
+                    newChildren.append(FileItem(url: contentURL))
                 }
+            }
+
+            self.children = newChildren.sorted { lhs, rhs in
+                if lhs.isDirectory != rhs.isDirectory {
+                    return lhs.isDirectory
+                }
+                return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+            }
         } catch {
             print("Error loading directory contents: \(error)")
             self.children = []
@@ -56,5 +70,19 @@ struct FileItem: Identifiable, Hashable {
 
     var hasChildren: Bool {
         return isDirectory && !(children?.isEmpty ?? true)
+    }
+
+    mutating func refreshFromFileSystem() {
+        // Update properties from current file system state
+        self.name = url.lastPathComponent
+        self.isHidden = name.hasPrefix(".")
+
+        // Update directory status
+        var isDir: ObjCBool = false
+        let exists = FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir)
+        self.isDirectory = exists && isDir.boolValue
+
+        // Note: We don't reload children here to avoid infinite recursion
+        // Children will be reloaded when loadChildren() is called explicitly
     }
 }
