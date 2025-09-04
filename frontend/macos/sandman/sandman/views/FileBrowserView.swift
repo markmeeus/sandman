@@ -74,7 +74,7 @@ struct FileItemView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 4) {
                 // Indentation
                 ForEach(0..<level, id: \.self) { _ in
@@ -85,27 +85,27 @@ struct FileItemView: View {
 
                 // Disclosure triangle for directories
                 if item.isDirectory {
-                    Button(action: toggleExpansion) {
-                        Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.secondary)
-                            .frame(width: 12, height: 12)
-                    }
-                    .buttonStyle(PlainButtonStyle())
+                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.secondary)
+                        .frame(width: 12, height: 12)
                 } else {
                     Rectangle()
                         .fill(Color.clear)
                         .frame(width: 12, height: 12)
                 }
 
-                // File/folder icon
-                Image(systemName: item.isDirectory ? "folder.fill" : "doc.text.fill")
-                    .font(.system(size: 12))
-                    .foregroundColor(item.isDirectory ? .blue : .secondary)
+                if(!item.isDirectory) {
+                    // File icon
+                    Image(systemName: "doc.text.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+
+                }
 
                 // File name
                 Text(item.name)
-                    .font(.system(size: 12))
+                    .font(.system(size: 14))
                     .lineLimit(1)
                     .truncationMode(.middle)
 
@@ -115,8 +115,11 @@ struct FileItemView: View {
             .padding(.vertical, 2)
             .background(isSelected ? Color.accentColor.opacity(0.3) : Color.clear)
             .cornerRadius(4)
+            .contentShape(Rectangle()) // Make entire HStack area clickable
             .onTapGesture {
-                if !item.isDirectory {
+                if item.isDirectory {
+                    toggleExpansion()
+                } else {
                     selectedFile = item.url
                 }
             }
