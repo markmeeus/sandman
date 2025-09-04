@@ -12,12 +12,16 @@ struct FileBrowserView: View {
     @State private var expandedItems: Set<URL> = []
     @Binding var selectedFile: URL?
 
-    init(selectedFile: Binding<URL?>) {
+    init(rootURL: URL, selectedFile: Binding<URL?>) {
         self._selectedFile = selectedFile
-        let homeURL = FileManager.default.homeDirectoryForCurrentUser
-        var homeItem = FileItem(url: homeURL)
-        homeItem.loadChildren()
-        self._rootItem = State(initialValue: homeItem)
+        var rootFileItem = FileItem(url: rootURL)
+        rootFileItem.loadChildren()
+        self._rootItem = State(initialValue: rootFileItem)
+    }
+
+    // Convenience initializer for backward compatibility
+    init(selectedFile: Binding<URL?>) {
+        self.init(rootURL: FileManager.default.homeDirectoryForCurrentUser, selectedFile: selectedFile)
     }
 
     var body: some View {
