@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import WebKit
 
 struct DocumentTabsView: View {
     @State private var openTabs: [DocumentTab] = []
     @State private var selectedTabId: UUID?
+    @State private var webViews: [UUID: WebViewContainer] = [:]
     @Binding var selectedFile: URL?
     let zoomLevel: Double
 
@@ -47,7 +49,18 @@ struct DocumentTabsView: View {
 
             // Document content area
             if let selectedTab = selectedTab {
-                DocumentView(url: selectedTab.url, zoomLevel: zoomLevel)
+                ZStack {
+                    // Show all webviews but only make the selected one visible
+                    ForEach(openTabs, id: \.id) { tab in
+                        if let webViewContainer = webViews[tab.id] {
+                            WebViewWrapper(
+                                container: webViewContainer,
+                                zoomLevel: zoomLevel
+                            )
+                            .opacity(tab.id == selectedTabId ? 1 : 0)
+                        }
+                    }
+                }
             } else {
                 VStack(spacing: 16) {
                     Image(systemName: "doc.text")
@@ -85,6 +98,10 @@ struct DocumentTabsView: View {
         let newTab = DocumentTab(url: url)
         openTabs.append(newTab)
         selectedTabId = newTab.id
+
+        // Create WebView container for this tab
+        let webViewContainer = WebViewContainer(url: url)
+        webViews[newTab.id] = webViewContainer
     }
 
     private func selectTab(_ tab: DocumentTab) {
@@ -95,6 +112,9 @@ struct DocumentTabsView: View {
     private func closeTab(_ tab: DocumentTab) {
         if let index = openTabs.firstIndex(where: { $0.id == tab.id }) {
             openTabs.remove(at: index)
+
+            // Clean up the WebView container
+            webViews.removeValue(forKey: tab.id)
 
             // If we closed the selected tab, select another one
             if selectedTabId == tab.id {
@@ -169,6 +189,44 @@ struct TabItemView: View {
         .onHover { hovering in
             isHovering = hovering
         }
+    }
+}
+
+// WebView container to maintain state
+class WebViewContainer: ObservableObject {
+    let webView: WKWebView
+    let url: URL
+
+    init(url: URL) {
+        self.url = url
+        self.webView = WKWebView()
+
+        // Build the localhost URL with file parameter
+        var components = URLComponents()
+        components.scheme = "http"
+        components.host = "localhost"
+        components.port = 7000
+        components.queryItems = [URLQueryItem(name: "file", value: url.path)]
+
+        let webURL = components.url ?? URL(string: "http://localhost:7000")!
+
+        // Load the URL once
+        self.webView.load(URLRequest(url: webURL))
+    }
+}
+
+// SwiftUI wrapper for persistent WebView
+struct WebViewWrapper: NSViewRepresentable {
+    let container: WebViewContainer
+    let zoomLevel: Double
+
+    func makeNSView(context: Context) -> WKWebView {
+        return container.webView
+    }
+
+    func updateNSView(_ nsView: WKWebView, context: Context) {
+        // Only update zoom level, don't reload
+        nsView.pageZoom = zoomLevel
     }
 }
 

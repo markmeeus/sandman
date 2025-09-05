@@ -30,11 +30,9 @@ struct WebView: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: WKWebView, context: Context) {
-        // Load URL if it's different
-        if nsView.url != url {
+        if(nsView.url != url) {
             nsView.load(URLRequest(url: url))
         }
-
         // Apply zoom level to webview
         nsView.pageZoom = zoomLevel
     }

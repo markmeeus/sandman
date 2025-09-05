@@ -104,11 +104,24 @@ struct FileItemView: View {
                 }
 
                 if(!item.isDirectory) {
-                    // File icon
-                    Image(systemName: "doc.text.fill")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-
+                    // File icon based on extension
+                    if item.url.pathExtension.lowercased() == "md" {
+                        // Use app icon for .md files (sandman files)
+                        if let appIcon = NSApplication.shared.applicationIconImage {
+                            Image(nsImage: appIcon)
+                                .resizable()
+                                .frame(width: 12 * zoomLevel, height: 12 * zoomLevel  )
+                        } else {
+                            // Fallback to a distinctive system icon for sandman files
+                            Image(systemName: "doc.richtext.fill")
+                                .font(.system(size: 12 * zoomLevel))
+                                .foregroundColor(.blue)
+                        }
+                    } else {
+                        Image(systemName: "doc.text.fill")
+                            .font(.system(size: 12 * zoomLevel))
+                            .foregroundColor(.secondary)
+                    }
                 }
 
                 // File name

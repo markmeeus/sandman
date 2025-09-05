@@ -11,7 +11,6 @@ defmodule SandmanWeb.LiveView.Document do
     ~H"""
     <div phx-hook="DocumentHook" id="document" class="h-screen" style="overflow:scroll; overscroll-behavior: none">
         <div class="sticky top-0 z-10 text-white p-2 px-6  flex flex-row text-sm" style="background-color:#1E1E1E; border-bottom: 1px solid #444;">
-          <img src="/images/icon.png" class="w-8 h-8 mr-4"/>
           <button phx-click="run-all-blocks"><span><%="▶"%></span> Run All</button>
           <div class="flex-grow"/>
         </div>
@@ -58,7 +57,7 @@ defmodule SandmanWeb.LiveView.Document do
       </div>
     </div>
     <%= for block <- @document.blocks do%>
-        <div class="my-1 pt-2 pb-1 px-5 no-select" style="border-bottom: 2px solid #333;">
+        <div class="my-1 pt-2 pb-1 px-5 no-select" style="border-bottom: 1px solid #000;">
   <%!-- <div class="absolute left-0 z-10 mt-2 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
     <div class="py-1" role="none">
       <!-- Active: "bg-gray-100 text-gray-900", Not Active: "text-gray-700" -->

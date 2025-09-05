@@ -10,8 +10,8 @@ const HomeHook = {
       },
       gutterStyle: () => {
         return {
-          'background-color': '#555',
-          width: "4px",
+          'background-color': '#000',
+          width: "2px",
         }
       }
     });
