@@ -11,6 +11,7 @@ struct DocumentTabsView: View {
     @State private var openTabs: [DocumentTab] = []
     @State private var selectedTabId: UUID?
     @Binding var selectedFile: URL?
+    let zoomLevel: Double
 
     var selectedTab: DocumentTab? {
         openTabs.first { $0.id == selectedTabId }
@@ -46,7 +47,7 @@ struct DocumentTabsView: View {
 
             // Document content area
             if let selectedTab = selectedTab {
-                DocumentView(url: selectedTab.url)
+                DocumentView(url: selectedTab.url, zoomLevel: zoomLevel)
             } else {
                 VStack(spacing: 16) {
                     Image(systemName: "doc.text")
@@ -172,6 +173,6 @@ struct TabItemView: View {
 }
 
 #Preview {
-    DocumentTabsView(selectedFile: .constant(nil))
+    DocumentTabsView(selectedFile: .constant(nil), zoomLevel: 1.0)
         .frame(width: 600, height: 400)
 }

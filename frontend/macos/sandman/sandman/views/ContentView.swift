@@ -10,6 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @State private var selectedFile: URL?
     @State private var rootFolderURL: URL?
+    @EnvironmentObject var zoomManager: ZoomManager
 
     var body: some View {
         Group {
@@ -17,15 +18,18 @@ struct ContentView: View {
                 // Main interface with selected folder
                 HSplitView {
                     // Left side: File browser
-                    FileBrowserView(rootURL: rootURL, selectedFile: $selectedFile)
+                    FileBrowserView(rootURL: rootURL, selectedFile: $selectedFile, zoomLevel: zoomManager.zoomLevel)
                         .frame(minWidth: 200, idealWidth: 250, maxWidth: 400)
 
                     // Right side: Document tabs and content
-                    DocumentTabsView(selectedFile: $selectedFile)
+                    DocumentTabsView(selectedFile: $selectedFile, zoomLevel: zoomManager.zoomLevel)
                         .frame(minWidth: 400)
                 }
                 .frame(minWidth: 800, minHeight: 600)
                 .background(Color(NSColor.windowBackgroundColor))
+                .onChange(of: zoomManager.zoomLevel) { _, newValue in
+                    print("ContentView: Zoom level changed to \(newValue)")
+                }
             } else {
                 // Folder selection screen
                 FolderSelectionView { selectedURL in
@@ -39,5 +43,6 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environmentObject(ZoomManager.shared)
         .frame(width: 1000, height: 700)
 }

@@ -11,9 +11,11 @@ struct FileBrowserView: View {
     @State private var rootItem: FileItem
     @State private var expandedItems: Set<URL> = []
     @Binding var selectedFile: URL?
+    let zoomLevel: Double
 
-    init(rootURL: URL, selectedFile: Binding<URL?>) {
+    init(rootURL: URL, selectedFile: Binding<URL?>, zoomLevel: Double = 1.0) {
         self._selectedFile = selectedFile
+        self.zoomLevel = zoomLevel
         var rootFileItem = FileItem(url: rootURL)
         rootFileItem.loadChildren()
         self._rootItem = State(initialValue: rootFileItem)
@@ -21,13 +23,13 @@ struct FileBrowserView: View {
 
     // Convenience initializer for backward compatibility
     init(selectedFile: Binding<URL?>) {
-        self.init(rootURL: FileManager.default.homeDirectoryForCurrentUser, selectedFile: selectedFile)
+        self.init(rootURL: FileManager.default.homeDirectoryForCurrentUser, selectedFile: selectedFile, zoomLevel: 1.0)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Files")
-                .font(.headline)
+                .font(.system(size: 17 * zoomLevel, weight: .semibold))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -40,6 +42,7 @@ struct FileBrowserView: View {
                         level: 0,
                         expandedItems: $expandedItems,
                         selectedFile: $selectedFile,
+                        zoomLevel: zoomLevel,
                         onRefreshNeeded: {
                             // Only refresh the root directory's children if they're loaded
                             if rootItem.children != nil {
@@ -61,6 +64,7 @@ struct FileItemView: View {
     let level: Int
     @Binding var expandedItems: Set<URL>
     @Binding var selectedFile: URL?
+    let zoomLevel: Double
     let onRefreshNeeded: () -> Void
 
     @State private var showingNewFileAlert = false
@@ -109,7 +113,7 @@ struct FileItemView: View {
 
                 // File name
                 Text(item.name)
-                    .font(.system(size: 14))
+                    .font(.system(size: 14 * zoomLevel))
                     .lineLimit(1)
                     .truncationMode(.middle)
 
@@ -156,6 +160,7 @@ struct FileItemView: View {
                         level: level + 1,
                         expandedItems: $expandedItems,
                         selectedFile: $selectedFile,
+                        zoomLevel: zoomLevel,
                         onRefreshNeeded: {
                             // Only refresh the current directory's children, not the whole tree
                             if item.isDirectory && item.children != nil {

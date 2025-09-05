@@ -22,19 +22,27 @@ struct DocumentTab: Identifiable, Hashable {
 
 struct WebView: NSViewRepresentable {
     let url: URL
+    let zoomLevel: Double
 
     func makeNSView(context: Context) -> WKWebView {
-        let webView = WKWebView()        
+        let webView = WKWebView()
         return webView
     }
 
     func updateNSView(_ nsView: WKWebView, context: Context) {
-        nsView.load(URLRequest(url: url))
+        // Load URL if it's different
+        if nsView.url != url {
+            nsView.load(URLRequest(url: url))
+        }
+
+        // Apply zoom level to webview
+        nsView.pageZoom = zoomLevel
     }
 }
 
 struct DocumentView: View {
     let url: URL
+    let zoomLevel: Double
 
     private var webURL: URL {
         var components = URLComponents()
@@ -47,12 +55,12 @@ struct DocumentView: View {
     }
 
     var body: some View {
-        WebView(url: webURL)
+        WebView(url: webURL, zoomLevel: zoomLevel)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
 #Preview {
-    DocumentView(url: URL(fileURLWithPath: "/Users/Shared/test.txt"))
+    DocumentView(url: URL(fileURLWithPath: "/Users/Shared/test.txt"), zoomLevel: 1.0)
         .frame(width: 500, height: 400)
 }
