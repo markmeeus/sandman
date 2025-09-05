@@ -1,4 +1,5 @@
 import * as monaco from "monaco-editor";
+import globalUndoManager from "../globalUndo";
 
 
 function trackSize(editor, container, resize){
@@ -53,6 +54,9 @@ const MonacoHook = {
       scrollBeyondLastLine: false,
       lineNumbersMinChars: 1
     });
+
+    // Register with global undo manager
+    globalUndoManager.registerEditor(blockId, editor);
 
     // send changes to backend
     editor.getModel().onDidChangeContent((changeEvent)=>{
@@ -167,6 +171,22 @@ const MonacoHook = {
     })
     // set initial size
     resize(editor, this.el);
+
+    // Store references for cleanup
+    this.editor = editor;
+    this.blockId = blockId;
+  },
+
+  destroyed() {
+    // Unregister from global undo manager
+    if (this.blockId) {
+      globalUndoManager.unregisterEditor(this.blockId);
+    }
+
+    // Dispose of Monaco editor
+    if (this.editor) {
+      this.editor.dispose();
+    }
   }
 }
 
