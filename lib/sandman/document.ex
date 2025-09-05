@@ -37,9 +37,6 @@ defmodule Sandman.Document do
     GenServer.cast(pid, {:change_code, block_id, code})
   end
 
-  def update_title(pid, title) do
-    GenServer.cast(pid, {:update_title, title})
-  end
 
   def run_block(pid, block_id) do
     GenServer.cast(pid, {:run_block, block_id})
@@ -248,11 +245,6 @@ defmodule Sandman.Document do
     {:noreply, %{ state | document: document}}
   end
 
-  def handle_cast({:update_title, title}, state = %{document: document}) do
-    document = Map.put(document, :title, title)
-    write_file(state)
-    {:noreply, %{ state | document: document}}
-  end
 
   def handle_cast({:run_block, block_id}, state ) do
     {:noreply, start_block(block_id, state)}

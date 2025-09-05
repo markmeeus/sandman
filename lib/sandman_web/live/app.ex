@@ -149,10 +149,6 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     {:noreply, assign(socket, :open_requests, open_requests)}
   end
 
-  def handle_event("update", %{"_target" => ["title"], "title" => title}, socket = %{assigns: %{doc_pid: doc_pid}}) do
-    Document.update_title(doc_pid, title)
-    {:noreply, socket}
-  end
 
   def handle_event("switch_tab", %{"tab" => tab}, socket) do
     # switching subtab to headers, better to keep separate state

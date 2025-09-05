@@ -35,41 +35,25 @@ defmodule Sandman.DocumentEncoderTest do
 
   test "reads empty document" do
     encoded = ""
-    assert DocumentEncoder.decode(encoded, &(&1)) == %{title: "<untitled>", blocks: []}
+    assert DocumentEncoder.decode(encoded, &(&1)) == %{blocks: []}
   end
 
-  test "write title" do
-    document = %{title: "this is a title"}
-    assert DocumentEncoder.encode(document) == """
-# this is a title
-"""
-  end
 
-  test "reads title" do
-    encoded = """
-# this is a title
-"""
-    assert DocumentEncoder.decode(encoded, &(&1)) == %{title: "this is a title", blocks: []}
-  end
 
   test "writes a block" do
-    document = %{title: "this is a title", blocks: [%{id: "867b6036-67a6-4afd-9857-050f21e24618", code: "ola pola", type: "lua"}]}
+    document = %{blocks: [%{id: "867b6036-67a6-4afd-9857-050f21e24618", code: "ola pola", type: "lua"}]}
     assert DocumentEncoder.encode(document) == """
-# this is a title
-
 ```lua
 ola pola
 ```
 """
   end
   test "writes multiple blocks" do
-    document = %{title: "this is a title", blocks: [
+    document = %{blocks: [
       %{id: "867b6036-67a6-4afd-9857-050f21e24618", code: "ola pola"},
       %{id: "867b6036-67a6-4afd-9857-050f21e24619", code: "ola\npola"}
     ]}
     assert DocumentEncoder.encode(document) == """
-# this is a title
-
 ```lua
 ola pola
 ```
@@ -83,8 +67,6 @@ pola
 
   test "reads multiple blocks" do
     encoded = """
-# this is a title
-
 ```lua
 ola pola1
 ```
@@ -95,7 +77,7 @@ pola
 2
 ```
 """
-    document = %{title: "this is a title", blocks: [
+    document = %{blocks: [
       %{id: 1, code: "ola pola1", type: "lua"},
       %{id: 2, code: "ola\npola\n2", type: "lua"}
     ]}
@@ -106,15 +88,13 @@ pola
 
   test "keeps newlines in text" do
     encoded = """
-# this is a title
-
 ```lua
 ola
 
 pola1
 ```
 """
-    document = %{title: "this is a title", blocks: [
+    document = %{blocks: [
       %{id: 1, code: "ola\n\npola1", type: "lua"},
     ]}
 

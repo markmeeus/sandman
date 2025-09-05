@@ -1,47 +1,34 @@
 defmodule Sandman.DocumentEncoder do
   def encode(document) do
     ""
-    |> write_title(document)
     |> write_blocks(document)
   end
 
   def decode(encoded, new_id_fn) do
     %{}
-    |> read_title(encoded)
     |> read_blocks(encoded, new_id_fn)
   end
 
-  defp write_title(encoded, %{title: title}) when is_binary(title) do
-    encoded <> "# #{title}\n"
-  end
-  defp write_title(encoded, _) do
-    encoded
-  end
 
   defp write_blocks(encoded, %{blocks: blocks}) do
     write_blocks(encoded, blocks)
   end
   defp write_blocks(encoded, [block | rest]) do
     encoded
-    |> write_block(block)
+    |> write_block(block, encoded == "")
     |> write_blocks(rest)
   end
   defp write_blocks(encoded, _) do
     encoded
   end
 
-  defp write_block(encoded, block) do
+  defp write_block(encoded, block, true) do
+    encoded <> "```lua\n#{block.code}\n```\n"
+  end
+  defp write_block(encoded, block, false) do
     encoded <> "\n```lua\n#{block.code}\n```\n"
   end
 
-  defp read_title(document, encoded) do
-    title = case String.split(encoded, "\n") do
-      ["# " <> title] -> title
-      ["# " <> title | _] -> title
-      _ -> "<untitled>"
-    end
-    Map.put(document, :title, title)
-  end
 
   defp read_blocks(document, encoded, new_id_fn) do
     {blocks, _current_block} = Enum.reduce(String.split(encoded, "\n"), {[], nil}, fn line, {blocks, current_block} ->

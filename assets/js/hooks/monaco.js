@@ -50,7 +50,8 @@ const MonacoHook = {
       renderLineHighlight: "none",
       overviewRulerBorder: false,
       overviewRulerLanes: 0,
-      scrollBeyondLastLine: false
+      scrollBeyondLastLine: false,
+      lineNumbersMinChars: 1
     });
 
     // send changes to backend

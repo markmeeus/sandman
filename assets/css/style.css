@@ -3,15 +3,10 @@
 @import "tailwindcss/utilities";
 
 body {
-  background-color: #222;
+  background-color: #1E1E1E;
   color: #DDD;
 }
 
-input#title {
-  background-color: #222;
-  color: white;
-  border: 0;
-}
 
 /* This file is for your main application CSS */
 .split {

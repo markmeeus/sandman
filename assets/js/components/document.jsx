@@ -34,9 +34,6 @@ const Document = (props) => {
     return <></>
   }
   return (<>
-    <h1 class="text-xl text-center mx-5 mt-1 font-bold" contentEditable>
-      New Script
-    </h1>
     <>
       {window.sandman?.sandmanDocument.blocks.map(block => {
         if(block.type === 'lua') {

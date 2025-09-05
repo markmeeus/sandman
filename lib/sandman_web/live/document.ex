@@ -10,22 +10,8 @@ defmodule SandmanWeb.LiveView.Document do
   def render(assigns) do
     ~H"""
     <div phx-hook="DocumentHook" id="document" class="h-screen" style="overflow:scroll; overscroll-behavior: none">
-        <div class="sticky top-0 z-10 text-white p-2 px-6  flex flex-row text-sm" style="background-color:#1E1E1E; border-bottom: 1px solid #444;">
-          <button phx-click="run-all-blocks"><span><%="▶"%></span> Run All</button>
-          <div class="flex-grow"/>
-        </div>
+
       <div style="overflow:scroll;">
-        <form phx-change="update" phx-hook="TitleForm" id="title-form" >
-          <input
-            type="text"
-            id="title"
-            name="title"
-            value={@document.title || "new script"}
-            spellcheck="false"
-            autocomplete="off"
-            class="w-full border-0 p-0 px-5 font-semibold text-lg mt-8 leading-tight text-center"
-          />
-        </form>
 
         <%= case @document.blocks do
           [] -> render_empty_state(assigns)
@@ -57,7 +43,7 @@ defmodule SandmanWeb.LiveView.Document do
       </div>
     </div>
     <%= for block <- @document.blocks do%>
-        <div class="my-1 pt-2 pb-1 px-5 no-select" style="border-bottom: 1px solid #000;">
+        <div class="my-1 pb-1 px-5 no-select" style="border-bottom: 1px solid #000;">
   <%!-- <div class="absolute left-0 z-10 mt-2 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
     <div class="py-1" role="none">
       <!-- Active: "bg-gray-100 text-gray-900", Not Active: "text-gray-700" -->
@@ -79,7 +65,7 @@ defmodule SandmanWeb.LiveView.Document do
             <%end%>
           </div>
           <div class="group min-h-5">
-            <div class="flex flex-row fs-2 my-2 text-sm sticky">
+            <div class="flex flex-row fs-2 my-2 px-6 text-sm sticky">
               <button phx-click="run-block" phx-value-block-id={block.id}><span><%="▶"%></span> Run</button>
               <div class="flex-grow"/>
               <button class="  mr-3 text-sm hidden group-hover:block" phx-click="add-block" phx-value-block-id={block.id}><span class="font-bold">+</span> Insert block</button>
