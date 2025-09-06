@@ -46,13 +46,13 @@ const MonacoHook = {
         enabled: false,
       },
       fontSize: '12px',
-      fontWeight: "bold",
+      //fontWeight: '600',
       theme: 'vs-dark',
       renderLineHighlight: "none",
       overviewRulerBorder: false,
       overviewRulerLanes: 0,
       scrollBeyondLastLine: false,
-      lineNumbersMinChars: 1
+      lineNumbersMinChars: 2
     });
 
     // Register with global undo manager

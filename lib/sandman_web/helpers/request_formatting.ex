@@ -10,8 +10,9 @@ defmodule Sandman.RequestFormatting do
     |> add_call_info(call_info)
   end
 
-  defp in_or_out(:in), do: "server:"
-  defp in_or_out(:out), do: "client:"
+  # for no info on direction
+  defp in_or_out(:in), do: ""
+  defp in_or_out(:out), do: ""
 
   defp add_port(formatted, :http, 80), do: formatted
   defp add_port(formatted, :https, 443), do: formatted
@@ -23,5 +24,6 @@ defmodule Sandman.RequestFormatting do
   defp add_query(formatted, q), do: "#{formatted}?#{q}"
 
   defp add_call_info(formatted, nil), do: formatted
-  defp add_call_info(formatted, %{line_nr: line_nr}), do: "#{formatted} (#{line_nr})"
+
+  defp add_call_info(formatted, %{line_nr: line_nr}), do: "#{formatted} @:#{line_nr}"
 end
