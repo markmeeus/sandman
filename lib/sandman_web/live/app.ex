@@ -55,9 +55,8 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
             <div class="">
               <nav class="flex space-x-4" aria-label="Tabs">
                 <!-- Current: "bg-gray-100 text-gray-700", Default: "text-gray-500 hover:text-gray-700" -->
-                <a href="#" class={"#{tab_colors(@main_left_tab, :req_res)} px-3 py-2 text-sm font-medium"} phx-click="change-main-left-tab" phx-value-tab-id="req_res">Request Info</a>
-                <a href="#" class={"#{tab_colors(@main_left_tab, :logs)} px-3 py-2 text-sm font-medium"}  phx-click="change-main-left-tab" phx-value-tab-id="logs">Logs</a>
-                <%!-- <a href="#" class={"#{tab_colors(@main_left_tab, :docs)}  px-3 py-2 text-sm font-medium"}  phx-click="change-main-left-tab" phx-value-tab-id="docs">Docs</a> --%>
+                <a href="#" class={"#{tab_colors(@main_left_tab, :req_res)} px-1 py-1 text-xs font-medium"} phx-click="change-main-left-tab" phx-value-tab-id="req_res">Inspector</a>
+                <a href="#" class={"#{tab_colors(@main_left_tab, :logs)} px-1 py-1 text-xs font-medium"}  phx-click="change-main-left-tab" phx-value-tab-id="logs">Logs</a>
               </nav>
             </div>
           </div>
