@@ -76,3 +76,9 @@ body {
   /* background-color: red; */
   color: #F77;
 }
+
+/* Selected request row styling */
+.request-row-selected {
+  background-color: rgba(100, 149, 237, 0.2) !important;
+  border-left: 3px solid #6495ED;
+}

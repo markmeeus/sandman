@@ -170,6 +170,9 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     end
     {request_index, _} = Integer.parse(request_index)
 
+    # Send request-selected event to frontend for row highlighting
+    socket = push_event(socket, "request-selected", %{block_id: block_id, request_index: request_index})
+
     {:noreply, assign(socket, request_id: {block_id, request_index})}
   end
 

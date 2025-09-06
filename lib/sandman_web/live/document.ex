@@ -93,7 +93,8 @@ defmodule SandmanWeb.LiveView.Document do
   defp render_request(assigns) do
     ~H"""
       <div class="flex flex-col">
-        <a class="flex flex-row text-xs rounded-b pb-1 px-1 pt-1 hover:bg-gray-500 hover:bg-opacity-10 transition-colors duration-150"
+        <a class="request-row flex flex-row text-xs rounded-b pb-1 px-1 pt-1 hover:bg-gray-500 hover:bg-opacity-10 transition-colors duration-150"
+            data-block-id={@block_id} data-request-index={@request_index}
             href="#" phx-click="select-request" phx-value-block-id={@block_id} phx-value-line_nr={@req.call_info.line_nr} phx-value-request-index={@request_index}>
           <div class="flex-grow">
             <span><%= format_request(@req) %></span>
