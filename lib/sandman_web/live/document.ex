@@ -51,7 +51,7 @@ defmodule SandmanWeb.LiveView.Document do
           <div class="px-1" >
             <%= if(@open_requests[block.id]) do %>
               <%= for {req, index} <- Enum.with_index(requests_for_block(@requests, block.id)) do%>
-                <%= render_request(%{req: req, block_id: block.id, request_index: index}) %>
+                <%= render_request(%{req: req, block_id: block.id, request_index: index, selected_request: @selected_request}) %>
               <% end %>
             <%end%>
           </div>
@@ -81,9 +81,12 @@ defmodule SandmanWeb.LiveView.Document do
 
   defp render_request(assigns = %{req: %{ res: nil, lua_result: [nil, err] }}) when is_bitstring(err) do
     # TODO: deze moeten we nog fixen, die assigns zijn hier totaal gefaked!
+    is_selected = assigns.selected_request == {assigns.block_id, assigns.request_index}
+    row_class = if is_selected, do: "request-row request-row-selected flex flex-row-reverse text-xs text-red-700 rounded-b pb-1 px-1", else: "request-row flex flex-row-reverse text-xs text-red-700 rounded-b pb-1 px-1"
+
     ~H"""
       <div class="flex flex-col">
-        <div class="flex flex-row-reverse text-xs text-red-700 rounded-b pb-1 px-1">
+        <div class={row_class} data-block-id={assigns.block_id} data-request-index={assigns.request_index}>
           <%= format_request(@req)%>: <%= err %>
         </div>
       </div>
@@ -91,11 +94,19 @@ defmodule SandmanWeb.LiveView.Document do
   end
 
   defp render_request(assigns) do
+    is_selected = assigns.selected_request == {assigns.block_id, assigns.request_index}
+
+    row_class = if is_selected do
+      "request-row request-row-selected flex flex-row text-xs rounded-b pb-1 px-1 pt-1 hover:bg-gray-500 hover:bg-opacity-10 transition-colors duration-150"
+    else
+      "request-row flex flex-row text-xs rounded-b pb-1 px-1 pt-1 hover:bg-gray-500 hover:bg-opacity-10 transition-colors duration-150"
+    end
+
     ~H"""
       <div class="flex flex-col">
-        <a class="request-row flex flex-row text-xs rounded-b pb-1 px-1 pt-1 hover:bg-gray-500 hover:bg-opacity-10 transition-colors duration-150"
-            data-block-id={@block_id} data-request-index={@request_index}
-            href="#" phx-click="select-request" phx-value-block-id={@block_id} phx-value-line_nr={@req.call_info.line_nr} phx-value-request-index={@request_index}>
+        <a class={row_class}
+            data-block-id={assigns.block_id} data-request-index={assigns.request_index}
+            href="#" phx-click="select-request" phx-value-block-id={assigns.block_id} phx-value-line_nr={@req.call_info.line_nr} phx-value-request-index={assigns.request_index}>
           <div class="flex-grow">
             <span><%= format_request(@req) %></span>
           </div>

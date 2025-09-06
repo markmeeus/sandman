@@ -44,7 +44,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
 
           <div id="document-container" style="overflow:clip;" class="h-screen">
             <div id="document-root" class="h-screen">
-              <SandmanWeb.LiveView.Document.render doc_pid={@doc_pid} open_requests={@open_requests} requests={@document.requests} document={@document.document} code="" />
+              <SandmanWeb.LiveView.Document.render doc_pid={@doc_pid} open_requests={@open_requests} requests={@document.requests} document={@document.document} selected_request={@selected_request} code="" />
             </div>
           </div>
 
@@ -170,10 +170,14 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     end
     {request_index, _} = Integer.parse(request_index)
 
-    # Send request-selected event to frontend for row highlighting
-    socket = push_event(socket, "request-selected", %{block_id: block_id, request_index: request_index})
+    # Auto-switch to Request Info tab when selecting a request
+    socket = assign(socket, :main_left_tab, :req_res)
 
-    {:noreply, assign(socket, request_id: {block_id, request_index})}
+    socket = socket
+    |> assign(:request_id, {block_id, request_index})
+    |> assign(:selected_request, {block_id, request_index})
+
+    {:noreply, socket}
   end
 
   def handle_event("change-main-left-tab", %{"tab-id" => tab_id}, socket) do
@@ -229,6 +233,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     |> assign(:log_count, 0)
     |> assign(:tab, "Response")
     |> assign(:request_id, nil)
+    |> assign(:selected_request, nil)
     |> assign(:show_raw_res_body, false)
     |> assign(:show_raw_req_body, false)
     |> assign(:open_requests, %{})
