@@ -26,7 +26,7 @@ struct ContentView: View {
                         .frame(minWidth: 400)
                 }
                 .frame(minWidth: 800, minHeight: 600)
-                .background(Color(NSColor.windowBackgroundColor))
+                .background(Color(red: 0.2, green: 0.2, blue: 0.2)) // neutral-800 equivalent
                 .onChange(of: zoomManager.zoomLevel) { _, newValue in
                     print("ContentView: Zoom level changed to \(newValue)")
                 }

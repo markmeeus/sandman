@@ -4,18 +4,26 @@ defmodule SandmanWeb.TabBar do
 
   def item(assigns = %{selected: true}) do
     ~H"""
-    <a href="#" phx-click={JS.push(@event, value: %{tab: @item})}
-      class="border-white text-white whitespace-nowrap border-b-2 py-2 pr-1 text-xs font-medium" aria-current="page">
+    <button
+      type="button"
+      phx-click={JS.push(@event, value: %{tab: @item})}
+      class="relative px-3 py-2 text-xs font-medium text-neutral-100 bg-neutral-600 border-b-2 border-neutral-100 whitespace-nowrap transition-colors"
+      aria-current="page"
+    >
       <%= @item %>
-    </a>
+    </button>
     """
   end
+
   def item(assigns = %{selected: false}) do
     ~H"""
-    <a href="#" phx-click={JS.push(@event, value: %{tab: @item})}
-      class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-2 pr-1 text-xs font-medium">
+    <button
+      type="button"
+      phx-click={JS.push(@event, value: %{tab: @item})}
+      class="relative px-3 py-2 text-xs font-medium text-neutral-400 hover:text-neutral-200 hover:bg-neutral-600/50 border-b-2 border-transparent hover:border-neutral-400 whitespace-nowrap transition-colors"
+    >
       <%= @item %>
-    </a>
+    </button>
     """
   end
 end

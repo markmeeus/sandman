@@ -77,7 +77,7 @@ struct DocumentTabsView: View {
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(NSColor.textBackgroundColor))
+                .background(Color(red: 0.2, green: 0.2, blue: 0.2)) // neutral-800 equivalent
             }
         }
         .onChange(of: selectedFile) { _, newFile in

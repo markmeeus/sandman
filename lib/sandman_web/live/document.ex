@@ -9,7 +9,7 @@ defmodule SandmanWeb.LiveView.Document do
 
   def render(assigns) do
     ~H"""
-    <div phx-hook="DocumentHook" id="document" class="h-screen" style="overflow:scroll; overscroll-behavior: none">
+    <div phx-hook="DocumentHook" id="document" class="h-screen bg-neutral-900" style="overflow:scroll; overscroll-behavior: none">
 
       <div style="overflow:scroll;">
 
@@ -27,7 +27,7 @@ defmodule SandmanWeb.LiveView.Document do
       <div class="group h-5">
         <div class="flex flex-row">
           <div class="flex-grow"/>
-          <button class="pt-1 mr-3 text-lg" phx-click="add-block" phx-value-block-id="-"><span class="font-bold">+</span> Insert block</button>
+          <button class="pt-1 mr-3 text-sm text-neutral-300 hover:text-neutral-100" phx-click="add-block" phx-value-block-id="-"><span class="font-bold">+</span> Insert block</button>
           <div class="flex-grow"/>
         </div>
       </div>
@@ -35,43 +35,78 @@ defmodule SandmanWeb.LiveView.Document do
   end
   def render_blocks(assigns) do
     ~H"""
-    <div class="group h-5">
-      <div class="flex flex-row">
-        <div class="flex-grow"/>
-        <button class="pt-1 mr-3 text-sm hidden group-hover:block" phx-click="add-block" phx-value-block-id="-"><span class="font-bold">+</span> Insert block</button>
-        <div class="flex-grow"/>
-      </div>
-    </div>
-    <%= for block <- @document.blocks do%>
-      <div class="my-1 px-2 no-select">
-        <div class="group rounded" style="border: 1px solid rgb(30, 30, 30);">
-          <div class="rounded-t p-2" style="background-color: rgb(30, 30, 30);" phx-update="ignore" id={"monaco-wrapper-#{block.id}"}>
-            <div id={"monaco-#{block.id}"} phx-hook="MonacoHook" data-block-id={block.id} ><%= block.code %></div>
-          </div>
-          <div class="px-1" >
-            <%= if(@open_requests[block.id]) do %>
-              <%= for {req, index} <- Enum.with_index(requests_for_block(@requests, block.id)) do%>
-                <%= render_request(%{req: req, block_id: block.id, request_index: index, selected_request: @selected_request}) %>
-              <% end %>
-            <%end%>
-          </div>
-          <div class="min-h-5">
-            <div class="flex flex-row fs-2 my-2 px-6 text-sm sticky">
-              <button phx-click="run-block" phx-value-block-id={block.id}><span><%="▶"%></span></button>
-              <div class="flex-grow"/>
-              <%= render_block_stats(%{requests: requests_for_block(@requests, block.id), block: block, is_open: !!@open_requests[block.id]}) %>
-              <div class="flex-grow"/>
-              <button class=" text-sm invisible group-hover:visible" phx-click="remove-block" phx-value-block-id={block.id}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="w-4 h-4 fill-current"><!--!Font Awesome Free v7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M232.7 69.9C237.1 56.8 249.3 48 263.1 48L377 48C390.8 48 403 56.8 407.4 69.9L416 96L512 96C529.7 96 544 110.3 544 128C544 145.7 529.7 160 512 160L128 160C110.3 160 96 145.7 96 128C96 110.3 110.3 96 128 96L224 96L232.7 69.9zM128 208L512 208L512 512C512 547.3 483.3 576 448 576L192 576C156.7 576 128 547.3 128 512L128 208zM216 272C202.7 272 192 282.7 192 296L192 488C192 501.3 202.7 512 216 512C229.3 512 240 501.3 240 488L240 296C240 282.7 229.3 272 216 272zM320 272C306.7 272 296 282.7 296 296L296 488C296 501.3 306.7 512 320 512C333.3 512 344 501.3 344 488L344 296C344 282.7 333.3 272 320 272zM424 272C410.7 272 400 282.7 400 296L400 488C400 501.3 410.7 512 424 512C437.3 512 448 501.3 448 488L448 296C448 282.7 437.3 272 424 272z"/></svg>
-              </button>
-            </div>
-          </div>
+    <div class="flex flex-row">
+      <!-- Run All button positioned above status indicators -->
+      <div class="w-8 flex flex-col items-center mt-2">
+        <div class="flex justify-center w-full">
+          <button class="fixed mb-2 px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors z-50" phx-click="run-all-blocks">
+            ▶
+          </button>
         </div>
+        <!-- Connecting line from Run All button to first block -->
+        <%= if length(@document.blocks) > 0 do %>
+          <div class="w-0.5 flex-grow bg-green-600"></div>
+        <% end %>
+      </div>
+      <!-- Top insert block button -->
+      <div class="flex-grow py-2">
         <div class="group h-5">
           <div class="flex flex-row">
             <div class="flex-grow"/>
-            <button class="mr-3 text-sm invisible group-hover:visible" phx-click="add-block" phx-value-block-id={block.id}><span class="font-bold">+</span> Insert block</button>
+            <button class="pt-1 mr-3 text-sm text-neutral-300 hover:text-neutral-100 hidden group-hover:block" phx-click="add-block" phx-value-block-id="-"><span class="font-bold">+</span> Insert block</button>
             <div class="flex-grow"/>
+          </div>
+        </div>
+      </div>
+    </div>
+    <%= for {block, index} <- Enum.with_index(@document.blocks) do%>
+      <div class="flex flex-row my-1 no-select">
+        <!-- Status indicator column -->
+        <div class="w-8 flex flex-col items-center justify-end">
+          <!-- Connecting line from above (Run All button or previous block) -->
+          <div class="w-0.5 flex-grow bg-green-600 mb-1"></div>
+          <!-- Status dot -->
+          <div class="w-3 h-3 mb-1 bg-green-600 rounded-full flex-shrink-0"></div>
+        </div>
+
+        <!-- Block content -->
+        <div class="flex-grow min-w-0 pr-2">
+          <div class="group rounded border border-neutral-700">
+            <div class="rounded-t p-1" phx-update="ignore" id={"monaco-wrapper-#{block.id}"}>
+              <div id={"monaco-#{block.id}"} phx-hook="MonacoHook" data-block-id={block.id} ><%= block.code %></div>
+            </div>
+            <div class="px-1" >
+              <%= if(@open_requests[block.id]) do %>
+                <%= for {req, req_index} <- Enum.with_index(requests_for_block(@requests, block.id)) do%>
+                  <%= render_request(%{req: req, block_id: block.id, request_index: req_index, selected_request: @selected_request}) %>
+                <% end %>
+              <%end%>
+            </div>
+            <div class="min-h-5">
+              <div class="flex flex-row fs-2 my-2 px-6 text-sm sticky">
+                <button class="text-green-600 hover:text-green-700 transition-colors p-1 rounded hover:bg-green-900/20" phx-click="run-block" phx-value-block-id={block.id}><span><%="▶"%></span></button>
+                <div class="flex-grow"/>
+                <%= render_block_stats(%{requests: requests_for_block(@requests, block.id), block: block, is_open: !!@open_requests[block.id]}) %>
+                <div class="flex-grow"/>
+                <button class="text-sm text-neutral-400 hover:text-red-400 invisible group-hover:visible transition-colors p-1 rounded hover:bg-red-900/20" phx-click="remove-block" phx-value-block-id={block.id}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="w-4 h-4 fill-current"><!--!Font Awesome Free v7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M232.7 69.9C237.1 56.8 249.3 48 263.1 48L377 48C390.8 48 403 56.8 407.4 69.9L416 96L512 96C529.7 96 544 110.3 544 128C544 145.7 529.7 160 512 160L128 160C110.3 160 96 145.7 96 128C96 110.3 110.3 96 128 96L224 96L232.7 69.9zM128 208L512 208L512 512C512 547.3 483.3 576 448 576L192 576C156.7 576 128 547.3 128 512L128 208zM216 272C202.7 272 192 282.7 192 296L192 488C192 501.3 202.7 512 216 512C229.3 512 240 501.3 240 488L240 296C240 282.7 229.3 272 216 272zM320 272C306.7 272 296 282.7 296 296L296 488C296 501.3 306.7 512 320 512C333.3 512 344 501.3 344 488L344 296C344 282.7 333.3 272 320 272zM424 272C410.7 272 400 282.7 400 296L400 488C400 501.3 410.7 512 424 512C437.3 512 448 501.3 448 488L448 296C448 282.7 437.3 272 424 272z"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Insert block row between blocks -->
+      <div class="flex flex-row">
+        <div class="w-8"></div> <!-- Empty space to align with status indicators -->
+        <div class="flex-grow">
+          <div class="group h-5">
+            <div class="flex flex-row">
+              <div class="flex-grow"/>
+              <button class="mr-3 text-sm text-neutral-300 hover:text-neutral-100 invisible group-hover:visible" phx-click="add-block" phx-value-block-id={block.id}><span class="font-bold">+</span> Insert block</button>
+              <div class="flex-grow"/>
+            </div>
           </div>
         </div>
       </div>
@@ -82,7 +117,7 @@ defmodule SandmanWeb.LiveView.Document do
   defp render_request(assigns = %{req: %{ res: nil, lua_result: [nil, err] }}) when is_bitstring(err) do
     # TODO: deze moeten we nog fixen, die assigns zijn hier totaal gefaked!
     is_selected = assigns.selected_request == {assigns.block_id, assigns.request_index}
-    row_class = if is_selected, do: "request-row request-row-selected flex flex-row-reverse text-xs text-red-700 rounded-b pb-1 px-1", else: "request-row flex flex-row-reverse text-xs text-red-700 rounded-b pb-1 px-1"
+    row_class = if is_selected, do: "request-row request-row-selected flex flex-row-reverse text-xs text-red-400 rounded-b pb-1 px-1", else: "request-row flex flex-row-reverse text-xs text-red-400 rounded-b pb-1 px-1"
 
     ~H"""
       <div class="flex flex-col">
@@ -97,9 +132,9 @@ defmodule SandmanWeb.LiveView.Document do
     is_selected = assigns.selected_request == {assigns.block_id, assigns.request_index}
 
     row_class = if is_selected do
-      "request-row request-row-selected flex flex-row text-xs rounded-b pb-1 px-1 pt-1 hover:bg-gray-500 hover:bg-opacity-10 transition-colors duration-150"
+      "request-row request-row-selected flex flex-row text-xs text-neutral-100 rounded-b pb-1 px-1 pt-1 bg-neutral-700 hover:bg-neutral-600 transition-colors duration-150"
     else
-      "request-row flex flex-row text-xs rounded-b pb-1 px-1 pt-1 hover:bg-gray-500 hover:bg-opacity-10 transition-colors duration-150"
+      "request-row flex flex-row text-xs text-neutral-300 rounded-b pb-1 px-1 pt-1 hover:bg-neutral-800 transition-colors duration-150"
     end
 
     ~H"""
@@ -120,7 +155,7 @@ defmodule SandmanWeb.LiveView.Document do
 
   defp render_block_stats(assigns = %{is_open: true}) do
     ~H"""
-    <a href="#" class="px-1" phx-click="toggle-requests" phx-value-block-id={@block.id}>▲</a>
+    <a href="#" class="px-1 text-neutral-300 hover:text-neutral-100 transition-colors" phx-click="toggle-requests" phx-value-block-id={@block.id}>▲</a>
     """
   end
 
@@ -129,7 +164,7 @@ defmodule SandmanWeb.LiveView.Document do
     <%= case Enum.count(@requests) do %>
     <% 0 -> %>
     <% count -> %>
-      <a href="#" class="px-1" phx-click="toggle-requests" phx-value-block-id={@block.id}><%=count%> requests ▼</a>
+      <a href="#" class="px-1 text-neutral-300 hover:text-neutral-100 transition-colors" phx-click="toggle-requests" phx-value-block-id={@block.id}><%=count%> requests ▼</a>
     <% end %>
     """
   end
@@ -141,7 +176,7 @@ defmodule SandmanWeb.LiveView.Document do
   defp format_response(nil), do: nil
   defp format_response(assigns) do
      ~H"""
-     <span style="color: rgb(50, 138, 50);"  class="rounded font-bold mx-1">
+     <span class="text-neutral-400 bg-neutral-700 px-1.5 py-0.5 rounded text-xs font-medium mx-1">
         <%= @res.status %>
       </span>
      """

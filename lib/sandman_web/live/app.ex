@@ -50,13 +50,12 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
 
         <div class="gutter gutter-horizontal" id="doc-req-gutter" phx-update="ignore"></div>
 
-        <div id="req-res-container" class="h-screen flex-grow" style="overflow:scroll;" phx-hook="MaintainWidth">
-          <div style="background-color:#1E1E1E;">
-            <div class="">
+        <div id="req-res-container" class="h-screen flex-grow bg-neutral-800" style="overflow:scroll;" phx-hook="MaintainWidth">
+          <div class="bg-neutral-700 border-b border-neutral-600">
+            <div class="px-3">
               <nav class="flex space-x-4" aria-label="Tabs">
-                <!-- Current: "bg-gray-100 text-gray-700", Default: "text-gray-500 hover:text-gray-700" -->
-                <a href="#" class={"#{tab_colors(@main_left_tab, :req_res)} px-1 py-1 text-xs font-medium"} phx-click="change-main-left-tab" phx-value-tab-id="req_res">Inspector</a>
-                <a href="#" class={"#{tab_colors(@main_left_tab, :logs)} px-1 py-1 text-xs font-medium"}  phx-click="change-main-left-tab" phx-value-tab-id="logs">Logs</a>
+                <a href="#" class={"#{tab_colors(@main_left_tab, :req_res)} px-3 py-2 text-xs font-medium"} phx-click="change-main-left-tab" phx-value-tab-id="req_res">Inspector</a>
+                <a href="#" class={"#{tab_colors(@main_left_tab, :logs)} px-3 py-2 text-xs font-medium"}  phx-click="change-main-left-tab" phx-value-tab-id="logs">Logs</a>
               </nav>
             </div>
           </div>
@@ -213,8 +212,8 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
   end
 
 
-  defp tab_colors(selected_tab, selected_tab), do:  "text-white"
-  defp tab_colors(_, _), do:  "text-gray-500 hover:text-gray-300"
+  defp tab_colors(selected_tab, selected_tab), do:  "text-neutral-100 bg-neutral-600 border-b-2 border-neutral-100"
+  defp tab_colors(_, _), do:  "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-600/50 border-b-2 border-transparent hover:border-neutral-400"
 
   defp tab_visibility(selected_tab, selected_tab), do: "block"
   defp tab_visibility(_, _), do: "hidden"
