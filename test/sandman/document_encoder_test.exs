@@ -78,8 +78,8 @@ pola
 ```
 """
     document = %{blocks: [
-      %{id: 1, code: "ola pola1", type: "lua"},
-      %{id: 2, code: "ola\npola\n2", type: "lua"}
+      %{id: 1, code: "ola pola1", type: "lua", state: :empty},
+      %{id: 2, code: "ola\npola\n2", type: "lua", state: :empty}
     ]}
 
     assert DocumentEncoder.decode(encoded, &(&1 + 1)) == document
@@ -95,7 +95,7 @@ pola1
 ```
 """
     document = %{blocks: [
-      %{id: 1, code: "ola\n\npola1", type: "lua"},
+      %{id: 1, code: "ola\n\npola1", type: "lua", state: :empty},
     ]}
 
     assert DocumentEncoder.decode(encoded, &(&1 + 1)) == document

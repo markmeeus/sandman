@@ -211,6 +211,14 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     {:noreply, socket}
   end
 
+  def handle_info({:block_state_changed, block_id, new_state}, socket = %{assigns: %{doc_pid: doc_pid}}) do
+    # Refresh document to get updated block states - LiveView will automatically re-render
+    document = Document.get(doc_pid)
+    socket = assign(socket, :document, document)
+
+    {:noreply, socket}
+  end
+
 
   defp tab_colors(selected_tab, selected_tab), do:  "text-neutral-100 bg-neutral-600 border-b-2 border-neutral-100"
   defp tab_colors(_, _), do:  "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-600/50 border-b-2 border-transparent hover:border-neutral-400"

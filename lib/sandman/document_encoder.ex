@@ -35,7 +35,7 @@ defmodule Sandman.DocumentEncoder do
       case read_block_header(line) do
         :lua -> case current_block do
           # this is a header, is there no current block? then create one
-          nil -> {blocks, %{type: "lua", id: new_id_fn.(Enum.count(blocks)), code: ""}}
+          nil -> {blocks, %{type: "lua", id: new_id_fn.(Enum.count(blocks)), code: "", state: :empty}}
           current_block ->
             # there is a current block, let's treat this a normal line
             add_line_to_current_block({blocks, current_block}, line)

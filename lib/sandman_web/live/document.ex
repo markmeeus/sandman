@@ -45,7 +45,7 @@ defmodule SandmanWeb.LiveView.Document do
         </div>
         <!-- Connecting line from Run All button to first block -->
         <%= if length(@document.blocks) > 0 do %>
-          <div class="w-0.5 flex-grow bg-green-600"></div>
+          <div class="w-0.5 flex-grow bg-neutral-400"></div>
         <% end %>
       </div>
       <!-- Top insert block button -->
@@ -60,13 +60,14 @@ defmodule SandmanWeb.LiveView.Document do
       </div>
     </div>
     <%= for {block, index} <- Enum.with_index(@document.blocks) do%>
+      <% preceding_block = if index > 0, do: Enum.at(@document.blocks, index - 1), else: nil %>
       <div class="flex flex-row my-1 no-select">
         <!-- Status indicator column -->
         <div class="w-8 flex flex-col items-center justify-end">
-          <!-- Connecting line from above (Run All button or previous block) -->
-          <div class="w-0.5 flex-grow bg-green-600 mb-1"></div>
+        <!-- Connecting line from above (Run All button or previous block) -->
+        <%= render_connecting_line(%{state: Map.get(block, :state, :empty)}) %>
           <!-- Status dot -->
-          <div class="w-3 h-3 mb-1 bg-green-600 rounded-full flex-shrink-0"></div>
+          <%= render_block_state_indicator(%{state: Map.get(block, :state, :empty)}) %>
         </div>
 
         <!-- Block content -->
@@ -84,7 +85,7 @@ defmodule SandmanWeb.LiveView.Document do
             </div>
             <div class="min-h-5">
               <div class="flex flex-row fs-2 my-2 px-6 text-sm sticky">
-                <button class="text-green-600 hover:text-green-700 transition-colors p-1 rounded hover:bg-green-900/20" phx-click="run-block" phx-value-block-id={block.id}><span><%="▶"%></span></button>
+                <%= render_run_button(%{block: block, preceding_block: preceding_block}) %>
                 <div class="flex-grow"/>
                 <%= render_block_stats(%{requests: requests_for_block(@requests, block.id), block: block, is_open: !!@open_requests[block.id]}) %>
                 <div class="flex-grow"/>
@@ -171,6 +172,88 @@ defmodule SandmanWeb.LiveView.Document do
 
   defp requests_for_block(requests, block_id) do
     requests[block_id] || []
+  end
+
+  defp render_run_button(assigns) do
+    block_state = Map.get(assigns.block, :state, :empty)
+    preceding_state = if assigns.preceding_block, do: Map.get(assigns.preceding_block, :state, :empty), else: nil
+
+    case {block_state, preceding_state} do
+      # If preceding block is :empty, don't show button
+      {_, :empty} when not is_nil(assigns.preceding_block) ->
+        ~H"""
+        <div class="p-1"></div>
+        """
+
+      # If block is :executed or :errored, show rerun icon
+      {state, _} when state in [:executed, :errored] ->
+        ~H"""
+        <button class="text-green-600 hover:text-green-700 transition-colors p-1 rounded hover:bg-green-900/20" phx-click="run-block" phx-value-block-id={@block.id} title="Re-run block">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="w-4 h-4 fill-current">
+            <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+          </svg>
+        </button>
+        """
+
+      # If preceding block is :executed or no preceding block, show run icon
+      {_, preceding} when preceding in [:executed, nil] ->
+        ~H"""
+        <button class="text-green-600 hover:text-green-700 transition-colors p-1 rounded hover:bg-green-900/20" phx-click="run-block" phx-value-block-id={@block.id} title="Run block">
+          <span>▶</span>
+        </button>
+        """
+
+      # All other cases (preceding block is :running, :errored) - don't show button
+      _ ->
+        ~H"""
+        <div class="p-1"></div>
+        """
+    end
+  end
+
+  defp render_connecting_line(assigns) do
+    case assigns.state do
+      :executed ->
+        ~H"""
+        <div class="w-0.5 flex-grow bg-green-500 mb-1"></div>
+        """
+      :errored ->
+        ~H"""
+        <div class="w-0.5 flex-grow bg-red-500 mb-1"></div>
+        """
+      :running ->
+        ~H"""
+        <div class="w-0.5 flex-grow bg-neutral-400 mb-1"></div>
+        """
+      _ -> # :empty or any other state
+        ~H"""
+        <div class="w-0.5 flex-grow bg-neutral-400 mb-1"></div>
+        """
+    end
+  end
+
+  defp render_block_state_indicator(assigns) do
+    case assigns.state do
+      :executed ->
+        ~H"""
+        <div class="w-3 h-3 mb-1 bg-green-500 rounded-full flex-shrink-0" title="Executed successfully"></div>
+        """
+      :errored ->
+        ~H"""
+        <div class="w-3 h-3 mb-1 bg-red-500 rounded-full flex-shrink-0" title="Execution failed"></div>
+        """
+      :running ->
+        ~H"""
+        <div class="w-3 h-3 mb-1 flex-shrink-0 flex items-center justify-center" title="Running...">
+          <div class="w-3 h-3 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        """
+      _ -> # :empty or any other state
+        ~H"""
+        <div class="w-3 h-3 mb-1 bg-neutral-400 rounded-full flex-shrink-0" title="Ready to run"></div>
+        """
+    end
   end
 
   defp format_response(nil), do: nil
