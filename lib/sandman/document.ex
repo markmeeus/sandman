@@ -39,8 +39,8 @@ defmodule Sandman.Document do
   end
 
 
-  def run_block(pid, block_id) do
-    GenServer.cast(pid, {:run_block, block_id})
+  def run_block(pid, block_id, context \\ %{}) do
+    GenServer.cast(pid, {:run_block, block_id, context})
   end
 
   def run_all_blocks(pid) do
@@ -138,6 +138,7 @@ defmodule Sandman.Document do
       requests: %{},
       servers: %{},
       current_block_id: nil,
+      current_block_context: %{},
       run_queue: [],
     }}
   end
@@ -281,7 +282,11 @@ defmodule Sandman.Document do
 
 
   def handle_cast({:run_block, block_id}, state ) do
-    {:noreply, start_block(block_id, state)}
+    {:noreply, start_block(block_id, %{}, state)}
+  end
+
+  def handle_cast({:run_block, block_id, context}, state ) do
+    {:noreply, start_block(block_id, context, state)}
   end
 
   def handle_cast(:run_all_blocks, state = %{document: document}) do
@@ -289,7 +294,7 @@ defmodule Sandman.Document do
       [] -> state
       [first | run_queue ] ->
         state = Map.put(state, :run_queue, run_queue)
-        start_block(first.id, state)
+        start_block(first.id, %{}, state)
     end
     {:noreply, state}
   end
@@ -307,6 +312,7 @@ defmodule Sandman.Document do
     {:noreply, state}
   end
   def handle_info({:lua_response, {:run_block}, response}, state = %{doc_id: doc_id, current_block_id: current_block_id}) do
+    context = Map.get(state, :current_block_context, %{})
     # Update block state based on execution result
     case response do
       {:error, _err, formatted} ->
@@ -322,10 +328,13 @@ defmodule Sandman.Document do
       _ ->
         if current_block_id do
           update_block_state(self(), current_block_id, :executed)
+          # Emit block-executed event with context
+          PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", {:block_executed, current_block_id, context})
         end
     end
 
     state = put_in(state.current_block_id, nil)
+    state = put_in(state.current_block_context, %{})
     state = case response do
       {:error, _err, _formatted} ->
         put_in(state.run_queue, [])
@@ -382,10 +391,10 @@ defmodule Sandman.Document do
   defp start_next_queued_block(state = %{run_queue: []}), do: state
   defp start_next_queued_block(state = %{run_queue: [next | rest_queue]}) do
     state = Map.put(state, :run_queue, rest_queue)
-    start_block(next.id, state)
+    start_block(next.id, %{}, state)
   end
 
-  defp start_block(block_id, state = %{document: document, doc_id: doc_id, luerl_server_pid: luerl_server_pid}) do
+  defp start_block(block_id, context, state = %{document: document, doc_id: doc_id, luerl_server_pid: luerl_server_pid}) do
     block = Enum.find(document.blocks, & &1[:id] == block_id)
     {prev_blocks, next_blocks} =  document.blocks
       |> Enum.split_while(fn bl -> bl.id != block.id end)
@@ -419,6 +428,7 @@ defmodule Sandman.Document do
 
     state = put_in(state.requests[block_id], [])
     state = put_in(state.current_block_id, block_id)
+    state = put_in(state.current_block_context, context)
     # using request recorded, since all requests are gone now
     # todo: refactor this
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", {:request_recorded, block.id})

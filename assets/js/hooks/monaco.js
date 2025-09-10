@@ -58,6 +58,46 @@ const MonacoHook = {
     // Register with global undo manager
     globalUndoManager.registerEditor(blockId, editor);
 
+    // Track focus state manually
+    let editorHasFocus = false;
+
+    editor.onDidFocusEditorText(() => {
+      editorHasFocus = true;
+    });
+
+    editor.onDidBlurEditorText(() => {
+      editorHasFocus = false;
+    });
+
+    // Add keyboard shortcuts using DOM events instead of Monaco commands
+    const editorDomNode = editor.getDomNode();
+    editorDomNode.addEventListener('keydown', (e) => {
+      // Ctrl+Enter - shortcut to run current block, stay focused
+      if (e.ctrlKey && e.key === 'Enter' && !e.shiftKey && !e.metaKey && editorHasFocus) {
+        e.preventDefault();
+        console.log(`Ctrl+Enter shortcut for block ${blockId}`);
+        const event = new Event('sandman:shortcut');
+        event.data = { type: 'run-block', blockId };
+        window.dispatchEvent(event);
+      }
+      // Shift+Enter - shortcut to run current block and move to next
+      else if (e.shiftKey && e.key === 'Enter' && !e.ctrlKey && !e.metaKey && editorHasFocus) {
+        e.preventDefault();
+        console.log(`Shift+Enter shortcut for block ${blockId}`);
+        const event = new Event('sandman:shortcut');
+        event.data = { type: 'run-block-and-next', blockId };
+        window.dispatchEvent(event);
+      }
+      // Cmd+Shift+Enter (or Ctrl+Shift+Enter) - shortcut to run all blocks from top
+      else if (e.shiftKey && e.key === 'Enter' && (e.ctrlKey || e.metaKey) && editorHasFocus) {
+        e.preventDefault();
+        console.log('Cmd+Shift+Enter shortcut for run all blocks');
+        const event = new Event('sandman:shortcut');
+        event.data = { type: 'run-all-blocks', blockId };
+        window.dispatchEvent(event);
+      }
+    });
+
     // send changes to backend
     editor.getModel().onDidChangeContent((changeEvent)=>{
       const event = new Event('sandman:code-changed');

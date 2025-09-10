@@ -132,6 +132,35 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     {:noreply, socket}
   end
 
+  def handle_event("shortcut", %{"type" => "run-block", "block-id" => block_id}, socket = %{assigns: %{doc_pid: doc_pid, document: %{document: doc_data}}}) do
+    # Check if block can be executed (same logic as render_run_button)
+    block = Enum.find(doc_data.blocks, & &1.id == block_id)
+    preceding_block = get_preceding_block(doc_data.blocks, block_id)
+
+    if can_run_block?(block, preceding_block) do
+      Document.run_block(doc_pid, block_id, %{})
+    end
+
+    {:noreply, socket}
+  end
+
+  def handle_event("shortcut", %{"type" => "run-block-and-next", "block-id" => block_id}, socket = %{assigns: %{doc_pid: doc_pid, document: %{document: doc_data}}}) do
+    # Check if block can be executed
+    block = Enum.find(doc_data.blocks, & &1.id == block_id)
+    preceding_block = get_preceding_block(doc_data.blocks, block_id)
+
+    if can_run_block?(block, preceding_block) do
+      Document.run_block(doc_pid, block_id, %{move_next: true})
+    end
+
+    {:noreply, socket}
+  end
+
+  def handle_event("shortcut", %{"type" => "run-all-blocks", "block-id" => _block_id}, socket = %{assigns: %{doc_pid: doc_pid}}) do
+    Document.run_all_blocks(doc_pid)
+    {:noreply, socket}
+  end
+
   def handle_event("remove-block", %{"block-id" => block_id}, socket = %{assigns: %{doc_pid: doc_pid}}) do
     # persist document here
     Document.remove_block(doc_pid, block_id)
@@ -219,6 +248,22 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     {:noreply, socket}
   end
 
+  def handle_info({:block_executed, block_id, context}, socket = %{assigns: %{document: %{document: doc_data}}}) do
+    # Handle block execution completion with context
+    if Map.get(context, :move_next, false) do
+      # Find the next block and send focus command
+      next_block_id = get_next_block_id(doc_data.blocks, block_id)
+
+      if next_block_id do
+        {:noreply, push_event(socket, "focus-block", %{"block-id" => next_block_id})}
+      else
+        {:noreply, socket}
+      end
+    else
+      {:noreply, socket}
+    end
+  end
+
 
   defp tab_colors(selected_tab, selected_tab), do:  "text-neutral-100 bg-neutral-600 border-b-2 border-neutral-100"
   defp tab_colors(_, _), do:  "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-600/50 border-b-2 border-transparent hover:border-neutral-400"
@@ -258,4 +303,43 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
   defp get_request_level(%{res: %{status: status}}) when status < 400, do: :ok
   defp get_request_level(%{res: %{status: status}}) when status < 500, do: :warn
   defp get_request_level(_), do: :error
+
+  # Helper functions for block execution validation
+  defp get_preceding_block(blocks, block_id) do
+    block_index = Enum.find_index(blocks, & &1.id == block_id)
+    if block_index && block_index > 0 do
+      Enum.at(blocks, block_index - 1)
+    else
+      nil
+    end
+  end
+
+  defp get_next_block_id(blocks, block_id) do
+    block_index = Enum.find_index(blocks, & &1.id == block_id)
+    if block_index && block_index < length(blocks) - 1 do
+      next_block = Enum.at(blocks, block_index + 1)
+      next_block.id
+    else
+      nil
+    end
+  end
+
+  defp can_run_block?(block, preceding_block) do
+    block_state = Map.get(block, :state, :empty)
+    preceding_state = if preceding_block, do: Map.get(preceding_block, :state, :empty), else: nil
+
+    case {block_state, preceding_state} do
+      # If preceding block is :empty, can't run
+      {_, :empty} when not is_nil(preceding_block) -> false
+
+      # If block is :executed or :errored, can rerun
+      {state, _} when state in [:executed, :errored] -> true
+
+      # If preceding block is :executed or no preceding block, can run
+      {_, preceding} when preceding in [:executed, nil] -> true
+
+      # All other cases (preceding block is :running, :errored) - can't run
+      _ -> false
+    end
+  end
 end
