@@ -6,7 +6,7 @@ defmodule Sandman.Document do
   alias Sandman.LuerlServer
   alias Sandman.LuaMapper
   alias Sandman.HttpClient
-  alias Sandman.Encoders.Json
+  alias Sandman.Encoders.{Json, Base64}
   alias Sandman.LuaSupport.Jwt
   alias Sandman.DocumentEncoder
   alias Sandman.LuaSupport
@@ -115,6 +115,10 @@ defmodule Sandman.Document do
       end,
       json_decode: &Json.decode(doc_id, &1, &2),
       json_encode: &Json.encode(doc_id, &1, &2),
+      base64_decode: &Base64.decode(doc_id, &1, &2),
+      base64_encode: &Base64.encode(doc_id, &1, &2),
+      base64_decode_url: &Base64.decode_url(doc_id, &1, &2),
+      base64_encode_url: &Base64.encode_url(doc_id, &1, &2),
       jwt_sign: &Jwt.sign(doc_id, &1, &2),
       jwt_verify: &Jwt.verify(doc_id, &1, &2),
       uri: %{

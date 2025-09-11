@@ -17,8 +17,8 @@ defmodule Sandman.Encoders.Json do
       end
   end
   def decode(doc_id, _, luerl_state) do
-    log(doc_id, "Unexpected arguments in JSON.decode")
-    {[nil, false, "Unexpected arguments in JSON.decode"], luerl_state}
+    log(doc_id, "Unexpected arguments in json.decode")
+    {[nil, false, "Unexpected arguments in json.decode"], luerl_state}
   end
 
   def encode(_, [data], luerl_state) do

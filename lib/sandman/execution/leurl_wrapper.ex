@@ -47,6 +47,12 @@ defmodule Sandman.LuerlWrapper do
     {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "jwt", "sign"], handlers.jwt_sign, luerl_state)
     {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "jwt", "verify"], handlers.jwt_verify, luerl_state)
 
+    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "base64"], [], luerl_state)
+    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "base64", "encode"], handlers.base64_encode, luerl_state)
+    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "base64", "decode"], handlers.base64_decode, luerl_state)
+    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "base64", "encode_url"], handlers.base64_encode_url, luerl_state)
+    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "base64", "decode_url"], handlers.base64_decode_url, luerl_state)
+
     luerl_state
 
   end
