@@ -82,3 +82,15 @@ body {
   background-color: rgba(100, 149, 237, 0.2) !important;
   border-left: 3px solid #6495ED;
 }
+
+/* Selected block styling */
+.selected-block {
+  border-color: #CCC !important;
+  border-width: 1px !important;
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.2), 0 4px 6px -1px rgba(96, 165, 250, 0.1) !important;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.selected-block:hover {
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.3), 0 8px 12px -2px rgba(96, 165, 250, 0.15) !important;
+}

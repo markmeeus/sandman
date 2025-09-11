@@ -72,7 +72,7 @@ defmodule SandmanWeb.LiveView.Document do
 
         <!-- Block content -->
         <div class="flex-grow min-w-0 pr-2">
-          <div class="group rounded border border-neutral-700">
+          <div class={"group rounded border #{if @selected_block && @selected_block == block.id, do: "selected-block", else: "border-neutral-700"}"}>
             <div class="rounded-t p-1" phx-update="ignore" id={"monaco-wrapper-#{block.id}"}>
               <div id={"monaco-#{block.id}"} phx-hook="MonacoHook" data-block-id={block.id} ><%= block.code %></div>
             </div>

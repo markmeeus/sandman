@@ -424,7 +424,8 @@ defmodule Sandman.Document do
 
     # Set block state to :running before execution
     update_block_state(self(), block.id, :running)
-    LuerlServer.run_code(luerl_server_pid, last_block_id, block.id, {:run_block}, block.code)
+    # pass 500ms delay, so the ui has a chance to view the state change
+    LuerlServer.run_code(luerl_server_pid, last_block_id, block.id, {:run_block}, block.code, 50)
 
     state = put_in(state.requests[block_id], [])
     state = put_in(state.current_block_id, block_id)

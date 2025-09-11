@@ -44,7 +44,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
 
           <div id="document-container" style="overflow:clip;" class="h-screen">
             <div id="document-root" class="h-screen">
-              <SandmanWeb.LiveView.Document.render doc_pid={@doc_pid} open_requests={@open_requests} requests={@document.requests} document={@document.document} selected_request={@selected_request} code="" />
+              <SandmanWeb.LiveView.Document.render doc_pid={@doc_pid} open_requests={@open_requests} requests={@document.requests} document={@document.document} selected_request={@selected_request} selected_block={@selected_block} code="" />
             </div>
           </div>
 
@@ -211,6 +211,33 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     {:noreply, assign(socket, :main_left_tab, String.to_existing_atom(tab_id))}
   end
 
+  def handle_event("cursor-moved", %{"block-id" => block_id}, socket) do
+    socket = assign(socket, :selected_block, block_id)
+    {:noreply, socket}
+  end
+
+  def handle_event("navigate-up", _, socket = %{assigns: %{document: document}}) do
+    selected_block = Map.get(socket.assigns, :selected_block, nil)
+    blocks = document.document.blocks
+    case find_previous_block(blocks, selected_block) do
+      nil -> {:noreply, socket}  # Already at first block or no blocks
+      previous_block_id ->
+        socket = assign(socket, :selected_block, previous_block_id)
+        {:noreply, socket}
+    end
+  end
+
+  def handle_event("navigate-down", _, socket = %{assigns: %{document: document}}) do
+    selected_block = Map.get(socket.assigns, :selected_block, nil)
+    blocks = document.document.blocks
+    case find_next_block(blocks, selected_block) do
+      nil -> {:noreply, socket}  # Already at last block or no blocks
+      next_block_id ->
+        socket = assign(socket, :selected_block, next_block_id)
+        {:noreply, socket}
+    end
+  end
+
   def handle_event("clear-log", _, socket = %{assigns: %{log_count: log_count}}) do
     socket = socket
     |> assign(:log_count, log_count + 1)
@@ -285,6 +312,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     |> assign(:tab, "Response")
     |> assign(:request_id, nil)
     |> assign(:selected_request, nil)
+    |> assign(:selected_block, nil)
     |> assign(:show_raw_res_body, false)
     |> assign(:show_raw_req_body, false)
     |> assign(:open_requests, %{})
@@ -321,6 +349,47 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
       next_block.id
     else
       nil
+    end
+  end
+
+  # Helper functions for block navigation
+  defp find_previous_block(blocks, selected_block_id) do
+    case selected_block_id do
+      nil ->
+        # If no block is selected, select the first block
+        case blocks do
+          [first_block | _] -> first_block.id
+          [] -> nil
+        end
+      current_id ->
+        # Find the block before the current one
+        block_index = Enum.find_index(blocks, & &1.id == current_id)
+        if block_index && block_index > 0 do
+          previous_block = Enum.at(blocks, block_index - 1)
+          previous_block.id
+        else
+          nil  # Already at first block
+        end
+    end
+  end
+
+  defp find_next_block(blocks, selected_block_id) do
+    case selected_block_id do
+      nil ->
+        # If no block is selected, select the first block
+        case blocks do
+          [first_block | _] -> first_block.id
+          [] -> nil
+        end
+      current_id ->
+        # Find the block after the current one
+        block_index = Enum.find_index(blocks, & &1.id == current_id)
+        if block_index && block_index < length(blocks) - 1 do
+          next_block = Enum.at(blocks, block_index + 1)
+          next_block.id
+        else
+          nil  # Already at last block
+        end
     end
   end
 
