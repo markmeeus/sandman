@@ -16,29 +16,23 @@ defmodule Sandman.LuerlWrapper do
     {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "server", "start"], handlers.start_server, luerl_state)
     luerl_state = Enum.reduce(["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD"], luerl_state, fn method, luerl_state ->
       {:ok, luerl_state} = :luerl.set_table_keys(["sandman", "server", String.downcase(method)],
-        {:erl_func, &handlers.add_route.(method, &1, &2)}, luerl_state)
+        {:erl_func, &handlers.add_route.([String.upcase(method)] ++ &1, &2)}, luerl_state)
       luerl_state
     end)
     {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "http"], [], luerl_state)
     luerl_state = Enum.reduce(["get", "post", "put", "delete", "patch", "head"], luerl_state, fn method, luerl_state ->
-      {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "http", String.downcase(method)], &handlers.fetch.(String.upcase(method), &1, &2), luerl_state)
+      {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "http", String.downcase(method)], &handlers.send.([String.upcase(method)] ++ &1, &2), luerl_state)
       luerl_state
     end)
-    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "http", "send"], fn args, luerl_state ->
-      case args do
-        [] -> handlers.fetch.(nil, [], luerl_state) # this is wrong, handlers will handle it
-        [method] -> handlers.fetch.(method, [], luerl_state) # this is also wrong, handlers will handle it
-        [method | args] -> handlers.fetch.(method, args, luerl_state) # this is also wrong, handlers will handle it
-      end
-    end, luerl_state)
+    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "http", "send"], handlers.send, luerl_state)
 
     {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "uri"], [], luerl_state)
-    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "uri", "parse"], handlers.uri.parse, luerl_state)
-    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "uri", "tostring"], handlers.uri.tostring, luerl_state)
-    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "uri", "encode"], handlers.uri.encode, luerl_state)
-    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "uri", "decode"], handlers.uri.decode, luerl_state)
-    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "uri", "encodeComponent"], handlers.uri.encodeComponent, luerl_state)
-    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "uri", "decodeComponent"], handlers.uri.decodeComponent, luerl_state)
+    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "uri", "parse"], handlers.uri_parse, luerl_state)
+    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "uri", "tostring"], handlers.uri_tostring, luerl_state)
+    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "uri", "encode"], handlers.uri_encode, luerl_state)
+    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "uri", "decode"], handlers.uri_decode, luerl_state)
+    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "uri", "encodeComponent"], handlers.uri_encodeComponent, luerl_state)
+    {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "uri", "decodeComponent"], handlers.uri_decodeComponent, luerl_state)
     {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "json"], [], luerl_state)
     {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "json", "encode"], handlers.json_encode, luerl_state)
     {:ok, luerl_state} = :luerl.set_table_keys_dec(["sandman", "json", "decode"], handlers.json_decode, luerl_state)
