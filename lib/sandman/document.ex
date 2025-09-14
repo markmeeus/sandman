@@ -463,6 +463,8 @@ defmodule Sandman.Document do
       fn
         {name, handler, path} ->
           wrapped_handler = fn args, luerl_state ->
+            # TODO, luerl decode args and luerl_encode results
+            # TODO, tables should be mapped to results
             try do
               handler.(args, luerl_state)
             rescue
@@ -471,8 +473,8 @@ defmodule Sandman.Document do
                 :luerl_lib.lua_error("Invalid arguments for #{full_function_name}", luerl_state)
             end
           end
-          {name, wrapped_handler}
-      end) |>
-    Enum.into(%{})
+          {name, wrapped_handler, path}
+      end)
+    #Enum.into(%{})
   end
 end
