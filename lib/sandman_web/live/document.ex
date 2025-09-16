@@ -60,22 +60,21 @@ defmodule SandmanWeb.LiveView.Document do
       </div>
     </div>
     <%= for {block, index} <- Enum.with_index(@document.blocks) do%>
-      <% preceding_block = if index > 0, do: Enum.at(@document.blocks, index - 1), else: nil %>
+      <% preceding_block = get_preceding_lua_block(@document.blocks, index) %>
       <div class="flex flex-row my-1 no-select">
         <!-- Status indicator column -->
         <div class="w-8 flex flex-col items-center justify-end">
         <!-- Connecting line from above (Run All button or previous block) -->
         <%= render_connecting_line(%{state: Map.get(block, :state, :empty)}) %>
-          <!-- Status dot -->
-          <%= render_block_state_indicator(%{state: Map.get(block, :state, :empty)}) %>
+            <!-- Status dot -->
+            <%= if block.type == "lua" do %>
+            <%= render_block_state_indicator(%{state: Map.get(block, :state, :empty)}) %>
+            <% end %>
         </div>
-
         <!-- Block content -->
         <div class="flex-grow min-w-0 pr-2">
           <div class={"group rounded border #{if @selected_block && @selected_block == block.id, do: "selected-block", else: "border-neutral-700"}"}>
-            <div class="rounded-t p-1" phx-update="ignore" id={"monaco-wrapper-#{block.id}"}>
-              <div id={"monaco-#{block.id}"} phx-hook="MonacoHook" data-block-id={block.id} ><%= block.code %></div>
-            </div>
+            <%= render_block_content(%{block: block, focused_block: @focused_block}) %>
             <div class="px-1" >
               <%= if(@open_requests[block.id]) do %>
                 <%= for {req, req_index} <- Enum.with_index(requests_for_block(@requests, block.id)) do%>
@@ -83,17 +82,19 @@ defmodule SandmanWeb.LiveView.Document do
                 <% end %>
               <%end%>
             </div>
-            <div class="min-h-5">
-              <div class="flex flex-row fs-2 my-2 px-6 text-sm sticky">
-                <%= render_run_button(%{block: block, preceding_block: preceding_block}) %>
-                <div class="flex-grow"/>
-                <%= render_block_stats(%{requests: requests_for_block(@requests, block.id), block: block, is_open: !!@open_requests[block.id]}) %>
-                <div class="flex-grow"/>
-                <button class="text-sm text-neutral-400 hover:text-red-400 invisible group-hover:visible transition-colors p-1 rounded hover:bg-red-900/20" phx-click="remove-block" phx-value-block-id={block.id}>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="w-4 h-4 fill-current"><!--!Font Awesome Free v7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M232.7 69.9C237.1 56.8 249.3 48 263.1 48L377 48C390.8 48 403 56.8 407.4 69.9L416 96L512 96C529.7 96 544 110.3 544 128C544 145.7 529.7 160 512 160L128 160C110.3 160 96 145.7 96 128C96 110.3 110.3 96 128 96L224 96L232.7 69.9zM128 208L512 208L512 512C512 547.3 483.3 576 448 576L192 576C156.7 576 128 547.3 128 512L128 208zM216 272C202.7 272 192 282.7 192 296L192 488C192 501.3 202.7 512 216 512C229.3 512 240 501.3 240 488L240 296C240 282.7 229.3 272 216 272zM320 272C306.7 272 296 282.7 296 296L296 488C296 501.3 306.7 512 320 512C333.3 512 344 501.3 344 488L344 296C344 282.7 333.3 272 320 272zM424 272C410.7 272 400 282.7 400 296L400 488C400 501.3 410.7 512 424 512C437.3 512 448 501.3 448 488L448 296C448 282.7 437.3 272 424 272z"/></svg>
-                </button>
-              </div>
-            </div>
+            <%= if block.type == "lua" do %>
+                <div class="min-h-5">
+                  <div class="flex flex-row fs-2 my-2 px-6 text-sm sticky">
+                    <%= render_run_button(%{block: block, preceding_block: preceding_block}) %>
+                    <div class="flex-grow"/>
+                    <%= render_block_stats(%{requests: requests_for_block(@requests, block.id), block: block, is_open: !!@open_requests[block.id]}) %>
+                    <div class="flex-grow"/>
+                    <button class="text-sm text-neutral-400 hover:text-red-400 invisible group-hover:visible transition-colors p-1 rounded hover:bg-red-900/20" phx-click="remove-block" phx-value-block-id={block.id}>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="w-4 h-4 fill-current"><!--!Font Awesome Free v7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M232.7 69.9C237.1 56.8 249.3 48 263.1 48L377 48C390.8 48 403 56.8 407.4 69.9L416 96L512 96C529.7 96 544 110.3 544 128C544 145.7 529.7 160 512 160L128 160C110.3 160 96 145.7 96 128C96 110.3 110.3 96 128 96L224 96L232.7 69.9zM128 208L512 208L512 512C512 547.3 483.3 576 448 576L192 576C156.7 576 128 547.3 128 512L128 208zM216 272C202.7 272 192 282.7 192 296L192 488C192 501.3 202.7 512 216 512C229.3 512 240 501.3 240 488L240 296C240 282.7 229.3 272 216 272zM320 272C306.7 272 296 282.7 296 296L296 488C296 501.3 306.7 512 320 512C333.3 512 344 501.3 344 488L344 296C344 282.7 333.3 272 320 272zM424 272C410.7 272 400 282.7 400 296L400 488C400 501.3 410.7 512 424 512C437.3 512 448 501.3 448 488L448 296C448 282.7 437.3 272 424 272z"/></svg>
+                    </button>
+                  </div>
+                </div>
+            <%end%>
           </div>
         </div>
       </div>
@@ -172,6 +173,38 @@ defmodule SandmanWeb.LiveView.Document do
 
   defp requests_for_block(requests, block_id) do
     requests[block_id] || []
+  end
+
+  defp get_preceding_lua_block(blocks, current_index) do
+    if current_index == 0 do
+      nil
+    else
+      blocks
+      |> Enum.take(current_index)
+      |> Enum.reverse()
+      |> Enum.find(& &1.type == "lua")
+    end
+  end
+
+  defp render_block_content(assigns) do
+    is_focused = assigns.focused_block == assigns.block.id
+    is_markdown = assigns.block.type == "markdown"
+
+    ~H"""
+    <div class="rounded-t p-1">
+      <!-- Always render Monaco editor, but hide it for unfocused markdown blocks -->
+      <div class={if is_markdown && !is_focused, do: "hidden", else: ""}
+           phx-update="ignore" id={"monaco-wrapper-#{@block.id}"}>
+        <div id={"monaco-#{@block.id}"} phx-hook="MonacoHook" data-block-id={@block.id} data-block-type={@block.type}><%= @block.code %></div>
+      </div>
+
+      <!-- Render text content for unfocused markdown blocks -->
+      <%= if is_markdown && !is_focused do %>
+        <div class="text-neutral-200 whitespace-pre-wrap font-mono text-sm leading-relaxed p-2 cursor-text hover:bg-neutral-800 transition-colors"
+             phx-click="focus-block" phx-value-block-id={@block.id}><%= @block.code %></div>
+      <% end %>
+    </div>
+    """
   end
 
   defp render_run_button(assigns) do

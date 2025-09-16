@@ -81,7 +81,20 @@ const DocumentHook = {
 
             if (wrapperElement) {
               const blockId = wrapperElement.id.replace('monaco-wrapper-', '');
-              this.focusBlock(blockId);
+
+              // Send focus event to backend (for markdown blocks to switch to editor mode)
+              this.pushEvent("focus-block", { "block-id": blockId });
+
+              // For markdown blocks, wait a bit for DOM to update before focusing
+              const monacoElement = wrapperElement.querySelector('[id^="monaco-"]');
+              if (monacoElement && monacoElement.dataset.blockType === 'markdown') {
+                setTimeout(() => {
+                  this.focusBlock(blockId);
+                }, 50);
+              } else {
+                // Focus immediately for non-markdown blocks
+                this.focusBlock(blockId);
+              }
               e.preventDefault();
             }
           }

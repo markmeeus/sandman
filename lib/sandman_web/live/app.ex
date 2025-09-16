@@ -25,7 +25,9 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     #   id ->
     #     String.to_existing_atom(params["window_id"])
     # end
-    socket = assign(socket, :window_id, :browser)
+    socket = socket
+    |> assign(:window_id, :browser)
+    |> assign(:focused_block, nil)
     {:ok, socket}
   end
 
@@ -44,7 +46,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
 
           <div id="document-container" style="overflow:clip;" class="h-screen">
             <div id="document-root" class="h-screen">
-              <SandmanWeb.LiveView.Document.render doc_pid={@doc_pid} open_requests={@open_requests} requests={@document.requests} document={@document.document} selected_request={@selected_request} selected_block={@selected_block} code="" />
+              <SandmanWeb.LiveView.Document.render doc_pid={@doc_pid} open_requests={@open_requests} requests={@document.requests} document={@document.document} selected_request={@selected_request} selected_block={@selected_block} focused_block={@focused_block} code="" />
             </div>
           </div>
 
@@ -167,6 +169,62 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     {:noreply, socket}
   end
 
+  def handle_event("block-focused", %{"block_id" => block_id}, socket) do
+    # Only set focused_block for markdown blocks, lua blocks don't need this state
+    current_document = socket.assigns[:document]
+    if current_document do
+      block = Enum.find(current_document.document.blocks, & &1.id == block_id)
+      if block && block.type == "markdown" do
+        {:noreply, assign(socket, :focused_block, block_id)}
+      else
+        {:noreply, socket}
+      end
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("block-blurred", %{"block_id" => block_id}, socket) do
+    # Clear focused_block for markdown blocks when they truly lose focus
+    current_document = socket.assigns[:document]
+    if current_document do
+      block = Enum.find(current_document.document.blocks, & &1.id == block_id)
+      if block && block.type == "markdown" && socket.assigns[:focused_block] == block_id do
+        {:noreply, assign(socket, :focused_block, nil)}
+      else
+        {:noreply, socket}
+      end
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("focus-block", %{"block-id" => block_id}, socket) do
+    # For markdown blocks, set focused_block and also set selected_block
+    current_document = socket.assigns[:document]
+    if current_document do
+      block = Enum.find(current_document.document.blocks, & &1.id == block_id)
+      if block && block.type == "markdown" do
+        socket = socket
+        |> assign(:focused_block, block_id)
+        |> assign(:selected_block, block_id)
+        {:noreply, socket}
+      else
+        # For non-markdown blocks, clear focused_block and set selected_block
+        socket = socket
+        |> assign(:focused_block, nil)
+        |> assign(:selected_block, block_id)
+        {:noreply, socket}
+      end
+    else
+      {:noreply, assign(socket, :focused_block, block_id)}
+    end
+  end
+
+  def handle_event("unfocus-markdown", _, socket) do
+    {:noreply, assign(socket, :focused_block, nil)}
+  end
+
   def handle_event("toggle-requests", %{"block-id" => block_id}, socket = %{assigns: %{open_requests: open_requests}}) do
     # persist document here
     open_requests = case open_requests[block_id] do
@@ -212,7 +270,12 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
   end
 
   def handle_event("cursor-moved", %{"block-id" => block_id}, socket) do
-    socket = assign(socket, :selected_block, block_id)
+    # Preserve focused_block when setting selected_block
+    current_focused = socket.assigns[:focused_block]
+    socket = socket
+    |> assign(:selected_block, block_id)
+    |> assign(:focused_block, current_focused)
+
     {:noreply, socket}
   end
 
@@ -292,6 +355,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
   end
 
 
+
   defp tab_colors(selected_tab, selected_tab), do:  "text-neutral-100 bg-neutral-600 border-b-2 border-neutral-100"
   defp tab_colors(_, _), do:  "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-600/50 border-b-2 border-transparent hover:border-neutral-400"
 
@@ -313,6 +377,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     |> assign(:request_id, nil)
     |> assign(:selected_request, nil)
     |> assign(:selected_block, nil)
+    |> assign(:focused_block, nil)
     |> assign(:show_raw_res_body, false)
     |> assign(:show_raw_req_body, false)
     |> assign(:open_requests, %{})
@@ -336,7 +401,11 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
   defp get_preceding_block(blocks, block_id) do
     block_index = Enum.find_index(blocks, & &1.id == block_id)
     if block_index && block_index > 0 do
-      Enum.at(blocks, block_index - 1)
+      # Find the preceding lua block, not just the immediately previous block
+      blocks
+      |> Enum.take(block_index)
+      |> Enum.reverse()
+      |> Enum.find(& &1.type == "lua")
     else
       nil
     end
@@ -393,7 +462,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     end
   end
 
-  defp can_run_block?(block, preceding_block) do
+  defp can_run_block?(block = %{type: "lua"}, preceding_block) do
     block_state = Map.get(block, :state, :empty)
     preceding_state = if preceding_block, do: Map.get(preceding_block, :state, :empty), else: nil
 
@@ -411,4 +480,5 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
       _ -> false
     end
   end
+  defp can_run_block?(_, _), do: false # only lua can run
 end

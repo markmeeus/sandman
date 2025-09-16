@@ -33,10 +33,11 @@ const MonacoHook = {
   mounted() {
     const code = decodeHtml(this.el.innerHTML);
     const blockId = this.el.dataset.blockId;
+    const language = this.el.dataset.blockType;
     this.el.innerText = "";
     let editor = monaco.editor.create(this.el, {
     	value: code,
-      language: 'lua',
+      language: language,
       glyphMargin: true,
     	minimap: {
     		enabled: false
@@ -60,17 +61,31 @@ const MonacoHook = {
 
     // Track focus state manually
     let editorHasFocus = false;
+    let lastFocusTime = 0;
 
     editor.onDidFocusEditorText(() => {
       editorHasFocus = true;
+      lastFocusTime = Date.now();
+
       // Send cursor-moved event when editor gains focus
       const event = new Event('sandman:cursor-moved');
       event.data = { blockId };
       window.dispatchEvent(event);
+
+      // Send block-focused event to backend
+      this.pushEvent("block-focused", { block_id: blockId });
     });
 
     editor.onDidBlurEditorText(() => {
       editorHasFocus = false;
+
+      // Only send blur event if it's been more than 100ms since focus
+      // This prevents rapid focus/blur cycles during initialization
+      const timeSinceFocus = Date.now() - lastFocusTime;
+      if (timeSinceFocus > 100) {
+        // Send block-blurred event to backend
+        this.pushEvent("block-blurred", { block_id: blockId });
+      }
     });
 
     // Send cursor-moved event when cursor position changes within the editor
@@ -88,6 +103,12 @@ const MonacoHook = {
       // ESC - remove focus from editor while keeping block selected
       if (e.key === 'Escape' && editorHasFocus) {
         e.preventDefault();
+
+        // For markdown blocks, send unfocus event to backend
+        if (language === 'markdown') {
+          this.pushEvent("unfocus-markdown", {});
+        }
+
         document.activeElement.blur();
       }
     });

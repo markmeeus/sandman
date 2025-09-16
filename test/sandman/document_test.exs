@@ -9,7 +9,7 @@ defmodule Sandman.DocumentTest do
     doc_path = Path.join([__DIR__, "fixtures", fixture])
 
     PubSub.subscribe(Sandman.PubSub, "document:#{doc_id}")
-    {:ok, doc_pid} = Document.start_link(doc_id, doc_path, & to_string(&1))
+    {:ok, doc_pid} = Document.start_link(doc_id, doc_path, &(&1||0) + 1)
     {:ok, %{doc_pid: doc_pid}}
   end
 
