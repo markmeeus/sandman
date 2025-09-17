@@ -78,7 +78,6 @@ liveSocket.connect()
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
 
-
 self.MonacoEnvironment = {
 	globalAPI: true,
 	getWorkerUrl(_workerId, label) {

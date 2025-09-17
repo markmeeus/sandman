@@ -62,7 +62,8 @@ defmodule Sandman.MixProject do
       #{:desktop_deployment, git: "git@github.com:markmeeus/deployment.git", ref: "78f6f9dd31752cfd8ac97c3ee9cd77d9a8960160", runtime: false},
       {:desktop_deployment, path: "/Users/markmeeus/Documents/projects/github/deployment"},
       {:verl, "~> 1.1"},
-      {:debouncer, "~> 0.1.11"}
+      {:debouncer, "~> 0.1.11"},
+      {:earmark, "~> 1.4"}
     ]
   end
 

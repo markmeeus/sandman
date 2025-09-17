@@ -2,6 +2,8 @@ defmodule SandmanWeb.LiveView.Document do
   # In Phoenix v1.6+ apps, the line is typically: use MyAppWeb, :live_view
   use Phoenix.Component
   import Sandman.RequestFormatting
+  alias Sandman.MarkdownRenderer
+
   def mount(_params, _session, socket) do
     socket = assign(socket, :code, "some code")
     {:ok, socket}
@@ -27,7 +29,8 @@ defmodule SandmanWeb.LiveView.Document do
       <div class="group h-5">
         <div class="flex flex-row">
           <div class="flex-grow"/>
-          <button class="pt-1 mr-3 text-sm text-neutral-300 hover:text-neutral-100" phx-click="add-block" phx-value-block-id="-"><span class="font-bold">+</span> Insert block</button>
+          <button class="pt-1 mr-3 text-sm text-neutral-300 hover:text-neutral-100" phx-click="add-code" phx-value-block-id="-"><span class="font-bold">+</span> Add Code</button>
+          <button class="pt-1 mr-3 text-sm text-neutral-300 hover:text-neutral-100" phx-click="add-markdown" phx-value-block-id="-"><span class="font-bold">+</span> Add Markdown</button>
           <div class="flex-grow"/>
         </div>
       </div>
@@ -53,7 +56,8 @@ defmodule SandmanWeb.LiveView.Document do
         <div class="group h-5">
           <div class="flex flex-row">
             <div class="flex-grow"/>
-            <button class="pt-1 mr-3 text-sm text-neutral-300 hover:text-neutral-100 hidden group-hover:block" phx-click="add-block" phx-value-block-id="-"><span class="font-bold">+</span> Insert block</button>
+            <button class="pt-1 mr-3 text-sm text-neutral-300 hover:text-neutral-100 hidden group-hover:block" phx-click="add-code" phx-value-block-id="-"><span class="font-bold">+</span> Add Code</button>
+            <button class="pt-1 mr-3 text-sm text-neutral-300 hover:text-neutral-100 hidden group-hover:block" phx-click="add-markdown" phx-value-block-id="-"><span class="font-bold">+</span> Add Markdown</button>
             <div class="flex-grow"/>
           </div>
         </div>
@@ -73,7 +77,7 @@ defmodule SandmanWeb.LiveView.Document do
         </div>
         <!-- Block content -->
         <div class="flex-grow min-w-0 pr-2">
-          <div class={"group rounded border #{if @selected_block && @selected_block == block.id, do: "selected-block", else: "border-neutral-700"}"}>
+          <div class={"group rounded #{if block.type == "lua", do: "border", else: ""} #{if @selected_block && @selected_block == block.id, do: "selected-block", else: "border-neutral-700"}"}>
             <%= render_block_content(%{block: block, focused_block: @focused_block}) %>
             <div class="px-1" >
               <%= if(@open_requests[block.id]) do %>
@@ -106,7 +110,8 @@ defmodule SandmanWeb.LiveView.Document do
           <div class="group h-5">
             <div class="flex flex-row">
               <div class="flex-grow"/>
-              <button class="mr-3 text-sm text-neutral-300 hover:text-neutral-100 invisible group-hover:visible" phx-click="add-block" phx-value-block-id={block.id}><span class="font-bold">+</span> Insert block</button>
+              <button class="mr-3 text-sm text-neutral-300 hover:text-neutral-100 invisible group-hover:visible" phx-click="add-code" phx-value-block-id={block.id}><span class="font-bold">+</span> Add Code</button>
+              <button class="mr-3 text-sm text-neutral-300 hover:text-neutral-100 invisible group-hover:visible" phx-click="add-markdown" phx-value-block-id={block.id}><span class="font-bold">+</span> Add Markdown</button>
               <div class="flex-grow"/>
             </div>
           </div>
@@ -200,8 +205,37 @@ defmodule SandmanWeb.LiveView.Document do
 
       <!-- Render text content for unfocused markdown blocks -->
       <%= if is_markdown && !is_focused do %>
-        <div class="text-neutral-200 whitespace-pre-wrap font-mono text-sm leading-relaxed p-2 cursor-text hover:bg-neutral-800 transition-colors"
-             phx-click="focus-block" phx-value-block-id={@block.id}><%= @block.code %></div>
+        <div class="prose prose-sm text-[12px] prose-invert max-w-none text-neutral-200 font-mono leading-relaxed p-2 cursor-text hover:bg-neutral-800 transition-colors"
+             phx-click="focus-block" phx-value-block-id={@block.id} >
+             <style>
+              h1 { color:#AAA !important; margin-top: 0 !important;}
+              h2 { color:#AAA !important; margin-top: 0 !important;}
+              h3 { color:#AAA !important; margin-top: 0 !important;}
+              h4 { color:#AAA !important; margin-top: 0 !important;}
+              h5 { color:#AAA !important; margin-top: 0 !important;}
+              h6 { color:#AAA !important; margin-top: 0 !important;}
+              p { color:#AAA !important;}
+              ul { color:#AAA !important;}
+              ol { color:#AAA !important;}
+              li { color:#AAA !important;}
+              a { color:#AAA !important;}
+              img { color:#AAA !important;}
+              blockquote { color:#AAA !important;}
+              code { color:#AAA !important;}
+              pre { color:#AAA !important;}
+              table { color:#AAA !important;}
+              thead { color:#AAA !important;}
+              tbody { color:#AAA !important;}
+              tfoot { color:#AAA !important;}
+              tr { color:#AAA !important;}
+              td { color:#AAA !important;}
+              th { color:#AAA !important;}
+              hr { color:#AAA !important;}
+
+             </style>
+             <div class="markdown-wrappper">
+              <%= MarkdownRenderer.render_with_target_blank(@block.code) %></div>
+             </div>
       <% end %>
     </div>
     """

@@ -7,32 +7,32 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "41F5E665-3A14-425F-B048-D1EEA9232C98"
+            uuid = "317324FD-912A-4DC6-A138-AD1620755A76"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "sandman/sandmanApp.swift"
+            filePath = "sandman/views/DocumentTabsView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "21"
-            endingLineNumber = "21"
-            landmarkName = "unknown"
-            landmarkType = "0">
+            startingLineNumber = "200"
+            endingLineNumber = "200"
+            landmarkName = "webView(_:decidePolicyFor:)"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "D670BFB2-3801-4508-8CB9-2EE79D2C0EAC"
-            shouldBeEnabled = "Yes"
+            uuid = "F0829ECB-AD57-412D-8639-3C5E22761F66"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "sandman/bridge.swift"
+            filePath = "sandman/views/DocumentTabsView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "217"
-            endingLineNumber = "217"
-            landmarkName = "startPhoenixServer()"
+            startingLineNumber = "198"
+            endingLineNumber = "198"
+            landmarkName = "webView(_:decidePolicyFor:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

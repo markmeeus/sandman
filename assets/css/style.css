@@ -94,3 +94,7 @@ body {
 .selected-block:hover {
   box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.3), 0 8px 12px -2px rgba(96, 165, 250, 0.15) !important;
 }
+
+.markdown-wrappper a {
+  overflow-wrap: break-word;
+}

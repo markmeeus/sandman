@@ -48,7 +48,7 @@ struct DocumentTabsView: View {
             }
 
             // Document content area
-            if let selectedTab = selectedTab {
+            if selectedTab != nil {
                 ZStack {
                     // Show all webviews but only make the selected one visible
                     ForEach(openTabs, id: \.id) { tab in
@@ -192,15 +192,37 @@ struct TabItemView: View {
     }
 }
 
+class NavigationDelegate : NSObject, WKNavigationDelegate {
+    var loadedOnce = false
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
+        if !loadedOnce {
+            loadedOnce = true
+            return .allow
+        } else {
+            if let url = navigationAction.request.url {
+                // Open in default browser instead of WebView
+                NSWorkspace.shared.open(url)
+                return .cancel
+            }
+            return .cancel
+        }
+    }
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        print("didStartProvisionalNavigation")
+    }
+}
+
 // WebView container to maintain state
 class WebViewContainer: ObservableObject {
     let webView: WKWebView
     let url: URL
-
+    let navigationDelegate: NavigationDelegate
+    
     init(url: URL) {
         self.url = url
         self.webView = WKWebView()
-
+        self.navigationDelegate = NavigationDelegate()
+        self.webView.navigationDelegate = self.navigationDelegate
         // Build the localhost URL with file parameter
         var components = URLComponents()
         components.scheme = "http"
@@ -219,7 +241,7 @@ class WebViewContainer: ObservableObject {
 struct WebViewWrapper: NSViewRepresentable {
     let container: WebViewContainer
     let zoomLevel: Double
-
+    
     func makeNSView(context: Context) -> WKWebView {
         return container.webView
     }

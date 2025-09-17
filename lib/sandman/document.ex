@@ -27,8 +27,8 @@ defmodule Sandman.Document do
     GenServer.call(pid, :get)
   end
 
-  def add_block(pid, after_block) do
-    GenServer.cast(pid, {:add_block, :after, after_block})
+  def add_block(pid, after_block, block_type \\ "lua") do
+    GenServer.cast(pid, {:add_block, :after, after_block, block_type})
   end
 
   def remove_block(pid, block_id) do
@@ -177,9 +177,9 @@ defmodule Sandman.Document do
     {:noreply, state}
   end
 
-  def handle_cast({:add_block, :after, "-"}, state  = %{document: document, doc_id: doc_id}) do
+  def handle_cast({:add_block, :after, "-", block_type}, state  = %{document: document, doc_id: doc_id}) do
     new_block = %{
-      type: "lua",
+      type: block_type,
       code: "",
       id: UUID.uuid4(),
       state: :empty
@@ -191,9 +191,14 @@ defmodule Sandman.Document do
     {:noreply, %{ state | document: document}}
   end
 
-  def handle_cast({:add_block, :after, after_block_id}, state = %{document: document, doc_id: doc_id}) do
+  # Backward compatibility for old 3-parameter calls
+  def handle_cast({:add_block, :after, "-"}, state) do
+    handle_cast({:add_block, :after, "-", "lua"}, state)
+  end
+
+  def handle_cast({:add_block, :after, after_block_id, block_type}, state = %{document: document, doc_id: doc_id}) do
     new_block = %{
-      type: "lua",
+      type: block_type,
       code: "",
       id: UUID.uuid4(),
       state: :empty
@@ -206,6 +211,11 @@ defmodule Sandman.Document do
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
     write_file(state)
     {:noreply, %{ state | document: document}}
+  end
+
+  # Backward compatibility for old 3-parameter calls
+  def handle_cast({:add_block, :after, after_block_id}, state) do
+    handle_cast({:add_block, :after, after_block_id, "lua"}, state)
   end
 
   def handle_cast({:record_http_request, req_res, call_info, block_id}, state = %{doc_id: doc_id, current_block_id: current_block_id}) do
@@ -225,13 +235,14 @@ defmodule Sandman.Document do
     {:noreply, %{ state | document: document}}
   end
 
-  def handle_cast({:change_code, block_id, code}, state = %{document: document}) do
+  def handle_cast({:change_code, block_id, code}, state = %{document: document, doc_id: doc_id}) do
     new_blocks = Enum.map(document.blocks, fn
       block = %{id: ^block_id} -> Map.put(block, :code, code)
       block -> block
     end)
     document = Map.put(document, :blocks, new_blocks)
     write_file(state)
+    PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
     {:noreply, %{ state | document: document}}
   end
 

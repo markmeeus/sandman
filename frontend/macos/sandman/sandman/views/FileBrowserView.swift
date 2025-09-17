@@ -229,20 +229,16 @@ struct FileItemView: View {
         guard !newItemName.isEmpty, item.isDirectory else { return }
 
         let newFileURL = item.url.appendingPathComponent(newItemName)
+    
+        // Create empty file
+        FileManager.default.createFile(atPath: newFileURL.path, contents: Data(), attributes: nil)
 
-        do {
-            // Create empty file
-            FileManager.default.createFile(atPath: newFileURL.path, contents: Data(), attributes: nil)
+        // Refresh the directory contents
+        item.loadChildren()
 
-            // Refresh the directory contents
-            item.loadChildren()
-
-            // Expand the directory if not already expanded
-            if !isExpanded {
-                expandedItems.insert(item.url)
-            }
-        } catch {
-            print("Error creating file: \(error)")
+        // Expand the directory if not already expanded
+        if !isExpanded {
+            expandedItems.insert(item.url)
         }
     }
 

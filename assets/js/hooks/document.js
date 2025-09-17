@@ -21,6 +21,13 @@ const DocumentHook = {
       });
     });
 
+    window.addEventListener("keydown", (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        this.pushEvent("keydown", {key: 'Escape'});
+      }
+    });
+
     // Handle keyboard navigation when no editor is focused
     document.addEventListener("keydown", (e) => {
       // Check if any Monaco editor currently has focus

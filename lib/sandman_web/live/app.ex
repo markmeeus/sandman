@@ -119,8 +119,13 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     {:noreply, socket}
   end
 
-  def handle_event("add-block", %{"block-id" => block_id}, socket = %{assigns: %{doc_pid: doc_pid}}) do
-    Document.add_block(doc_pid, block_id)
+  def handle_event("add-code", %{"block-id" => block_id}, socket = %{assigns: %{doc_pid: doc_pid}}) do
+    Document.add_block(doc_pid, block_id, "lua")
+    {:noreply, socket}
+  end
+
+  def handle_event("add-markdown", %{"block-id" => block_id}, socket = %{assigns: %{doc_pid: doc_pid}}) do
+    Document.add_block(doc_pid, block_id, "markdown")
     {:noreply, socket}
   end
 
@@ -187,15 +192,21 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
   def handle_event("block-blurred", %{"block_id" => block_id}, socket) do
     # Clear focused_block for markdown blocks when they truly lose focus
     current_document = socket.assigns[:document]
+    # Force re-render by updating socket assigns
+    socket = assign(socket, :force_render, System.system_time(:nanosecond))
     if current_document do
       block = Enum.find(current_document.document.blocks, & &1.id == block_id)
       if block && block.type == "markdown" && socket.assigns[:focused_block] == block_id do
+        IO.inspect({"resetting focused_block", block_id})
         {:noreply, assign(socket, :focused_block, nil)}
       else
-        {:noreply, socket}
+        IO.inspect({"hier?", block.type, socket.assigns[:focused_block], block_id, block.id})
+        {:noreply, assign(socket, :focused_block, nil)}
+        #{:noreply, socket}
       end
     else
-      {:noreply, socket}
+      {:noreply, assign(socket, :focused_block, nil)}
+      #{:noreply, socket}
     end
   end
 
@@ -222,6 +233,10 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
   end
 
   def handle_event("unfocus-markdown", _, socket) do
+    {:noreply, assign(socket, :focused_block, nil)}
+  end
+
+  def handle_event("keydown", %{"key" => "Escape"}, socket) do
     {:noreply, assign(socket, :focused_block, nil)}
   end
 
