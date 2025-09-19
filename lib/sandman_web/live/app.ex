@@ -44,7 +44,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
       <%= live_render(@socket, UpdateBar, id: "update_bar") %>
       <div id="app-wrapper" class="flex flex-row" phx-hook="HomeHook" data-window_id={@window_id}>
 
-          <div id="document-container" style="overflow:clip;" class="h-screen">
+          <div id="document-container" style="overflow:clip;" class="h-screen" phx-hook="MaintainSplitDimensions">
             <div id="document-root" class="h-screen">
               <SandmanWeb.LiveView.Document.render doc_pid={@doc_pid} open_requests={@open_requests} requests={@document.requests} document={@document.document} selected_request={@selected_request} selected_block={@selected_block} focused_block={@focused_block} code="" />
             </div>
@@ -52,7 +52,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
 
         <div class="gutter gutter-horizontal" id="doc-req-gutter" phx-update="ignore"></div>
 
-        <div id="req-res-container" class="h-screen flex-grow bg-neutral-800" style="overflow:scroll;" phx-hook="MaintainWidth">
+        <div id="req-res-container" class="h-screen flex-grow bg-neutral-800" style="overflow:scroll;" phx-hook="MaintainSplitDimensions">
           <div class="bg-neutral-700 border-b border-neutral-600">
             <div class="px-3">
               <nav class="flex space-x-4" aria-label="Tabs">

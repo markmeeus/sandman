@@ -1,5 +1,3 @@
-import Split from 'split.js';
-
 const DocumentHook = {
   mounted() {
     window.addEventListener("sandman:code-changed", e => {

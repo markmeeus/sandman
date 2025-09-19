@@ -39,8 +39,7 @@ let liveSocket = new LiveSocket("/live", Socket, {
 		HomeHook,
 		MonacoHook,
 		DocumentHook,
-		MaintainHeight: MaintainDimensions.MaintainHeight,
-		MaintainWidth: MaintainDimensions.MaintainWidth,
+		MaintainSplitDimensions: MaintainDimensions.MaintainSplitDimensions,
   }
 })
 

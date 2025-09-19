@@ -37,10 +37,8 @@ const Document = (props) => {
     <>
       {window.sandman?.sandmanDocument.blocks.map(block => {
         if(block.type === 'lua') {
-          console.log("usin ke", block.id)
           return <Editor key={block.id} block={block}/>;
         }else{
-          console.log("usin ke", block.id)
           return <MarkDownEditor key={block.id} block={block} />;
         }
       })}
