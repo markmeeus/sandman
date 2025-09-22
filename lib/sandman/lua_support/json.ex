@@ -16,10 +16,6 @@ defmodule Sandman.Encoders.Json do
           {:luerl_lib.lua_error({"Json parse error", message}, luerl_state), luerl_state}
       end
   end
-  def decode(doc_id, _, luerl_state) do
-    log(doc_id, "Unexpected arguments in json.decode")
-    {[nil, false, "Unexpected arguments in json.decode"], luerl_state}
-  end
 
   def encode(_, [data], luerl_state) do
     decoded_data = :luerl.decode(data, luerl_state)
@@ -28,9 +24,6 @@ defmodule Sandman.Encoders.Json do
     |> Jason.encode!
     {[json], luerl_state}
   end
-  def encode(doc_id, _, luerl_state) do
-    log(doc_id, "Unexpected arguments in JSON.encode")
-    {nil, luerl_state}
-  end
+
 
 end

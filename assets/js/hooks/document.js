@@ -41,6 +41,25 @@ const DocumentHook = {
         }
       }
 
+      // Handle tab switching shortcuts
+      if (e.altKey && !e.ctrlKey && !e.shiftKey && !e.metaKey) {
+        if (e.code === 'Digit1' || e.key === '1') {
+          // Option+1 - switch to Inspector tab
+          this.pushEvent("change-main-left-tab", {"tab-id": "req_res"});
+          e.preventDefault();
+        }
+        else if (e.code === 'Digit2' || e.key === '2') {
+          // Option+2 - switch to Logs tab
+          this.pushEvent("change-main-left-tab", {"tab-id": "logs"});
+          e.preventDefault();
+        }
+        else if (e.code === 'Digit3' || e.key === '3') {
+          // Option+3 - switch to Docs tab
+          this.pushEvent("change-main-left-tab", {"tab-id": "docs"});
+          e.preventDefault();
+        }
+      }
+
       // Handle shortcuts that work in both focused and unfocused states
       if (e.key === 'Enter') {
         if (e.ctrlKey && !e.shiftKey && !e.metaKey) {

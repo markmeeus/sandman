@@ -193,22 +193,39 @@ struct TabItemView: View {
 }
 
 class NavigationDelegate : NSObject, WKNavigationDelegate {
-    var loadedOnce = false
-    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
-        if !loadedOnce {
-            loadedOnce = true
-            return .allow
-        } else {
-            if let url = navigationAction.request.url {
-                // Open in default browser instead of WebView
-                NSWorkspace.shared.open(url)
-                return .cancel
-            }
+    
+    var loadedUrl: URL?
+    
+    func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationAction: WKNavigationAction
+    ) async -> WKNavigationActionPolicy {
+        
+        guard let requestUrl = navigationAction.request.url else {
+            // no url? no need to allow this
             return .cancel
         }
+        
+        if let loadedUrl
+        {
+            if(navigationAction.request.url!.hasSameOrigin(as: loadedUrl)){
+                return .allow
+            } else {
+                // bumpo out of the app
+                NSWorkspace.shared.open(navigationAction.request.url!)
+                return .cancel
+            }
+        } else{
+            // first page is loaded
+            return .allow
+        }
     }
+    
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         print("didStartProvisionalNavigation")
+    }
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        loadedUrl = webView.url
     }
 }
 

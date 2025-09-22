@@ -96,11 +96,13 @@ defmodule Sandman.LuaApiDefinitions do
           type: :table,
           decode: %{
             type: :function,
-            description: "Decodes a JSON string into a Lua table"
+            description: "Decodes a JSON string into a Lua table",
+            schema: %{params: [%{type: :string}], ret_vals: [%{type: :table}]}
           },
           encode: %{
             type: :function,
-            description: "Encodes a Lua table into a JSON string"
+            description: "Encodes a Lua table into a JSON string",
+            schema: %{params: [%{type: :any}], ret_vals: [%{type: :string}]}
           }
         },
         base64: %{
