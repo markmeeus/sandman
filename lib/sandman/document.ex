@@ -158,8 +158,7 @@ defmodule Sandman.Document do
   def handle_call({:handle_lua_call, :document_set, [key, value]}, _sender, state = %{shared: shared}) do
     shared = Map.put(shared, key, value)
     new_state = put_in(state.shared, shared)
-    IO.inspect({"new state", new_state})
-    {:reply, {:ok, [true]}, new_state}
+    {:reply, {:ok, []}, new_state}
   end
   def handle_call({:handle_lua_call, :document_get, [key]}, _sender, state = %{shared: shared}) do
     IO.inspect({"shared", key, shared})

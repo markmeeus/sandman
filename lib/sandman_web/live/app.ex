@@ -58,6 +58,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
               <nav class="flex space-x-4" aria-label="Tabs">
                 <a href="#" class={"#{tab_colors(@main_left_tab, :req_res)} px-3 py-2 text-xs font-medium"} phx-click="change-main-left-tab" phx-value-tab-id="req_res">Inspector</a>
                 <a href="#" class={"#{tab_colors(@main_left_tab, :logs)} px-3 py-2 text-xs font-medium"}  phx-click="change-main-left-tab" phx-value-tab-id="logs">Logs</a>
+                <a href="#" class={"#{tab_colors(@main_left_tab, :docs)} px-3 py-2 text-xs font-medium"}  phx-click="change-main-left-tab" phx-value-tab-id="docs">Docs</a>
               </nav>
             </div>
           </div>
@@ -74,6 +75,9 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
             </div>
             <div class={"pt-1 px-1 h-full #{tab_visibility(@main_left_tab, :logs)}"} >
               <SandmanWeb.LiveView.Log.render logs={@streams.logs} />
+            </div>
+            <div class={"h-full #{tab_visibility(@main_left_tab, :docs)}"} >
+              <SandmanWeb.LiveView.Docs.render docs_expanded_namespaces={@docs_expanded_namespaces} docs_expanded_functions={@docs_expanded_functions} />
             </div>
         </div>
       </div>
@@ -284,6 +288,30 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     {:noreply, assign(socket, :main_left_tab, String.to_existing_atom(tab_id))}
   end
 
+  def handle_event("toggle-docs-namespace", %{"namespace" => namespace}, socket) do
+    current_expanded = socket.assigns.docs_expanded_namespaces
+
+    new_expanded = if MapSet.member?(current_expanded, namespace) do
+      MapSet.delete(current_expanded, namespace)
+    else
+      MapSet.put(current_expanded, namespace)
+    end
+
+    {:noreply, assign(socket, :docs_expanded_namespaces, new_expanded)}
+  end
+
+  def handle_event("toggle-docs-function", %{"function" => function_name}, socket) do
+    current_expanded = socket.assigns.docs_expanded_functions
+
+    new_expanded = if MapSet.member?(current_expanded, function_name) do
+      MapSet.delete(current_expanded, function_name)
+    else
+      MapSet.put(current_expanded, function_name)
+    end
+
+    {:noreply, assign(socket, :docs_expanded_functions, new_expanded)}
+  end
+
   def handle_event("cursor-moved", %{"block-id" => block_id}, socket) do
     # Preserve focused_block when setting selected_block
     current_focused = socket.assigns[:focused_block]
@@ -397,6 +425,8 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     |> assign(:show_raw_req_body, false)
     |> assign(:open_requests, %{})
     |> assign(:main_left_tab, :req_res)
+    |> assign(:docs_expanded_namespaces, MapSet.new())
+    |> assign(:docs_expanded_functions, MapSet.new())
     |> stream(:logs, [])
   end
 

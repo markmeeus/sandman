@@ -114,16 +114,22 @@ defmodule Sandman.DocumentHandlers do
       if(params == :any || length(params) == length(args)) do
         case validate_args(args, params, full_function_name) do
           [] ->
-            try do
+            res = try do
               handler.(args, luerl_state)
             rescue
               error ->
-                :luerl_lib.lua_error("Invalid arguments for #{full_function_name}", luerl_state)
+                :luerl_lib.lua_error("Invalid arguments for #{full_function_name}, #{inspect(error)}", luerl_state)
+            end
+            case res do
+              {:error, message, luerl_state} ->
+                :luerl_lib.lua_error(message, luerl_state)
+              other ->
+                other
             end
           [err | _] -> :luerl_lib.lua_error(err, luerl_state)
         end
       else
-        :luerl_lib.lua_error("Invalid number of arguments for '#{full_function_name}' expected: (#{format_params(params)})", luerl_state)
+        :luerl_lib.lua_error("Invalid of arguments (#{format_args(args)}) for '#{full_function_name}' expected (#{format_params(params)})", luerl_state)
       end
     end
   end
@@ -141,12 +147,24 @@ defmodule Sandman.DocumentHandlers do
     |> Enum.with_index
     |> Enum.reduce([], fn {{arg, param}, index}, acc ->
       IO.inspect({"validate_args", {param, arg}, index})
-      if param == :any || arg_type(arg) == param.type do
+      if param.type == :any || arg_type(arg) == param.type do
         acc
       else
-        acc ++ ["Bad argument ##{index + 1} to '#{full_function_name}' (expected #{param.type}, got #{type_to_string(arg_type(arg))})"]
+        acc ++ ["Bad argument ##{index + 1} to '#{full_function_name}' expected #{param.type}, got #{type_to_string(arg_type(arg))})"]
       end
     end)
+  end
+
+  defp format_params(params) do
+    params
+    |> Enum.map(fn %{type: type} -> type end)
+    |> Enum.join(", ")
+  end
+
+  defp format_args(args) do
+    args
+    |> Enum.map(fn arg -> type_to_string(arg_type(arg)) end)
+    |> Enum.join(", ")
   end
 
   defp arg_type(nil), do: :nil
