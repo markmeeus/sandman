@@ -13,16 +13,12 @@ defmodule Sandman.Encoders.Json do
           {[encoded], luerl_state}
         {:error, err} ->
           message = Jason.DecodeError.message(err)
-          {:luerl_lib.lua_error({"Json parse error", message}, luerl_state), luerl_state}
+          {:error, message, luerl_state}
       end
   end
 
   def encode(_, [data], luerl_state) do
-    decoded_data = :luerl.decode(data, luerl_state)
-    json = decoded_data
-    |> LuaMapper.map_unchecked()
-    |> Jason.encode!
-    {[json], luerl_state}
+    {[Jason.encode!(data)], luerl_state}
   end
 
 

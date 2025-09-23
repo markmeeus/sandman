@@ -6,6 +6,7 @@ defmodule Sandman.DocumentHandlers do
   alias Sandman.Encoders.Json
   alias Sandman.Encoders.Jwt
   alias Sandman.Encoders.Uri
+  alias Sandman.LuaMapper
 
   def build_handlers(self_pid, doc_id) do
     # TODO: refactor this so that req can be stored before request is being sent
@@ -112,8 +113,9 @@ defmodule Sandman.DocumentHandlers do
     wrapped_handler = fn args, luerl_state ->
       # test number of args
       if(params == :any || length(params) == length(args)) do
-        case validate_args(args, params, full_function_name) do
-          [] ->
+        case preprocess_args(args, params, full_function_name, luerl_state) do
+          {:error, errors} -> :luerl_lib.lua_error(errors, luerl_state)
+          args ->
             res = try do
               handler.(args, luerl_state)
             rescue
@@ -126,7 +128,7 @@ defmodule Sandman.DocumentHandlers do
               other ->
                 other
             end
-          [err | _] -> :luerl_lib.lua_error(err, luerl_state)
+
         end
       else
         :luerl_lib.lua_error("Invalid of arguments (#{format_args(args)}) for '#{full_function_name}' expected (#{format_params(params)})", luerl_state)
@@ -138,6 +140,50 @@ defmodule Sandman.DocumentHandlers do
     params
     |> Enum.map(fn %{type: type} -> type end)
     |> Enum.join(", ")
+  end
+
+  defp preprocess_args(args, params, full_function_name, luerl_state) do
+    case validate_args(args, params, full_function_name) do
+      [] ->
+        map_args(args, params, luerl_state)
+      errors ->
+        {:error, Enum.join(errors, ", ")}
+    end
+  end
+
+
+  defp map_args(args, :any, _luerl_state), do: args
+  defp map_args(args, params, luerl_state) do
+    IO.inspect("decopding and mapping")
+    Enum.zip(args, params)
+    |> IO.inspect()
+    |> Enum.map(fn {arg, param} ->
+      decode_arg(arg, param, luerl_state)
+      |> IO.inspect()
+      |> map_arg(param)
+      |> IO.inspect()
+    end)
+  end
+
+  defp decode_arg(arg, param, luerl_state) do
+    IO.inspect({"decoding arg", arg, param})
+    if param[:decode] do
+      :luerl.decode(arg, luerl_state)
+    else
+      arg
+    end
+  end
+
+  defp map_arg(arg, param) do
+    IO.inspect({"mapping arg", arg, param})
+    if param[:map] do
+      {mapped, _warnings} =LuaMapper.map(arg, param[:schema] || :any)
+      # todo, handle warnings here
+      mapped
+    else
+      arg
+    end
+    |> IO.inspect()
   end
 
   defp validate_args(_, :any, _), do: []
