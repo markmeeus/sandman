@@ -223,16 +223,21 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
         socket = socket
         |> assign(:focused_block, block_id)
         |> assign(:selected_block, block_id)
+        |> push_event("scroll-to-selected", %{block_id: block_id})
         {:noreply, socket}
       else
         # For non-markdown blocks, clear focused_block and set selected_block
         socket = socket
         |> assign(:focused_block, nil)
         |> assign(:selected_block, block_id)
+        |> push_event("scroll-to-selected", %{block_id: block_id})
         {:noreply, socket}
       end
     else
-      {:noreply, assign(socket, :focused_block, block_id)}
+      socket = socket
+      |> assign(:focused_block, block_id)
+      |> push_event("scroll-to-selected", %{block_id: block_id})
+      {:noreply, socket}
     end
   end
 
@@ -318,6 +323,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     socket = socket
     |> assign(:selected_block, block_id)
     |> assign(:focused_block, current_focused)
+    |> push_event("scroll-to-selected", %{block_id: block_id})
 
     {:noreply, socket}
   end
@@ -328,7 +334,9 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     case find_previous_block(blocks, selected_block) do
       nil -> {:noreply, socket}  # Already at first block or no blocks
       previous_block_id ->
-        socket = assign(socket, :selected_block, previous_block_id)
+        socket = socket
+        |> assign(:selected_block, previous_block_id)
+        |> push_event("scroll-to-selected", %{block_id: previous_block_id})
         {:noreply, socket}
     end
   end
@@ -339,7 +347,9 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     case find_next_block(blocks, selected_block) do
       nil -> {:noreply, socket}  # Already at last block or no blocks
       next_block_id ->
-        socket = assign(socket, :selected_block, next_block_id)
+        socket = socket
+        |> assign(:selected_block, next_block_id)
+        |> push_event("scroll-to-selected", %{block_id: next_block_id})
         {:noreply, socket}
     end
   end

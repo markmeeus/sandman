@@ -7,10 +7,8 @@ defmodule Sandman.Encoders.Json do
     json
       |> Jason.decode
       |> case do
-        {:ok, data} ->
-          mapped = LuaMapper.reverse_map(data)
-           {encoded, luerl_state} = :luerl.encode(mapped, luerl_state)
-          {[encoded], luerl_state}
+        {:ok, decoded} ->
+          {[decoded], luerl_state}
         {:error, err} ->
           message = Jason.DecodeError.message(err)
           {:error, message, luerl_state}

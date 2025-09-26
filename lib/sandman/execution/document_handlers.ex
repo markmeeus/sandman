@@ -4,8 +4,9 @@ defmodule Sandman.DocumentHandlers do
   alias Sandman.LuaApiDefinitions
   alias Sandman.Encoders.Base64
   alias Sandman.Encoders.Json
-  alias Sandman.Encoders.Jwt
   alias Sandman.Encoders.Uri
+  alias Sandman.LuaSupport.Jwt
+
   alias Sandman.LuaMapper
 
   def build_handlers(self_pid, doc_id) do
@@ -21,6 +22,7 @@ defmodule Sandman.DocumentHandlers do
         {item_enc, luerl_state} = :luerl.encode(item, luerl_state)
         {encoded_results ++ [item_enc], luerl_state}
       end)
+      {encoded_results, luerl_state}
     end
 
     add_route_handler = fn [method | args], luerl_state ->
@@ -88,15 +90,22 @@ defmodule Sandman.DocumentHandlers do
   end
 
   defp wrap_handlers(handlers) do
-    handlers |>
-    Enum.map(
-      fn
-        {path, handler} ->
-          {:ok, api_def} = LuaApiDefinitions.get_api_definition(path)
-          IO.inspect({"api definition", api_def})
-          wrapped_handler = wrap_handler(path, handler, api_def)
-          {path, wrapped_handler}
-      end)
+    handlers
+    |> Enum.flat_map(fn {path, handler} ->
+      {:ok, api_def} = LuaApiDefinitions.get_api_definition(path)
+      wrapped_handler = wrap_handler(path, handler, api_def, false)
+
+      base_handlers = [{path, wrapped_handler}]
+
+      # If the function has has_try: true, also create a try_ version
+      if Map.get(api_def, :has_try, false) do
+        try_path = create_try_path(path)
+        safe_wrapped_handler = wrap_handler(path, handler, api_def, true)
+        base_handlers ++ [{try_path, safe_wrapped_handler}]
+      else
+        base_handlers
+      end
+    end)
   end
 
   @default_schema %{
@@ -104,42 +113,95 @@ defmodule Sandman.DocumentHandlers do
     ret_vals: :any
   }
 
-  defp wrap_handler(path, handler, api_def = %{type: :function}) do
+  defp create_try_path(path) do
+    # Replace the last element with try_ prefixed version
+    last_element = List.last(path)
+    List.replace_at(path, -1, "try_#{last_element}")
+  end
+
+  defp wrap_handler(path, handler, api_def = %{type: :function}, safe_call \\ false) do
     full_function_name = Enum.join(path, ".")
 
     schema = api_def[:schema] || @default_schema
     params = schema.params
 
-    wrapped_handler = fn args, luerl_state ->
+    fn args, luerl_state ->
       # test number of args
       if(params == :any || length(params) == length(args)) do
         case preprocess_args(args, params, full_function_name, luerl_state) do
-          {:error, errors} -> :luerl_lib.lua_error(errors, luerl_state)
+          {:error, errors} ->
+            if safe_call do
+              {nil_val, luerl_state} = :luerl.encode(nil, luerl_state)
+              {error_val, luerl_state} = :luerl.encode(errors, luerl_state)
+              {[nil_val, error_val], luerl_state}
+            else
+              :luerl_lib.lua_error(errors, luerl_state)
+            end
           args ->
             res = try do
-              handler.(args, luerl_state)
-            rescue
-              error ->
-                :luerl_lib.lua_error("Invalid arguments for #{full_function_name}, #{inspect(error)}", luerl_state)
-            end
-            case res do
-              {:error, message, luerl_state} ->
-                :luerl_lib.lua_error(message, luerl_state)
-              other ->
-                other
-            end
+                handler.(args, luerl_state)
+              rescue
+                error ->
+                  if safe_call do
+                    {nil_val, luerl_state} = :luerl.encode(nil, luerl_state)
+                    {error_val, luerl_state} = :luerl.encode("Invalid arguments for #{full_function_name}, #{inspect(error)}", luerl_state)
+                    {[nil_val, error_val], luerl_state}
+                  else
+                    # this should actually not happen.
+                    # the handlers should not throw, but return {:error, message, luerl_state}
+                    :luerl_lib.lua_error("Invalid arguments for #{full_function_name}, #{inspect(error)}", luerl_state)
+                  end
+              end
+              |> case do
+                {:error, message, luerl_state} ->
+                  if safe_call do
+                    {nil_val, luerl_state} = :luerl.encode(nil, luerl_state)
+                    {error_val, luerl_state} = :luerl.encode(message, luerl_state)
+                    {[nil_val, error_val], luerl_state}
+                  else
+                    :luerl_lib.lua_error(message, luerl_state)
+                  end
+                {returns, luerl_state} ->
+                  if(api_def[:schema][:ret_vals]) do
+                    map_returns(returns, api_def[:schema][:ret_vals], luerl_state)
+                  else
+                    {returns, luerl_state}
+                  end
+              end
 
         end
       else
-        :luerl_lib.lua_error("Invalid of arguments (#{format_args(args)}) for '#{full_function_name}' expected (#{format_params(params)})", luerl_state)
+        if safe_call do
+          {nil_val, luerl_state} = :luerl.encode(nil, luerl_state)
+          {error_val, luerl_state} = :luerl.encode("Invalid number of arguments (#{format_args(args)}) for '#{full_function_name}' expected (#{format_params(params)})", luerl_state)
+          {[nil_val, error_val], luerl_state}
+        else
+          :luerl_lib.lua_error("Invalid number of arguments (#{format_args(args)}) for '#{full_function_name}' expected (#{format_params(params)})", luerl_state)
+        end
       end
     end
   end
 
-  defp format_params(params) do
-    params
-    |> Enum.map(fn %{type: type} -> type end)
-    |> Enum.join(", ")
+  defp map_returns(returns, ret_vals, luerl_state) do
+    Enum.zip(returns, ret_vals)
+    |> Enum.reduce({[], luerl_state}, fn {return, ret_val}, {encoded_returns, luerl_state} ->
+      {encoded_return, luerl_state} = map_return(return, ret_val, luerl_state)
+      {encoded_returns ++ [encoded_return], luerl_state}
+    end)
+  end
+
+  defp map_return(return, ret_val, luerl_state) do
+    {encoded, luerl_state} = if ret_val[:encode] do
+      :luerl.encode(return, luerl_state)
+    else
+      {return, luerl_state}
+    end
+    mapped =if ret_val[:map] do
+      LuaMapper.reverse_map(encoded)
+    else
+      encoded
+    end
+    {mapped, luerl_state}
   end
 
   defp preprocess_args(args, params, full_function_name, luerl_state) do
@@ -151,22 +213,16 @@ defmodule Sandman.DocumentHandlers do
     end
   end
 
-
   defp map_args(args, :any, _luerl_state), do: args
   defp map_args(args, params, luerl_state) do
-    IO.inspect("decopding and mapping")
     Enum.zip(args, params)
-    |> IO.inspect()
     |> Enum.map(fn {arg, param} ->
       decode_arg(arg, param, luerl_state)
-      |> IO.inspect()
       |> map_arg(param)
-      |> IO.inspect()
     end)
   end
 
   defp decode_arg(arg, param, luerl_state) do
-    IO.inspect({"decoding arg", arg, param})
     if param[:decode] do
       :luerl.decode(arg, luerl_state)
     else
@@ -175,7 +231,6 @@ defmodule Sandman.DocumentHandlers do
   end
 
   defp map_arg(arg, param) do
-    IO.inspect({"mapping arg", arg, param})
     if param[:map] do
       {mapped, _warnings} =LuaMapper.map(arg, param[:schema] || :any)
       # todo, handle warnings here
@@ -183,7 +238,6 @@ defmodule Sandman.DocumentHandlers do
     else
       arg
     end
-    |> IO.inspect()
   end
 
   defp validate_args(_, :any, _), do: []
@@ -192,7 +246,6 @@ defmodule Sandman.DocumentHandlers do
     |> Enum.zip(params)
     |> Enum.with_index
     |> Enum.reduce([], fn {{arg, param}, index}, acc ->
-      IO.inspect({"validate_args", {param, arg}, index})
       if param.type == :any || arg_type(arg) == param.type do
         acc
       else
@@ -221,7 +274,6 @@ defmodule Sandman.DocumentHandlers do
   defp arg_type({:erl_func, _}), do: :function
   defp arg_type({:funref, _, _}), do: :function
   defp arg_type(arg) do
-    IO.inspect({"unhandled arg type", arg})
     :unknown
   end
 

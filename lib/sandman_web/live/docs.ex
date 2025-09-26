@@ -64,11 +64,20 @@ defmodule SandmanWeb.LiveView.Docs do
                                   <code class="text-blue-400 font-mono text-sm"><%= List.last(func.path) %></code>
                                 <% end %>
                                 <span class="text-xs text-neutral-500 bg-neutral-700 px-2 py-0.5 rounded">function</span>
+                                <%= if func.has_try do %>
+                                  <span class="text-xs text-amber-200 bg-amber-800 px-2 py-0.5 rounded ml-1" title="This function can throw errors">throws</span>
+                                <% end %>
                               </div>
                               <p class="text-sm text-neutral-300 mb-2"><%= func.description %></p>
 
                               <%= if has_details and is_function_expanded do %>
                                 <div class="mt-3 space-y-3 pl-4 border-l-2 border-neutral-600">
+                                  <%= if func.has_try do %>
+                                    <div class="mb-3 p-2 bg-amber-900/20 border border-amber-600/30 rounded text-xs">
+                                      <strong class="text-amber-200">⚠️ Note:</strong> <span class="text-amber-200">This function can throw errors. A</span> <code class="text-amber-300 bg-amber-900/30 px-1 rounded">try_<%= List.last(func.path) %></code> <span class="text-amber-200">alternative is available that returns</span> <code class="text-amber-300 bg-amber-900/30 px-1 rounded">nil, reason</code> <span class="text-amber-200">instead of throwing.</span>
+                                    </div>
+                                  <% end %>
+
                                   <%= if length(func.params) > 0 do %>
                                     <div>
                                       <span class="text-xs text-neutral-400 uppercase tracking-wide">Parameters:</span>
@@ -94,6 +103,10 @@ defmodule SandmanWeb.LiveView.Docs do
                                       <span class="text-xs text-neutral-400 uppercase tracking-wide">Example:</span>
                                       <div class="text-sm text-neutral-300 font-mono mt-1 bg-neutral-900 rounded p-2 border border-neutral-700">
                                         <%= generate_example(func) %>
+                                        <%= if func.has_try do %>
+                                          <br /><span class="text-neutral-500">-- Safe alternative:</span><br />
+                                          <%= generate_try_example(func) %>
+                                        <% end %>
                                       </div>
                                     </div>
                                   <% end %>
@@ -143,7 +156,8 @@ defmodule SandmanWeb.LiveView.Docs do
       type: "function",
       params: extract_params(func_def),
       return_values: extract_return_values(func_def),
-      description: Map.get(func_def, :description, "Lua API function")
+      description: Map.get(func_def, :description, "Lua API function"),
+      has_try: Map.get(func_def, :has_try, false)
     }
   end
 
@@ -165,7 +179,7 @@ defmodule SandmanWeb.LiveView.Docs do
     |> Enum.with_index()
     |> Enum.map(fn {ret_val, idx} ->
       %{
-        name: "return#{idx + 1}",
+        name: Map.get(ret_val, :name) || "return#{idx + 1}",
         type: Map.get(ret_val, :type, "any")
       }
     end)
@@ -190,10 +204,18 @@ defmodule SandmanWeb.LiveView.Docs do
     function_name = func.name
     param_examples = generate_param_examples(func.params)
 
-    if length(param_examples) > 0 do
+    function_call = if length(param_examples) > 0 do
       "#{function_name}(#{Enum.join(param_examples, ", ")})"
     else
       "#{function_name}()"
+    end
+
+    # Add assignment if there are return values
+    if length(func.return_values) > 0 do
+      return_vars = generate_return_variables(func.return_values)
+      "#{return_vars} = #{function_call}"
+    else
+      function_call
     end
   end
 
@@ -218,5 +240,53 @@ defmodule SandmanWeb.LiveView.Docs do
         example_value
       end
     end)
+  end
+
+  defp generate_try_example(func) do
+    function_name = func.name
+    param_examples = generate_param_examples(func.params)
+
+    # Replace the last part of the function name with try_ prefix
+    path_parts = func.path
+    last_part = List.last(path_parts)
+    try_path = List.replace_at(path_parts, -1, "try_#{last_part}")
+    try_function_name = Enum.join(try_path, ".")
+
+    function_call = if length(param_examples) > 0 do
+      "#{try_function_name}(#{Enum.join(param_examples, ", ")})"
+    else
+      "#{try_function_name}()"
+    end
+
+    # Generate return variables with _or_nil and _or_error suffixes
+    return_vars = generate_try_return_variables(func.return_values)
+    "#{return_vars} = #{function_call}"
+  end
+
+  defp generate_return_variables(return_values) do
+    return_values
+    |> Enum.map(fn ret_val ->
+      ret_val.name || "result"
+    end)
+    |> Enum.join(", ")
+  end
+
+  defp generate_try_return_variables(return_values) do
+    case return_values do
+      [] ->
+        "result_or_nil, error_or_reason"
+      [first_ret | rest] ->
+        first_var = "#{first_ret.name || "result"}_or_nil"
+        second_var = "#{first_ret.name || "result"}_or_error"
+
+        # If there are more return values, include them
+        additional_vars = rest
+        |> Enum.map(fn ret_val ->
+          "#{ret_val.name || "result"}_or_nil"
+        end)
+
+        ([first_var, second_var] ++ additional_vars)
+        |> Enum.join(", ")
+    end
   end
 end

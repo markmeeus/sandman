@@ -96,15 +96,19 @@ defmodule Sandman.LuaApiDefinitions do
           type: :table,
           decode: %{
             type: :function,
-            description: "Decodes a JSON string into a Lua table",
-            schema: %{params: [%{type: :string}], ret_vals: [%{type: :table}]}
+            description: "Decodes a JSON string into a Lua variable",
+            schema: %{
+              params: [%{name: "value", type: :string}],
+              ret_vals: [%{name: "json_string", type: :any, encode: true, map: true}]
+            },
+            has_try: true
           },
           encode: %{
             type: :function,
-            description: "Encodes a variable into a JSON string",
+            description: "Encodes a Lua variable into a JSON string",
             schema: %{
-              params: [%{type: :any, decode: true, map: true}],
-              ret_vals: [%{type: :string}]
+              params: [%{name: "json_string",type: :any, decode: true, map: true}],
+              ret_vals: [%{name: "decoded_value", type: :string}]
             }
           }
         },
@@ -113,22 +117,24 @@ defmodule Sandman.LuaApiDefinitions do
           decode: %{
             type: :function,
             description: "Decodes a base64 string",
-            schema: %{params: [%{type: :string}], ret_vals: [%{type: :string}]}
+            schema: %{params: [%{name: "data",type: :string}], ret_vals: [%{name: "b64_string", type: :string}]},
+            has_try: true
           },
           encode: %{
             type: :function,
             description: "Encodes a string to base64",
-            schema: %{params: [%{type: :string}], ret_vals: [%{type: :string}]}
+            schema: %{params: [%{name: "b64_string", type: :string}], ret_vals: [%{name: "data", type: :string}]}
           },
           decode_url: %{
             type: :function,
             description: "Decodes a URL-safe base64 string",
-            schema: %{params: [%{type: :string}], ret_vals: [%{type: :string}]}
+            schema: %{params: [%{name: "data", type: :string}], ret_vals: [%{name: "b64_string", type: :string}]},
+            has_try: true
           },
           encode_url: %{
             type: :function,
             description: "Encodes a string to URL-safe base64",
-            schema: %{params: [%{type: :string}], ret_vals: [%{type: :string}]}
+            schema: %{params: [%{name: "b64_string", type: :string}], ret_vals: [%{name: "data", type: :string}]}
           }
         },
         jwt: %{
@@ -139,7 +145,8 @@ defmodule Sandman.LuaApiDefinitions do
           },
           verify: %{
             type: :function,
-            description: "Verifies a JWT token"
+            description: "Verifies a JWT token",
+            has_try: true
           }
         },
         uri: %{

@@ -71,7 +71,7 @@ defmodule Sandman.LuaSupport.Jwt do
   end
 
   def verify(doc_id, [nil, _, _], luerl_state) do
-    {[false], luerl_state}
+    {[nil], luerl_state}
   end
 
   def verify(doc_id, [token, secret, options], luerl_state)
@@ -164,14 +164,14 @@ defmodule Sandman.LuaSupport.Jwt do
 
       {false, _, error} ->
         error_msg = format_error(error)
-        {[false, error_msg], luerl_state}
+        {[nil, error_msg], luerl_state}
     end
   end
 
   def verify(doc_id, _, luerl_state) do
     error = "Unexpected arguments in jwt.verify"
     log(doc_id, error)
-    {[false, error], luerl_state}
+    {[nil, error], luerl_state}
   end
 
   # Create an unsigned JWT token manually since Joken doesn't support "none" algorithm by default
