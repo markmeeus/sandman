@@ -25,7 +25,7 @@ defmodule SandmanWeb.LiveView.RequestResponse do
           <% req_res -> %>
             <div class="flex flex-col h-full">
               <!-- Request Header Section -->
-              <div class="bg-neutral-700 border-b border-neutral-600 p-3 shadow-sm">
+              <div class="bg-neutral-700 border-b border-neutral-600 p-3 shadow-sm flex-shrink-0">
                 <div class="flex items-start justify-between">
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 mb-1">
@@ -42,7 +42,7 @@ defmodule SandmanWeb.LiveView.RequestResponse do
               </div>
 
               <!-- Tab Navigation -->
-              <div class="bg-neutral-700 border-b border-neutral-600">
+              <div class="bg-neutral-700 border-b border-neutral-600 flex-shrink-0">
                 <nav class="flex px-3" aria-label="Tabs">
                   <%= Enum.map(["Request", "Response"], fn item -> %>
                     <SandmanWeb.TabBar.item event="switch_tab" item={item} selected={item == @tab}/>
@@ -51,7 +51,7 @@ defmodule SandmanWeb.LiveView.RequestResponse do
               </div>
 
               <!-- Content Area -->
-              <div class="flex-1 overflow-hidden">
+              <div class="flex-1 overflow-auto">
                 <%= case @tab do %>
                   <% "Request" -> %>
                     <.request doc_pid={@doc_pid} show_raw_body={@show_raw_req_body} request_id={@request_id} is_json={req_res.req_content_info.is_json} req={req_res.req} sub_tab={@sub_tab}/>
@@ -72,7 +72,7 @@ defmodule SandmanWeb.LiveView.RequestResponse do
     |> assign(:request_idx, request_idx)
 
     ~H"""
-    <div class="flex flex-col h-full bg-neutral-800">
+    <div class="bg-neutral-800">
       <div class="p-3 space-y-3">
         <.toggle_block name="request-headers" title="Headers"
           default_open={false} extra_toggle={nil} />
@@ -87,8 +87,8 @@ defmodule SandmanWeb.LiveView.RequestResponse do
           extra_toggle_event="switch_req_body_format" />
       </div>
 
-      <div id="request-body" class="flex-1 px-3 pb-3">
-        <div class="h-full border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden">
+      <div id="request-body" class="px-3 pb-3">
+        <div class="h-96 border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden">
           <%= if @show_raw_body do %>
             <iframe id="raw" class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{@block_id}/request/#{@request_idx}?raw=true"}>
               </iframe>
@@ -112,7 +112,7 @@ defmodule SandmanWeb.LiveView.RequestResponse do
     |> assign(:block_id, block_id)
     |> assign(:request_idx, request_idx)
     ~H"""
-    <div class="flex flex-col h-full bg-neutral-800">
+    <div class="bg-neutral-800">
       <div class="p-3 space-y-3">
         <.toggle_block name="response-headers" title="Headers" default_open={false} extra_toggle={nil} />
         <div id="response-headers" class="hidden">
@@ -125,8 +125,8 @@ defmodule SandmanWeb.LiveView.RequestResponse do
           extra_toggle_event="switch_res_body_format" />
       </div>
 
-      <div id="response-body" class="flex-1 px-3 pb-3">
-        <div class="h-full border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden">
+      <div id="response-body" class="px-3 pb-3">
+        <div class="h-96 border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden">
           <%= if @show_raw_body do %>
             <iframe id="raw" class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{@block_id}/response/#{@request_idx}?raw=true"}>
               </iframe>

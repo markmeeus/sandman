@@ -52,8 +52,8 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
 
         <div class="gutter gutter-horizontal" id="doc-req-gutter" phx-update="ignore"></div>
 
-        <div id="req-res-container" class="h-screen flex-grow bg-neutral-800" style="overflow:scroll;" phx-hook="MaintainSplitDimensions">
-          <div class="bg-neutral-700 border-b border-neutral-600">
+        <div id="req-res-container" class="h-screen flex-grow bg-neutral-800 flex flex-col" phx-hook="MaintainSplitDimensions">
+          <div class="bg-neutral-700 border-b border-neutral-600 flex-shrink-0">
             <div class="px-3">
               <nav class="flex space-x-4" aria-label="Tabs">
                 <a href="#" class={"#{tab_colors(@main_left_tab, :req_res)} px-3 py-2 text-xs font-medium"} phx-click="change-main-left-tab" phx-value-tab-id="req_res">Inspector</a>
@@ -62,7 +62,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
               </nav>
             </div>
           </div>
-            <div class={"pt-2 h-full #{tab_visibility(@main_left_tab, :req_res)}"}>
+            <div class={"pt-2 flex-1 overflow-auto min-h-0 #{tab_visibility(@main_left_tab, :req_res)}"}>
               <SandmanWeb.LiveView.RequestResponse.render
                 doc_pid={@doc_pid}
                 tab={@tab}
@@ -73,10 +73,10 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
                 show_raw_res_body={@show_raw_res_body}
                 />
             </div>
-            <div class={"pt-1 px-1 h-full #{tab_visibility(@main_left_tab, :logs)}"} >
+            <div class={"pt-1 px-1 flex-1 flex flex-col min-h-0 #{tab_visibility(@main_left_tab, :logs)}"} >
               <SandmanWeb.LiveView.Log.render logs={@streams.logs} />
             </div>
-            <div class={"h-full #{tab_visibility(@main_left_tab, :docs)}"} >
+            <div class={"flex-1 overflow-auto min-h-0 #{tab_visibility(@main_left_tab, :docs)}"} >
               <SandmanWeb.LiveView.Docs.render docs_expanded_namespaces={@docs_expanded_namespaces} docs_expanded_functions={@docs_expanded_functions} />
             </div>
         </div>
@@ -290,7 +290,17 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
   end
 
   def handle_event("change-main-left-tab", %{"tab-id" => tab_id}, socket) do
-    {:noreply, assign(socket, :main_left_tab, String.to_existing_atom(tab_id))}
+    tab_atom = String.to_existing_atom(tab_id)
+    socket = assign(socket, :main_left_tab, tab_atom)
+
+    # When switching to logs tab, scroll to bottom to show latest messages
+    socket = if tab_atom == :logs do
+      push_event(socket, "scroll-to-log", %{})
+    else
+      socket
+    end
+
+    {:noreply, socket}
   end
 
   def handle_event("toggle-docs-namespace", %{"namespace" => namespace}, socket) do
@@ -380,6 +390,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     socket = socket
     |> assign(:log_count, log_count + 1)
     |> stream_insert(:logs, Map.put(log, :id, log_count))
+    |> push_event("scroll-to-log", %{})
     {:noreply, socket}
   end
 

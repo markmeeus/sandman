@@ -144,6 +144,16 @@ const DocumentHook = {
       this.focusBlock(payload["block-id"]);
     });
 
+    // Register handler for scroll events from LiveView
+    this.handleEvent("scroll-to-selected", (payload) => {
+      this.scrollToBlock(payload["block_id"]);
+    });
+
+    // Register handler for log scroll events from LiveView
+    this.handleEvent("scroll-to-log", () => {
+      this.scrollToLastLogMessage();
+    });
+
     // Store reference to this hook instance for focus commands
     window.documentHook = this;
   },
@@ -181,6 +191,38 @@ const DocumentHook = {
       if (monacoEditor) {
         monacoEditor.focus();
       }
+    }
+  },
+
+  // Scroll a specific block into view
+  scrollToBlock(blockId) {
+    // Find the block element by its ID
+    const blockElement = document.querySelector(`#monaco-wrapper-${blockId}`);
+
+    if (blockElement) {
+      // Scroll the element into view with smooth behavior
+      blockElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',    // Center the element vertically
+        inline: 'nearest'   // Keep horizontal position
+      });
+    }
+  },
+
+  // Scroll the log container to show the last message
+  scrollToLastLogMessage() {
+    // Find the actual scrollable log wrapper
+    const logWrapper = document.querySelector('#log-wrapper');
+
+    if (logWrapper) {
+      // Add a small delay to ensure the DOM has been updated with the new log message
+      setTimeout(() => {
+        // Scroll the log wrapper to the bottom
+        logWrapper.scrollTo({
+          top: logWrapper.scrollHeight,
+          behavior: 'smooth'
+        });
+      }, 10); // Small delay to ensure DOM update
     }
   }
 }

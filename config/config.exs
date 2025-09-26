@@ -17,7 +17,10 @@ config :sandman, SandmanWeb.Endpoint,
     layout: false
   ],
   pubsub_server: Sandman.PubSub,
-  live_view: [signing_salt: "Shc4SoZI"]
+  live_view: [
+    signing_salt: "Shc4SoZI",
+    timeout: :infinity
+  ]
 
 # Configures the mailer
 #
