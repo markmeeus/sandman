@@ -119,13 +119,15 @@ defmodule Sandman.DocumentHandlers do
     List.replace_at(path, -1, "try_#{last_element}")
   end
 
-  defp wrap_handler(path, handler, api_def = %{type: :function}, safe_call \\ false) do
+  defp wrap_handler(path, handler, api_def, safe_call \\ false)
+  defp wrap_handler(path, handler, api_def = %{type: "function"}, safe_call) do
     full_function_name = Enum.join(path, ".")
 
     schema = api_def[:schema] || @default_schema
     params = schema.params
 
     fn args, luerl_state ->
+      IO.inspect({"wrap_handler", path, api_def, safe_call})
       # test number of args
       if(params == :any || length(params) == length(args)) do
         case preprocess_args(args, params, full_function_name, luerl_state) do
@@ -180,6 +182,11 @@ defmodule Sandman.DocumentHandlers do
         end
       end
     end
+  end
+
+  defp wrap_handler(path, handler, api_def , safe_call) do
+      IO.inspect({"unexpecte handler", path, api_def, safe_call})
+      nil
   end
 
   defp map_returns(returns, ret_vals, luerl_state) do

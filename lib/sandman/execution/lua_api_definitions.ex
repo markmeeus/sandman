@@ -1,183 +1,115 @@
 defmodule Sandman.LuaApiDefinitions do
+  @definitions_file Path.join(:code.priv_dir(:sandman), "api_definitions.json")
+
+  # Load and cache the API definitions from JSON at compile time
+  @external_resource @definitions_file
+  @definitions (case File.read(@definitions_file) do
+    {:ok, content} ->
+      json = Jason.decode!(content, keys: :atoms)
+
+      # Convert types to atoms inline - completely inline approach
+      json
+      |> Enum.map(fn {key, value} ->
+        # Process each API definition
+        converted_value =
+          value
+          # Handle schema params conversion
+          |> (fn api_def ->
+            case api_def do
+              %{schema: %{params: "any"}} = def ->
+                put_in(def[:schema][:params], :any)
+
+              %{schema: %{params: params}} = def when is_list(params) ->
+                atom_params = Enum.map(params, fn param ->
+                  Map.update!(param, :type, &String.to_atom/1)
+                end)
+                put_in(def[:schema][:params], atom_params)
+
+              def ->
+                def
+            end
+          end).()
+          # Handle schema ret_vals conversion
+          |> (fn api_def ->
+            case api_def do
+              %{schema: %{ret_vals: "any"}} = def ->
+                put_in(def[:schema][:ret_vals], :any)
+
+              %{schema: %{ret_vals: ret_vals}} = def when is_list(ret_vals) ->
+                atom_ret_vals = Enum.map(ret_vals, fn ret_val ->
+                  Map.update!(ret_val, :type, &String.to_atom/1)
+                end)
+                put_in(def[:schema][:ret_vals], atom_ret_vals)
+
+              def ->
+                def
+            end
+          end).()
+          # Handle nested tables (recursive processing)
+          |> (fn api_def ->
+            Enum.reduce(api_def, %{}, fn {k, v}, acc ->
+              case v do
+                %{type: "table"} = table_def ->
+                  # For nested tables, recursively process their children
+                  nested_map = Map.drop(table_def, [:type, :description])
+                  processed_nested = Enum.map(nested_map, fn {nested_key, nested_value} ->
+                    # Process nested API definitions
+                    processed_nested_value =
+                      nested_value
+                      # Handle nested schema params
+                      |> (fn nested_def ->
+                        case nested_def do
+                          %{schema: %{params: "any"}} = def ->
+                            put_in(def[:schema][:params], :any)
+
+                          %{schema: %{params: params}} = def when is_list(params) ->
+                            atom_params = Enum.map(params, fn param ->
+                              Map.update!(param, :type, &String.to_atom/1)
+                            end)
+                            put_in(def[:schema][:params], atom_params)
+
+                          def ->
+                            def
+                        end
+                      end).()
+                      # Handle nested ret_vals
+                      |> (fn nested_def ->
+                        case nested_def do
+                          %{schema: %{ret_vals: "any"}} = def ->
+                            put_in(def[:schema][:ret_vals], :any)
+
+                          %{schema: %{ret_vals: ret_vals}} = def when is_list(ret_vals) ->
+                            atom_ret_vals = Enum.map(ret_vals, fn ret_val ->
+                              Map.update!(ret_val, :type, &String.to_atom/1)
+                            end)
+                            put_in(def[:schema][:ret_vals], atom_ret_vals)
+
+                          def ->
+                            def
+                        end
+                      end).()
+
+                    {nested_key, processed_nested_value}
+                  end) |> Map.new()
+
+                  Map.put(acc, k, Map.merge(table_def, processed_nested))
+
+                other ->
+                  Map.put(acc, k, other)
+              end
+            end)
+          end).()
+
+        {key, converted_value}
+      end)
+      |> Map.new()
+
+    {:error, _} ->
+      raise "Could not load API definitions from #{@definitions_file}"
+  end)
+
   def get_api_definitions() do
-    %{
-      print: %{
-        type: :function,
-        description: "Prints values to the console/logs",
-        schema: %{
-          params: :any
-        }
-      },
-      sandman: %{
-        type: :table,
-        http: %{
-          type: :table,
-          get: %{
-            type: :function,
-            description: "Makes an HTTP GET request"
-          },
-          post: %{
-            type: :function,
-            description: "Makes an HTTP POST request"
-          },
-          put: %{
-            type: :function,
-            description: "Makes an HTTP PUT request"
-          },
-          delete: %{
-            type: :function,
-            description: "Makes an HTTP DELETE request"
-          },
-          patch: %{
-            type: :function,
-            description: "Makes an HTTP PATCH request"
-          },
-          head: %{
-            type: :function,
-            description: "Makes an HTTP HEAD request"
-          },
-          send: %{
-            type: :function,
-            description: "Sends an HTTP request with custom configuration"
-          }
-        },
-        server: %{
-          type: :table,
-          start: %{
-            type: :function,
-            description: "Starts the HTTP server"
-          },
-          get: %{
-            type: :function,
-            description: "Handles HTTP GET requests on the server"
-          },
-          post: %{
-            type: :function,
-            description: "Handles HTTP POST requests on the server"
-          },
-          put: %{
-            type: :function,
-            description: "Handles HTTP PUT requests on the server"
-          },
-          delete: %{
-            type: :function,
-            description: "Handles HTTP DELETE requests on the server"
-          },
-          patch: %{
-            type: :function,
-            description: "Handles HTTP PATCH requests on the server"
-          },
-          head: %{
-            type: :function,
-            description: "Handles HTTP HEAD requests on the server"
-          },
-          add_route: %{
-            type: :function,
-            description: "Adds a route to the HTTP server"
-          }
-        },
-        document: %{
-          type: :table,
-          set: %{
-            type: :function,
-            description: "Sets a value in the document context",
-            schema: %{
-              params: [%{type: :string, name: "key"}, %{type: :any, name: "value"}],
-              ret_vals: []
-            }
-          },
-          get: %{
-            type: :function,
-            description: "Gets a value from the document context",
-            schema: %{params: [%{type: :string, name: "key"}], ret_vals: [%{type: :any}]}
-          }
-        },
-        json: %{
-          type: :table,
-          decode: %{
-            type: :function,
-            description: "Decodes a JSON string into a Lua variable",
-            schema: %{
-              params: [%{name: "value", type: :string}],
-              ret_vals: [%{name: "json_string", type: :any, encode: true, map: true}]
-            },
-            has_try: true
-          },
-          encode: %{
-            type: :function,
-            description: "Encodes a Lua variable into a JSON string",
-            schema: %{
-              params: [%{name: "json_string",type: :any, decode: true, map: true}],
-              ret_vals: [%{name: "decoded_value", type: :string}]
-            }
-          }
-        },
-        base64: %{
-          type: :table,
-          decode: %{
-            type: :function,
-            description: "Decodes a base64 string",
-            schema: %{params: [%{name: "data",type: :string}], ret_vals: [%{name: "b64_string", type: :string}]},
-            has_try: true
-          },
-          encode: %{
-            type: :function,
-            description: "Encodes a string to base64",
-            schema: %{params: [%{name: "b64_string", type: :string}], ret_vals: [%{name: "data", type: :string}]}
-          },
-          decode_url: %{
-            type: :function,
-            description: "Decodes a URL-safe base64 string",
-            schema: %{params: [%{name: "data", type: :string}], ret_vals: [%{name: "b64_string", type: :string}]},
-            has_try: true
-          },
-          encode_url: %{
-            type: :function,
-            description: "Encodes a string to URL-safe base64",
-            schema: %{params: [%{name: "b64_string", type: :string}], ret_vals: [%{name: "data", type: :string}]}
-          }
-        },
-        jwt: %{
-          type: :table,
-          sign: %{
-            type: :function,
-            description: "Signs a JWT token"
-          },
-          verify: %{
-            type: :function,
-            description: "Verifies a JWT token",
-            has_try: true
-          }
-        },
-        uri: %{
-          type: :table,
-          parse: %{
-            type: :function,
-            description: "Parses a URI string into components"
-          },
-          tostring: %{
-            type: :function,
-            description: "Converts URI components to a string"
-          },
-          encode: %{
-            type: :function,
-            description: "URL-encodes a string"
-          },
-          decode: %{
-            type: :function,
-            description: "URL-decodes a string"
-          },
-          encodeComponent: %{
-            type: :function,
-            description: "URL-encodes a string component"
-          },
-          decodeComponent: %{
-            type: :function,
-            description: "URL-decodes a string component"
-          }
-        }
-      }
-    }
+    @definitions
   end
 
   def get_api_definition(path) do
@@ -192,5 +124,69 @@ defmodule Sandman.LuaApiDefinitions do
       definition ->
         {:ok, definition}
     end
+  end
+
+  # Public function for external use (uses runtime conversion)
+  def convert_types_to_atoms(json) when is_map(json) do
+    json
+    |> Enum.map(fn {key, value} ->
+      {key, convert_api_def_types(value)}
+    end)
+    |> Map.new()
+  end
+
+  defp convert_api_def_types(api_def) when is_map(api_def) do
+    api_def
+    |> convert_schema_types()
+    |> convert_ret_vals_types()
+    |> convert_nested_tables()
+  end
+
+  defp convert_schema_types(api_def) do
+    case api_def do
+      %{schema: %{params: "any"}} = def ->
+        put_in(def[:schema][:params], :any)
+
+      %{schema: %{params: params}} = def when is_list(params) ->
+        atom_params = Enum.map(params, fn param ->
+          Map.update!(param, :type, &String.to_atom/1)
+        end)
+        put_in(def[:schema][:params], atom_params)
+
+      def ->
+        def
+    end
+  end
+
+  defp convert_ret_vals_types(api_def) do
+    case api_def do
+      %{schema: %{ret_vals: "any"}} = def ->
+        put_in(def[:schema][:ret_vals], :any)
+
+      %{schema: %{ret_vals: ret_vals}} = def when is_list(ret_vals) ->
+        atom_ret_vals = Enum.map(ret_vals, fn ret_val ->
+          Map.update!(ret_val, :type, &String.to_atom/1)
+        end)
+        put_in(def[:schema][:ret_vals], atom_ret_vals)
+
+      def ->
+        def
+    end
+  end
+
+  defp convert_nested_tables(api_def) do
+    Enum.reduce(api_def, %{}, fn {key, value}, acc ->
+      case value do
+        %{type: "table"} = table_def ->
+          # Recursively process nested table definitions
+          nested_converted = Map.drop(table_def, [:type, :description])
+                             |> Enum.map(fn {k, v} -> {k, convert_api_def_types(v)} end)
+                             |> Map.new()
+          Map.put(acc, key, Map.merge(table_def, nested_converted))
+
+        other ->
+          Map.put(acc, key, other)
+      end
+    end)
   end
 end

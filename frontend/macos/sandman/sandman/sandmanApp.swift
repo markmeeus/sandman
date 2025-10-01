@@ -10,6 +10,10 @@ import SwiftData
 
 @main
 struct SandmanApp: App {
+    var activity: NSObjectProtocol?
+    init() {
+        activity = ProcessInfo.processInfo.beginActivity(options: .userInitiated, reason: "View depends on websocket staying open")
+    }
     var body: some Scene {
         WindowGroup {
             ContentView()

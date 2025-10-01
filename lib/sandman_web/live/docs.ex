@@ -53,7 +53,7 @@ defmodule SandmanWeb.LiveView.Docs do
                                     phx-value-function={function_id}
                                     title="Toggle parameters and return values"
                                   >
-                                    <code class="text-blue-400 font-mono text-sm group-hover:text-blue-300"><%= List.last(func.path) %></code>
+                                    <code class="text-blue-400 font-mono text-sm group-hover:text-blue-300"><%= if func.has_try, do: "(try_)", else: "" %><%= List.last(func.path) %></code>
                                     <div class={"text-neutral-400 group-hover:text-neutral-200 transition-all duration-200 #{if is_function_expanded, do: "rotate-90", else: ""}"}>
                                       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -61,7 +61,7 @@ defmodule SandmanWeb.LiveView.Docs do
                                     </div>
                                   </button>
                                 <% else %>
-                                  <code class="text-blue-400 font-mono text-sm"><%= List.last(func.path) %></code>
+                                  <code class="text-blue-400 font-mono text-sm"><%= if func.has_try, do: "(try_)", else: "" %><%= List.last(func.path) %></code>
                                 <% end %>
                                 <span class="text-xs text-neutral-500 bg-neutral-700 px-2 py-0.5 rounded">function</span>
                                 <%= if func.has_try do %>
@@ -93,7 +93,7 @@ defmodule SandmanWeb.LiveView.Docs do
                                     <div>
                                       <span class="text-xs text-neutral-400 uppercase tracking-wide">Returns:</span>
                                       <div class="text-sm text-neutral-300 font-mono mt-1">
-                                        <%= Enum.map_join(func.return_values, ", ", fn r -> r.type end) %>
+                                        <%= Enum.map_join(func.return_values, ", ", fn r -> "#{r.name}: #{r.type}" end) %>
                                       </div>
                                     </div>
                                   <% end %>
@@ -133,9 +133,9 @@ defmodule SandmanWeb.LiveView.Docs do
     |> Enum.flat_map(fn {key, value} ->
       current_path = path_acc ++ [key]
       case value do
-        %{type: :function} = func_def ->
+        %{type: "function"} = func_def ->
           [format_function_doc(current_path, func_def)]
-        %{type: :table} = table_def ->
+        %{type: "table"} = table_def ->
           # Remove the :type key and recurse into the table
           table_contents = Map.delete(table_def, :type)
           flatten_api_definitions(table_contents, current_path)
@@ -274,12 +274,16 @@ defmodule SandmanWeb.LiveView.Docs do
   defp generate_try_return_variables(return_values) do
     case return_values do
       [] ->
-        "result_or_nil, error_or_reason"
-      [first_ret | rest] ->
+        "result_or_nil, error"
+      [first_ret] ->
+        # Single return value: first_or_nil, error
         first_var = "#{first_ret.name || "result"}_or_nil"
-        second_var = "#{first_ret.name || "result"}_or_error"
+        "#{first_var}, error"
+      [first_ret, second_ret | rest] ->
+        # Multiple return values: first_or_nil, second_or_error, rest_or_nil...
+        first_var = "#{first_ret.name || "result"}_or_nil"
+        second_var = "#{second_ret.name || "result"}_or_error"
 
-        # If there are more return values, include them
         additional_vars = rest
         |> Enum.map(fn ret_val ->
           "#{ret_val.name || "result"}_or_nil"

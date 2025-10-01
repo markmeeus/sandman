@@ -237,7 +237,10 @@ class WebViewContainer: ObservableObject {
     
     init(url: URL) {
         self.url = url
+        
         self.webView = WKWebView()
+        webView.isInspectable = true
+        
         self.navigationDelegate = NavigationDelegate()
         self.webView.navigationDelegate = self.navigationDelegate
         // Build the localhost URL with file parameter
