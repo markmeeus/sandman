@@ -2,177 +2,174 @@ defmodule Sandman.LuaSupport.Jwt do
   alias Sandman.LuaMapper
   import Sandman.Logger
 
-  def sign(doc_id, [data], luerl_state) do
-    sign(doc_id, [data, nil], luerl_state)
-  end
+  @doc """
+  Signs a JWT token with the given data, secret, and options.
 
-  def sign(doc_id, [data, secret], luerl_state) when is_bitstring(secret) or is_nil(secret) do
-    sign(doc_id, [data, secret, nil], luerl_state)
-  end
+  Returns either {[token], luerl_state} or {:error, message, luerl_state}
+  """
+  def sign(doc_id, [data, secret, options], luerl_state) do
+    try do
+      alg = Map.get(options, "alg", if(is_nil(secret), do: "none", else: "HS256"))
 
-  def sign(doc_id, [data, secret, options], luerl_state)
-      when is_bitstring(secret) or is_nil(secret) do
-    decoded_data = :luerl.decode(data, luerl_state)
-    decoded_options = :luerl.decode(options, luerl_state) || %{}
+      {token, error} =
+        cond do
+          # Handle unsigned tokens (alg: "none" or no secret)
+          is_nil(secret) or alg == "none" ->
+            {create_unsigned_token(data), nil}
 
-    {payload, _} =
-      decoded_data
-      |> LuaMapper.map(:any)
-
-    {opts, _} =
-      decoded_options
-      |> LuaMapper.map(:any)
-
-    alg = Map.get(opts, "alg", if(is_nil(secret), do: "none", else: "HS256"))
-
-    token =
-      cond do
-        # Handle unsigned tokens (alg: "none" or no secret)
-        is_nil(secret) or alg == "none" ->
-          create_unsigned_token(payload)
-
-        # Handle signed tokens
-        true ->
-          try do
-            case Joken.generate_and_sign(%{}, payload, Joken.Signer.create(alg, secret)) do
+          # Handle signed tokens
+          true ->
+            case Joken.generate_and_sign(%{}, data, Joken.Signer.create(alg, secret)) do
               {:ok, token, _claims} ->
-                token
+                {token, nil}
 
               {:error, reason} ->
-                log(doc_id, "JWT signing error: #{inspect(reason)}")
-                nil
+                {nil, inspect(reason)}
             end
-          rescue
-            error in Joken.Error ->
-              log(doc_id, "JWT signer error: #{alg}: #{error.reason}")
-              nil
-
-            error ->
-              log(doc_id, "JWT unexpected error: #{inspect(error)}")
-              nil
-          end
-      end
-
-    {[token], luerl_state}
-  end
-
-  def sign(doc_id, _, luerl_state) do
-    error = "Unexpected arguments in jwt.sign"
-    log(doc_id, error)
-    {[nil, error], luerl_state}
-  end
-
-  def verify(doc_id, [token], luerl_state) do
-    verify(doc_id, [token, nil], luerl_state)
-  end
-
-  def verify(doc_id, [token, secret], luerl_state) when is_bitstring(secret) or is_nil(secret) do
-    verify(doc_id, [token, secret, nil], luerl_state)
-  end
-
-  def verify(doc_id, [nil, _, _], luerl_state) do
-    {[nil], luerl_state}
-  end
-
-  def verify(doc_id, [token, secret, options], luerl_state)
-      when is_bitstring(secret) or is_nil(secret) do
-    decoded_token = :luerl.decode(token, luerl_state)
-
-    decoded_secret = if is_nil(secret), do: nil, else: :luerl.decode(secret, luerl_state)
-    decoded_options = :luerl.decode(options, luerl_state) || %{}
-
-    {options, _} = LuaMapper.map(decoded_options, :any)
-
-    result =
-      if is_nil(decoded_secret) do
-        # Verify unsigned token manually
-        case verify_unsigned_token(decoded_token) do
-          {:ok, claims} -> {true, claims, nil}
-          {:error, reason} -> {false, nil, reason}
         end
+
+      if token do
+        {[token], luerl_state}
       else
-        # For signed tokens, use specified algorithms or defaults
-        default_algorithms = ["HS256", "HS384", "HS512"]
-
-        {algorithms, fail_fast} =
-          case options do
-            %{"algs" => algs} when is_list(algs) -> {algs, true}
-            %{"algs" => alg} when is_binary(alg) -> {[alg], true}
-            _ -> {default_algorithms, false}
-          end
-
-        # Pre-create signers and fail fast if any algorithm is invalid
-        signers_result =
-          Enum.reduce_while(algorithms, [], fn alg, acc ->
-            try do
-              signer = Joken.Signer.create(alg, decoded_secret)
-              {:cont, [{alg, signer} | acc]}
-            rescue
-              error in Joken.Error ->
-                {:halt, {:error, "#{alg}: #{error.reason}"}}
-
-              error ->
-                {:halt, {:error, "#{alg}: #{inspect(error)}"}}
-            end
-          end)
-
-        case signers_result do
-          {:error, error_msg} ->
-            {false, nil, error_msg}
-
-          signers when is_list(signers) ->
-            # Reverse to maintain original order
-            signers = Enum.reverse(signers)
-
-            last_error =
-              Enum.reduce_while(signers, nil, fn {alg, signer}, _acc ->
-                case Joken.verify(decoded_token, signer) do
-                  {:ok, claims} ->
-                    # Manually validate claims after successful verification
-                    case validate_claims(claims) do
-                      :ok ->
-                        {:halt, {:success, claims}}
-
-                      {:error, reason} ->
-                        if fail_fast do
-                          {:halt, reason}
-                        else
-                          {:cont, reason}
-                        end
-                    end
-
-                  {:error, reason} ->
-                    if fail_fast do
-                      {:halt, "#{alg}: #{reason}"}
-                    else
-                      {:cont, "#{alg}: #{reason}"}
-                    end
-                end
-              end)
-
-            case last_error do
-              {:success, claims} -> {true, claims, nil}
-              error_reason -> {false, nil, error_reason}
-            end
-        end
+        {:error, "Failed to sign JWT token", luerl_state}
       end
+    rescue
+      error in Joken.Error ->
+        log(doc_id, "JWT signer error: #{error.reason}")
+        {:error, "JWT signer error: #{error.reason}", luerl_state}
 
-    case result do
-      {true, claims, _} ->
-        {encoded_claims, luerl_state} = :luerl.encode(claims, luerl_state)
-        {[true, encoded_claims], luerl_state}
-
-      {false, _, error} ->
-        error_msg = format_error(error)
-        {[nil, error_msg], luerl_state}
+      error ->
+        log(doc_id, "JWT unexpected error: #{inspect(error)}")
+        {:error, "JWT unexpected error: #{inspect(error)}", luerl_state}
     end
   end
 
-  def verify(doc_id, _, luerl_state) do
-    error = "Unexpected arguments in jwt.verify"
-    log(doc_id, error)
-    {[nil, error], luerl_state}
+  @doc """
+  Decodes a JWT token without verifying the signature.
+
+  Returns either {[claims, header], luerl_state} or {:error, reason, luerl_state}
+  """
+  def decode(doc_id, [token], luerl_state) do
+    try do
+      case String.split(token, ".") do
+        [header_b64, payload_b64, signature_b64] ->
+          header = header_b64 |> Base.url_decode64!(padding: false) |> Jason.decode!()
+          payload = payload_b64 |> Base.url_decode64!(padding: false) |> Jason.decode!()
+
+          {[payload, header], luerl_state}
+
+        _ ->
+          {:error, "Invalid JWT format", luerl_state}
+      end
+    rescue
+      error ->
+        {:error, "Invalid token encoding", luerl_state}
+    end
   end
+
+  @doc """
+  Verifies a JWT token signature and validates claims.
+
+  Returns either {[claims, header], luerl_state} or {:error, reason, luerl_state}
+  """
+  def verify(doc_id, [token, secret, options], luerl_state) do
+    try do
+      result =
+        if is_nil(secret) do
+          # Verify unsigned token manually
+          case verify_unsigned_token(token) do
+            {:ok, claims} -> {:ok, claims, nil}
+            {:error, reason} -> {:error, reason}
+          end
+        else
+          # For signed tokens, use specified algorithms or defaults
+          default_algorithms = ["HS256", "HS384", "HS512"]
+
+          {algorithms, fail_fast} =
+            case options do
+              %{"algs" => algs} when is_list(algs) -> {algs, true}
+              %{"algs" => alg} when is_binary(alg) -> {[alg], true}
+              _ -> {default_algorithms, false}
+            end
+
+          # Pre-create signers and fail fast if any algorithm is invalid
+          signers_result =
+            Enum.reduce_while(algorithms, [], fn alg, acc ->
+              try do
+                signer = Joken.Signer.create(alg, secret)
+                {:cont, [{alg, signer} | acc]}
+              rescue
+                error in Joken.Error ->
+                  {:halt, {:error, "#{alg}: #{error.reason}"}}
+
+                error ->
+                  {:halt, {:error, "#{alg}: #{inspect(error)}"}}
+              end
+            end)
+
+          case signers_result do
+            {:error, error_msg} ->
+              {:error, error_msg}
+
+            signers when is_list(signers) ->
+              # Reverse to maintain original order
+              signers = Enum.reverse(signers)
+
+              last_error =
+                Enum.reduce_while(signers, nil, fn {alg, signer}, _acc ->
+                  case Joken.verify(token, signer) do
+                    {:ok, claims} ->
+                      # Manually validate claims after successful verification
+                      case validate_claims(claims) do
+                        :ok ->
+                          {:halt, {:success, claims}}
+
+                        {:error, reason} ->
+                          if fail_fast do
+                            {:halt, reason}
+                          else
+                            {:cont, reason}
+                          end
+                      end
+
+                    {:error, reason} ->
+                      if fail_fast do
+                        {:halt, "#{alg}: #{reason}"}
+                      else
+                        {:cont, "#{alg}: #{reason}"}
+                      end
+                  end
+                end)
+
+              case last_error do
+                {:success, claims} -> {:ok, claims, nil}
+                error_reason -> {:error, error_reason}
+              end
+          end
+        end
+
+      case result do
+        {:ok, claims, _} ->
+          # Also decode the header for completeness
+          case String.split(token, ".") do
+            [header_b64, _, _] ->
+              header = header_b64 |> Base.url_decode64!(padding: false) |> Jason.decode!()
+              {[claims, header], luerl_state}
+            _ ->
+              {[claims, %{}], luerl_state}
+          end
+
+        {:error, error} ->
+          error_msg = format_error(error)
+          {:error, error_msg, luerl_state}
+      end
+    rescue
+      error ->
+        log(doc_id, "JWT verify error: #{inspect(error)}")
+        {:error, "JWT verify error: #{inspect(error)}", luerl_state}
+    end
+  end
+
 
   # Create an unsigned JWT token manually since Joken doesn't support "none" algorithm by default
   defp create_unsigned_token(payload) do

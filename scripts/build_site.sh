@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SITE_DIR="$(cd "$SCRIPT_DIR/../../sandman-docs/site" && pwd)"
+SITE_DIR="$(cd "$SCRIPT_DIR/../../sandman-docs/docs" && pwd)"
 BUILD_DIR="${SITE_DIR}/_site"
 JEKYLL_ENV="${JEKYLL_ENV:-production}"
 

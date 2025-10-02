@@ -6,7 +6,7 @@ require 'fileutils'
 class ApiDocGenerator
   def initialize
     @api_definitions_file = File.join(__dir__, '..', 'priv', 'api_definitions.json')
-    @docs_dir = File.join(__dir__, '..', '..', 'sandman-docs', 'site', '_docs')
+    @docs_dir = File.join(__dir__, '..', '..', 'sandman-docs', 'docs', '_docs')
 
     unless File.exist?(@api_definitions_file)
       puts "❌ API definitions file not found: #{@api_definitions_file}"

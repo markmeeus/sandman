@@ -80,6 +80,7 @@ defmodule Sandman.DocumentHandlers do
       {["sandman", "base64", "encode_url"], &Base64.encode_url(doc_id, &1, &2)},
       {["sandman", "jwt", "sign"], &Jwt.sign(doc_id, &1, &2)},
       {["sandman", "jwt", "verify"], &Jwt.verify(doc_id, &1, &2)},
+      {["sandman", "jwt", "decode"], &Jwt.decode(doc_id, &1, &2)},
       {["sandman", "uri", "parse"], &LuaSupport.Uri.parse(doc_id, &1, &2)},
       {["sandman", "uri", "tostring"], &LuaSupport.Uri.tostring(doc_id, &1, &2)},
       {["sandman", "uri", "encode"], &LuaSupport.Uri.encode(doc_id, &1, &2)},
@@ -141,6 +142,7 @@ defmodule Sandman.DocumentHandlers do
             end
           args ->
             res = try do
+                IO.inspect({"calling handler", full_function_name, handler, args})
                 handler.(args, luerl_state)
               rescue
                 error ->
@@ -149,6 +151,7 @@ defmodule Sandman.DocumentHandlers do
                     {error_val, luerl_state} = :luerl.encode("Invalid arguments for #{full_function_name}, #{inspect(error)}", luerl_state)
                     {[nil_val, error_val], luerl_state}
                   else
+                    IO.inspect(error)
                     # this should actually not happen.
                     # the handlers should not throw, but return {:error, message, luerl_state}
                     :luerl_lib.lua_error("Invalid arguments for #{full_function_name}, #{inspect(error)}", luerl_state)
@@ -214,8 +217,11 @@ defmodule Sandman.DocumentHandlers do
   defp preprocess_args(args, params, full_function_name, luerl_state) do
     case validate_args(args, params, full_function_name) do
       [] ->
+        IO.inspect({"preprocessing args", args, params})
         map_args(args, params, luerl_state)
+        |> IO.inspect()
       errors ->
+        IO.inspect({"errors", errors})
         {:error, Enum.join(errors, ", ")}
     end
   end

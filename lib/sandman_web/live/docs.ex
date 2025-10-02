@@ -157,7 +157,8 @@ defmodule SandmanWeb.LiveView.Docs do
       params: extract_params(func_def),
       return_values: extract_return_values(func_def),
       description: Map.get(func_def, :description, "Lua API function"),
-      has_try: Map.get(func_def, :has_try, false)
+      has_try: Map.get(func_def, :has_try, false),
+      example_values: Map.get(func_def, :example_values, %{})
     }
   end
 
@@ -192,7 +193,7 @@ defmodule SandmanWeb.LiveView.Docs do
     functions
     |> Enum.group_by(fn func ->
       if length(func.path) > 1 do
-        func.path |> Enum.slice(0..-2) |> Enum.join(".")
+        func.path |> Enum.slice(0..-2//-1) |> Enum.join(".")
       else
         "Global"
       end
@@ -202,7 +203,7 @@ defmodule SandmanWeb.LiveView.Docs do
 
   defp generate_example(func) do
     function_name = func.name
-    param_examples = generate_param_examples(func.params)
+    param_examples = generate_param_examples(func.params, func.example_values)
 
     function_call = if length(param_examples) > 0 do
       "#{function_name}(#{Enum.join(param_examples, ", ")})"
@@ -219,32 +220,22 @@ defmodule SandmanWeb.LiveView.Docs do
     end
   end
 
-  defp generate_param_examples(params) do
+  defp generate_param_examples(params, example_values) do
     params
     |> Enum.map(fn param ->
-      example_value = case param.type do
-        :string -> "\"some string\""
-        :number -> "42"
-        :boolean -> "true"
-        :table -> "{key = \"value\"}"
-        _ -> "value"
-      end
+      # Use example value from API definitions, or use parameter name if no example
+      # example_values keys are atoms, param.name is a string
+      example_value = Map.get(example_values, String.to_atom(param.name))
 
-      # If parameter has a name, use it as a comment or in the example
-      if param.name do
-        case param.type do
-          :string -> "\"#{param.name}\""
-          _ -> example_value
-        end
-      else
-        example_value
+      case example_value do
+        nil -> param.name || "value"
+        value -> value
       end
     end)
   end
 
   defp generate_try_example(func) do
-    function_name = func.name
-    param_examples = generate_param_examples(func.params)
+    param_examples = generate_param_examples(func.params, func.example_values)
 
     # Replace the last part of the function name with try_ prefix
     path_parts = func.path
