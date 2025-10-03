@@ -61,7 +61,7 @@ class ApiDocGenerator
 
       ## API Modules
 
-      ### [Global Functions](/docs/api/global/)
+      ### [Global Functions](/sandman-docs/docs/api-global/)
       Core functions available globally without any module prefix:
       #{generate_function_list(@definitions.reject { |k, _| k == 'sandman' })}
 
@@ -139,7 +139,7 @@ class ApiDocGenerator
       description = module_description(module_name)
       functions = extract_functions(module_def)
 
-      "### [#{title}](/docs/api/#{module_name}/)\n#{description}\n#{generate_function_list(functions, module_name)}\n"
+      "### [#{title}](/sandman-docs/docs/api-#{module_name}/)\n#{description}\n#{generate_function_list(functions, module_name)}\n"
     end.join("\n")
   end
 
@@ -150,7 +150,7 @@ class ApiDocGenerator
       ---
       layout: docs
       title: "Global Functions"
-      permalink: /docs/api/global/
+      permalink: /docs/api-global/
       nav_order: 2
       parent: "Sandman Lua API"
       ---
@@ -188,7 +188,7 @@ class ApiDocGenerator
       ---
       layout: docs
       title: "#{title}"
-      permalink: /docs/api/#{module_name}/
+      permalink: /docs/api-#{module_name}/
       nav_order: #{nav_order}
       parent: "Sandman Lua API"
       ---
@@ -255,7 +255,7 @@ class ApiDocGenerator
 
     if func_def['has_try']
       try_func_name = func_name.sub(/\.([^.]+)$/, '.try_\\1')
-      content += "**⚠️ Note:** This function can throw errors. A `#{try_func_name}` alternative is available that returns `result_or_nil, error` instead of throwing.\n"
+      content += "\n**⚠️ Note:** This function can throw errors. A `#{try_func_name}` alternative is available that returns `result_or_nil, error` instead of throwing.\n"
     end
 
     content += "\n### Usage\n\n"
@@ -438,7 +438,7 @@ class ApiDocGenerator
                        else
                          func_name
                        end
-        "- [`#{display_name}()`](/docs/api/#{module_name}/##{anchor}) - #{func_def['description']}"
+        "- [`#{display_name}()`](/sandman-docs/docs/api-#{module_name}/##{anchor}) - #{func_def['description']}"
       else
         anchor = func_name.downcase.gsub('.', '')
         display_name = if func_def['has_try']
@@ -446,7 +446,7 @@ class ApiDocGenerator
                        else
                          func_name
                        end
-        "- [`#{display_name}()`](/docs/api/global/##{anchor}) - #{func_def['description']}"
+        "- [`#{display_name}()`](/sandman-docs/docs/api-global/##{anchor}) - #{func_def['description']}"
       end
     end.compact
 
