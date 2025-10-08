@@ -14,7 +14,7 @@ defmodule Sandman.MixProject do
       releases: [
         sandman: [
           applications: [runtime_tools: :permanent, ssl: :permanent],
-          steps: [:assemble, &Desktop.Deployment.generate_installer/1]
+          # steps: [:assemble, &Desktop.Deployment.generate_installer/1]
         ],
       ],
     ]

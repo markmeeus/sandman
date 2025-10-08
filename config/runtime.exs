@@ -33,7 +33,7 @@ if config_env() == :prod do
   port = String.to_integer(System.get_env("PORT") || "4000")
 
   config :sandman, SandmanWeb.Endpoint,
-    http: [ip: {127, 0, 0, 1}, port: 0],
+    http: [ip: {127, 0, 0, 1}, port: System.get_env("PORT")],
     secret_key_base: secret_key_base,
     server: true
 

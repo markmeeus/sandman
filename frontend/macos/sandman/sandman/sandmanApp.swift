@@ -11,6 +11,8 @@ import SwiftData
 @main
 struct SandmanApp: App {
     var activity: NSObjectProtocol?
+    @StateObject private var phoenixManager = PhoenixManager()
+
     init() {
         activity = ProcessInfo.processInfo.beginActivity(options: .userInitiated, reason: "View depends on websocket staying open")
     }
@@ -18,6 +20,7 @@ struct SandmanApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(ZoomManager.shared)
+                .environmentObject(phoenixManager)
         }
         .windowStyle(.automatic)
         .windowResizability(.contentSize)
@@ -34,6 +37,10 @@ struct SandmanApp: App {
                 .keyboardShortcut("-", modifiers: .command)
             }
         }
+    }
+
+    func applicationWillTerminate() {
+        phoenixManager.stopPhoenixApp()
     }
 }
 
@@ -55,4 +62,5 @@ class ZoomManager: ObservableObject {
         print("ZoomManager: New zoom level: \(zoomLevel)")
     }
 }
+
 

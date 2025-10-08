@@ -14,6 +14,7 @@ struct DocumentTabsView: View {
     @State private var webViews: [UUID: WebViewContainer] = [:]
     @Binding var selectedFile: URL?
     let zoomLevel: Double
+    @EnvironmentObject var phoenixManager: PhoenixManager
 
     var selectedTab: DocumentTab? {
         openTabs.first { $0.id == selectedTabId }
@@ -100,7 +101,7 @@ struct DocumentTabsView: View {
         selectedTabId = newTab.id
 
         // Create WebView container for this tab
-        let webViewContainer = WebViewContainer(url: url)
+        let webViewContainer = WebViewContainer(url: url, port: phoenixManager.port)
         webViews[newTab.id] = webViewContainer
     }
 
@@ -193,19 +194,19 @@ struct TabItemView: View {
 }
 
 class NavigationDelegate : NSObject, WKNavigationDelegate {
-    
+
     var loadedUrl: URL?
-    
+
     func webView(
         _ webView: WKWebView,
         decidePolicyFor navigationAction: WKNavigationAction
     ) async -> WKNavigationActionPolicy {
-        
+
         guard let requestUrl = navigationAction.request.url else {
             // no url? no need to allow this
             return .cancel
         }
-        
+
         if let loadedUrl
         {
             if(navigationAction.request.url!.hasSameOrigin(as: loadedUrl)){
@@ -220,7 +221,7 @@ class NavigationDelegate : NSObject, WKNavigationDelegate {
             return .allow
         }
     }
-    
+
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         print("didStartProvisionalNavigation")
     }
@@ -234,26 +235,43 @@ class WebViewContainer: ObservableObject {
     let webView: WKWebView
     let url: URL
     let navigationDelegate: NavigationDelegate
-    
-    init(url: URL) {
+
+    var timer: Timer?
+
+    init(url: URL, port: UInt16) {
         self.url = url
-        
+
         self.webView = WKWebView()
         webView.isInspectable = true
-        
+
+
         self.navigationDelegate = NavigationDelegate()
         self.webView.navigationDelegate = self.navigationDelegate
         // Build the localhost URL with file parameter
         var components = URLComponents()
         components.scheme = "http"
         components.host = "localhost"
-        components.port = 7000
+        components.port = Int(port)
         components.queryItems = [URLQueryItem(name: "file", value: url.path)]
 
-        let webURL = components.url ?? URL(string: "http://localhost:7000")!
+        let webURL = components.url!
 
         // Load the URL once
         self.webView.load(URLRequest(url: webURL))
+
+        // Start a timer that calls JS periodically
+        timer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+            self?.webView.evaluateJavaScript("window._heartbeat = Date.now();") { result, error in
+                if let error = error {
+                    print("JS error: \(error)")
+                } else {
+                    print("JS heartbeat sent")
+                }
+            }
+        }
+    }
+    deinit {
+        timer?.invalidate()
     }
 }
 
@@ -261,7 +279,7 @@ class WebViewContainer: ObservableObject {
 struct WebViewWrapper: NSViewRepresentable {
     let container: WebViewContainer
     let zoomLevel: Double
-    
+
     func makeNSView(context: Context) -> WKWebView {
         return container.webView
     }
@@ -274,5 +292,6 @@ struct WebViewWrapper: NSViewRepresentable {
 
 #Preview {
     DocumentTabsView(selectedFile: .constant(nil), zoomLevel: 1.0)
+        .environmentObject(PhoenixManager())
         .frame(width: 600, height: 400)
 }

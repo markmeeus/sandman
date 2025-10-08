@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var selectedFile: URL?
     @State private var rootFolderURL: URL?
     @EnvironmentObject var zoomManager: ZoomManager
+    @EnvironmentObject var phoenixManager: PhoenixManager
 
     var body: some View {
         Group {
@@ -30,6 +31,14 @@ struct ContentView: View {
                 .onChange(of: zoomManager.zoomLevel) { _, newValue in
                     print("ContentView: Zoom level changed to \(newValue)")
                 }
+                .overlay(alignment: .topTrailing) {
+                    // Phoenix status indicator
+                    Circle()
+                        .fill(phoenixManager.isRunning ? Color.green : Color.red)
+                        .frame(width: 12, height: 12)
+                        .padding(.top, 8)
+                        .padding(.trailing, 8)
+                }
             } else {
                 // Folder selection screen
                 FolderSelectionView { selectedURL in
@@ -44,5 +53,6 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environmentObject(ZoomManager.shared)
+        .environmentObject(PhoenixManager())
         .frame(width: 1000, height: 700)
 }
