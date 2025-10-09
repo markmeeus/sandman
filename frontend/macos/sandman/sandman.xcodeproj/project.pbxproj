@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		365225922E96402400492B2E /* Puppy in Frameworks */ = {isa = PBXBuildFile; productRef = 365225912E96402400492B2E /* Puppy */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		3644229E2E670C8600BF17B2 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				365225922E96402400492B2E /* Puppy in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = sandman;
 			packageProductDependencies = (
+				365225912E96402400492B2E /* Puppy */,
 			);
 			productName = sandman;
 			productReference = 3644228D2E670C8400BF17B2 /* sandman.app */;
@@ -570,6 +576,14 @@
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		365225912E96402400492B2E /* Puppy */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 365225902E963E5200492B2E /* XCRemoteSwiftPackageReference "Puppy" */;
+			productName = Puppy;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 364422852E670C8400BF17B2 /* Project object */;
 }

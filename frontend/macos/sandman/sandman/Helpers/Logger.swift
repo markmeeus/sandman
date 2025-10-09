@@ -1,27 +1,64 @@
 import Foundation
-import os
+import Puppy
 
-/// A comprehensive logging utility that supports console output, OS logging, and file logging
+/// A logging utility using Puppy for console and file logging with rotation
 class SandmanLogger {
     static let shared = SandmanLogger()
 
-    private let osLogger: Logger
-    private let fileManager = FileManager.default
-    private let logQueue = DispatchQueue(label: "com.sandman.logger", qos: .utility)
-    private var logFileHandle: FileHandle?
-
-    // Configuration
-    private let subsystem = "be.codestation.sandman"
-    private let category = "client"
-    private let logFileName = "sandman.log"
+    private let puppy: Puppy
+    private let consoleLogger: ConsoleLogger
+    private let fileLogger: Loggerable
 
     private init() {
-        self.osLogger = Logger(subsystem: subsystem, category: category)
-        setupLogFile()
+        // Create console logger
+        self.consoleLogger = ConsoleLogger("be.codestation.sandman.console", logLevel: .info)
+
+        // Configure file rotation
+        let rotationConfig = RotationConfig(
+            suffixExtension: .numbering,
+            maxFileSize: 1 * 1024 * 1024, // 1MB
+            maxArchivedFilesCount: 4
+        )
+
+        // Get log file path
+        let logFileURL = Self.getLogFileURL()
+
+        // Create file rotation logger
+        do {
+            self.fileLogger = try FileRotationLogger(
+                "be.codestation.sandman.file",
+                logLevel: .info,
+                fileURL: logFileURL,
+                rotationConfig: rotationConfig
+            )
+        } catch {
+            print("Failed to create file rotation logger: \(error)")
+            print("Falling back to regular file logger")
+            // Fallback to regular file logger if rotation fails
+            do {
+                self.fileLogger = try FileLogger(
+                    "be.codestation.sandman.file",
+                    logLevel: .info,
+                    fileURL: logFileURL
+                )
+            } catch {
+                print("Failed to create file logger: \(error)")
+                print("Using console logger only")
+                // Last resort: use console logger only
+                self.fileLogger = ConsoleLogger("be.codestation.sandman.file.fallback", logLevel: .info)
+            }
+        }
+
+        // Initialize Puppy with both loggers
+        self.puppy = Puppy(loggers: [consoleLogger, fileLogger])
+
+        // Log initialization
+        self.info("SandmanLogger initialized with Puppy")
+        self.info("Log file location: \(logFileURL.path)")
     }
 
     deinit {
-        closeLogFile()
+        _ = puppy.flush()
     }
 
     // MARK: - Public Logging Methods
@@ -48,132 +85,55 @@ class SandmanLogger {
 
     // MARK: - Private Methods
 
-    private enum LogLevel: String, CaseIterable {
-        case info = "INFO"
-        case error = "ERROR"
-        case warning = "WARNING"
-        case debug = "DEBUG"
-
-        var emoji: String {
-            switch self {
-            case .info: return "ℹ️"
-            case .error: return "❌"
-            case .warning: return "⚠️"
-            case .debug: return "🔍"
-            }
-        }
-    }
-
     private func log(level: LogLevel, message: String, file: String, function: String, line: Int) {
         let fileName = URL(fileURLWithPath: file).lastPathComponent
-        let timestamp = DateFormatter.logTimestamp.string(from: Date())
-        let logMessage = "[\(timestamp)] \(level.emoji) [\(level.rawValue)] [\(fileName):\(line)] \(function): \(message)"
-
-        logQueue.async { [weak self] in
-            self?.writeToConsole(logMessage)
-            self?.writeToOSLog(level: level, message: message, fileName: fileName, function: function, line: line)
-            self?.writeToFile(logMessage)
-        }
-    }
-
-    private func writeToConsole(_ message: String) {
-        print(message)
-    }
-
-    private func writeToOSLog(level: LogLevel, message: String, fileName: String, function: String, line: Int) {
-        let osMessage = "[\(fileName):\(line)] \(function): \(message)"
+        let formattedMessage = "[\(fileName):\(line)] \(function): \(message)"
 
         switch level {
+        case .verbose:
+            puppy.verbose(formattedMessage)
         case .info:
-            osLogger.info("\(osMessage, privacy: .public)")
+            puppy.info(formattedMessage)
         case .error:
-            osLogger.error("\(osMessage, privacy: .public)")
+            puppy.error(formattedMessage)
         case .warning:
-            osLogger.warning("\(osMessage, privacy: .public)")
+            puppy.warning(formattedMessage)
         case .debug:
-            osLogger.debug("\(osMessage, privacy: .public)")
+            puppy.debug(formattedMessage)
+        case .trace:
+            puppy.trace(formattedMessage)
+        case .critical:
+            puppy.critical(formattedMessage)
+        case .notice:
+            puppy.notice(formattedMessage)
         }
     }
 
-    private func writeToFile(_ message: String) {
-        guard let fileHandle = logFileHandle else { return }
+    private static func getLogFileURL() -> URL {
+        // Get the application support directory
+        let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let sandmanURL = appSupportURL.appendingPathComponent("Sandman")
 
-        let data = (message + "\n").data(using: .utf8)
-        fileHandle.write(data ?? Data())
-    }
+        // Create Sandman directory if it doesn't exist
+        try? FileManager.default.createDirectory(at: sandmanURL, withIntermediateDirectories: true)
 
-    // MARK: - File Management
-
-    private func setupLogFile() {
-        logQueue.async { [weak self] in
-            guard let self = self else { return }
-
-            // Get the application support directory
-            let appSupportURL = self.fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-            let sandmanURL = appSupportURL?.appendingPathComponent("Sandman")
-
-            // Create Sandman directory if it doesn't exist
-            if let sandmanURL = sandmanURL {
-                try? self.fileManager.createDirectory(at: sandmanURL, withIntermediateDirectories: true)
-
-                let logFileURL = sandmanURL.appendingPathComponent(self.logFileName)
-
-                // Create log file if it doesn't exist
-                if !self.fileManager.fileExists(atPath: logFileURL.path) {
-                    self.fileManager.createFile(atPath: logFileURL.path, contents: nil)
-                }
-
-                // Open file handle for writing
-                do {
-                    self.logFileHandle = try FileHandle(forWritingTo: logFileURL)
-                    self.logFileHandle?.seekToEndOfFile()
-
-                    // Log the file location
-                    let fileMessage = "Log file created at: \(logFileURL.path)"
-                    DispatchQueue.main.async {
-                        print("📝 SandmanLogger: \(fileMessage)")
-                    }
-                } catch {
-                    print("❌ SandmanLogger: Failed to open log file: \(error)")
-                }
-            }
-        }
-    }
-
-    private func closeLogFile() {
-        logFileHandle?.closeFile()
-        logFileHandle = nil
+        return sandmanURL.appendingPathComponent("sandman.log")
     }
 
     /// Get the path to the current log file
-    func getLogFilePath() -> String? {
-        let appSupportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-        let sandmanURL = appSupportURL?.appendingPathComponent("Sandman")
-        let logFileURL = sandmanURL?.appendingPathComponent(logFileName)
-        return logFileURL?.path
+    func getLogFilePath() -> String {
+        return Self.getLogFileURL().path
     }
 
-    /// Clear the log file
+    /// Flush all pending log messages
+    func flush() {
+        _ = puppy.flush()
+    }
+
+    /// Clear the log file (this will clear the current active log file)
     func clearLogFile() {
-        logQueue.async { [weak self] in
-            guard let self = self else { return }
-
-            self.closeLogFile()
-
-            if let logFilePath = self.getLogFilePath() {
-                try? "".write(toFile: logFilePath, atomically: true, encoding: .utf8)
-                self.setupLogFile()
-            }
-        }
+        let logFileURL = Self.getLogFileURL()
+        try? "".write(toFile: logFileURL.path, atomically: true, encoding: .utf8)
+        info("Log file cleared")
     }
-}
-
-// MARK: - DateFormatter Extension
-
-private extension DateFormatter {
-    static let logTimestamp: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
-        return formatter
-    }()
 }
