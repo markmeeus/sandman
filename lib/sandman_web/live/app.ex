@@ -46,7 +46,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
 
           <div id="document-container" style="overflow:clip;" class="h-screen" phx-hook="MaintainSplitDimensions">
             <div id="document-root" class="h-screen">
-              <SandmanWeb.LiveView.Document.render doc_pid={@doc_pid} open_requests={@open_requests} requests={@document.requests} document={@document.document} selected_request={@selected_request} selected_block={@selected_block} focused_block={@focused_block} code="" />
+              <SandmanWeb.LiveView.Document.render doc_pid={@doc_pid} open_requests={@open_requests} requests={@document.requests} document={@document.document} selected_request={@selected_request} selected_block={@selected_block} focused_block={@focused_block} confirming_removal={@confirming_removal} code="" />
             </div>
           </div>
 
@@ -170,6 +170,20 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
   def handle_event("shortcut", %{"type" => "run-all-blocks", "block-id" => _block_id}, socket = %{assigns: %{doc_pid: doc_pid}}) do
     Document.run_all_blocks(doc_pid)
     {:noreply, socket}
+  end
+
+  def handle_event("show-remove-confirmation", %{"block-id" => block_id}, socket) do
+    {:noreply, assign(socket, :confirming_removal, block_id)}
+  end
+
+  def handle_event("cancel-remove-block", _, socket) do
+    {:noreply, assign(socket, :confirming_removal, nil)}
+  end
+
+  def handle_event("confirm-remove-block", %{"block-id" => block_id}, socket = %{assigns: %{doc_pid: doc_pid}}) do
+    # persist document here
+    Document.remove_block(doc_pid, block_id)
+    {:noreply, assign(socket, :confirming_removal, nil)}
   end
 
   def handle_event("remove-block", %{"block-id" => block_id}, socket = %{assigns: %{doc_pid: doc_pid}}) do
@@ -448,6 +462,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     |> assign(:main_left_tab, :req_res)
     |> assign(:docs_expanded_namespaces, MapSet.new())
     |> assign(:docs_expanded_functions, MapSet.new())
+    |> assign(:confirming_removal, nil)
     |> stream(:logs, [])
   end
 
