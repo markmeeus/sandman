@@ -16,9 +16,8 @@ class GlobalUndoManager {
     this.bindKeyboardShortcuts();
   }
 
-  /**
-   * Register a Monaco editor with the global undo manager
-   */
+
+   // Register a Monaco editor with the global undo manager
   registerEditor(blockId, editor) {
     this.editors.set(blockId, editor);
 
@@ -223,11 +222,12 @@ class GlobalUndoManager {
       const model = editor.getModel();
       if (!model) return;
 
+      const lineCount = model.getLineCount();
+      const maxLine = Math.max(1, lineCount);
+
       // Use the original cursor position where the change happened (for undo)
       if (operation && operation.cursorBeforeChange) {
         const originalPosition = operation.cursorBeforeChange;
-        const lineCount = model.getLineCount();
-        const maxLine = Math.max(1, lineCount);
 
         // Validate the original position is still valid
         const validLine = Math.min(originalPosition.lineNumber, maxLine);
@@ -242,9 +242,6 @@ class GlobalUndoManager {
       }
 
       // Default cursor position restoration (fallback)
-      const lineCount = model.getLineCount();
-      const maxLine = Math.max(1, lineCount);
-
       if (position) {
         const validLine = Math.min(position.lineNumber, maxLine);
         const lineLength = model.getLineLength(validLine);

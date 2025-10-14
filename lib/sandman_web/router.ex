@@ -24,6 +24,14 @@ defmodule SandmanWeb.Router do
     get "/:doc_pid/:block_id/response/:id", RequestController, :res
   end
 
+  # API routes for keepalive functionality
+  scope "/", SandmanWeb do
+    pipe_through :api
+
+    get "/keepalive", KeepAliveController, :keepalive
+    get "/keepalive/status", KeepAliveController, :status
+  end
+
   # Other scopes may use custom stacks.
   # scope "/api", SandmanWeb do
   #   pipe_through :api

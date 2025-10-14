@@ -21,6 +21,8 @@ defmodule Sandman.Application do
       SandmanWeb.Endpoint,
       Sandman.UpdateManager,
       Sandman.Http.CowboyManager,
+      # Start the KeepAliveManager
+      Sandman.KeepAliveManager,
       # Start a worker by calling: Sandman.Worker.start_link(arg)
       # {Sandman.Worker, arg}
     ]

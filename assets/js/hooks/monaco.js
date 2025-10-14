@@ -1,17 +1,17 @@
 import * as monaco from "monaco-editor";
 import globalUndoManager from "../globalUndo";
 
-
 function trackSize(editor, container, resize){
   editor.onDidChangeHiddenAreas(()=>{
     // changing collapsible code block
     resize();
   });
+  let insideObserver = false;
   new ResizeObserver(()=>{
-    if(!this.insideObserver){
-      this.insideObserver = true;
+    if(!insideObserver){
+      insideObserver = true;
       resize()
-      this.insideObserver = false;
+      insideObserver = false;
     }
 
   }).observe(container);
@@ -61,11 +61,9 @@ const MonacoHook = {
 
     // Track focus state manually
     let editorHasFocus = false;
-    let lastFocusTime = 0;
 
     editor.onDidFocusEditorText(() => {
       editorHasFocus = true;
-      lastFocusTime = Date.now();
 
       // Send cursor-moved event when editor gains focus
       const event = new Event('sandman:cursor-moved');
@@ -78,14 +76,8 @@ const MonacoHook = {
 
     editor.onDidBlurEditorText(() => {
       editorHasFocus = false;
-
-      // Only send blur event if it's been more than 100ms since focus
-      // This prevents rapid focus/blur cycles during initialization
-      const timeSinceFocus = Date.now() - lastFocusTime;
-      if (timeSinceFocus > 100) {
-        // Send block-blurred event to backend
-        this.pushEvent("block-blurred", { block_id: blockId });
-      }
+      // Send block-blurred event to backend
+      this.pushEvent("block-blurred", { block_id: blockId });
     });
 
     // Send cursor-moved event when cursor position changes within the editor
@@ -188,35 +180,6 @@ const MonacoHook = {
 
       this.oldDecorationsCollection = editor.createDecorationsCollection(decorations);
       this.oldDecorations = decorations;
-
-      console.log(this.oldDecorations, this.oldDecorations[0]);
-      //below is the glyph I am calling
-      // var decorations = editor.createDecorationsCollection([
-      //   {
-      //     range: new monaco.Range(2, 0, 2, 0),
-      //     options: {
-      //       isWholeLine: true,
-      //       className: "line-has-requests ok",
-      //       glyphMarginClassName: "has-requests ok request-count-1",
-      //     },
-      //   },
-      //   // {
-        //   range: new monaco.Range(3, 1, 3, 1),
-        //   options: {
-        //     isWholeLine: true,
-        //     className: "line-has-requests error",
-        //     glyphMarginClassName: "has-requests error request-count-9p",
-        //   },
-        // },
-        // {
-        //   range: new monaco.Range(4, 1, 4, 1),
-        //   options: {
-        //     isWholeLine: true,
-        //     className: "line-has-requests warn",
-        //     glyphMarginClassName: "has-requests warn request-count-4",
-        //   },
-        // }
-    //   ]);
     })
 
 

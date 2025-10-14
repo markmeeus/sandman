@@ -37,6 +37,7 @@ if config_env() == :prod do
     secret_key_base: secret_key_base,
     server: true
 
+  config :logger, level: String.to_atom(System.get_env("LOG_LEVEL") || "warn")
   # ## SSL Support
   #
   # To get SSL working, you will need to add the `https` key

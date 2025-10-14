@@ -56,9 +56,9 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
           <div class="bg-neutral-700 border-b border-neutral-600 flex-shrink-0">
             <div class="px-3">
               <nav class="flex space-x-4" aria-label="Tabs">
-                <a href="#" class={"#{tab_colors(@main_left_tab, :req_res)} px-3 py-2 text-xs font-medium"} phx-click="change-main-left-tab" phx-value-tab-id="req_res">Inspector</a>
-                <a href="#" class={"#{tab_colors(@main_left_tab, :logs)} px-3 py-2 text-xs font-medium"}  phx-click="change-main-left-tab" phx-value-tab-id="logs">Logs</a>
-                <a href="#" class={"#{tab_colors(@main_left_tab, :docs)} px-3 py-2 text-xs font-medium"}  phx-click="change-main-left-tab" phx-value-tab-id="docs">Docs</a>
+                <a href="#" class={"#{tab_colors(@main_left_tab, :req_res)} px-3 py-2 text-xs font-medium"} phx-click="show-main-left-tab" phx-value-tab-id="req_res">Inspector</a>
+                <a href="#" class={"#{tab_colors(@main_left_tab, :logs)} px-3 py-2 text-xs font-medium"}  phx-click="show-main-left-tab" phx-value-tab-id="logs">Logs</a>
+                <a href="#" class={"#{tab_colors(@main_left_tab, :docs)} px-3 py-2 text-xs font-medium"}  phx-click="show-main-left-tab" phx-value-tab-id="docs">Docs</a>
               </nav>
             </div>
           </div>
@@ -303,7 +303,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     {:noreply, socket}
   end
 
-  def handle_event("change-main-left-tab", %{"tab-id" => tab_id}, socket) do
+  def handle_event("show-main-left-tab", %{"tab-id" => tab_id}, socket) do
     tab_atom = String.to_existing_atom(tab_id)
     socket = assign(socket, :main_left_tab, tab_atom)
 
