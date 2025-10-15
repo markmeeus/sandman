@@ -22,7 +22,9 @@ defmodule Sandman.HttpClient do
   end
 
   def fetch(doc_id, method, url, headers, body) do
+    IO.inspect({"unmapped headers", headers})
     headers = map_headers(doc_id, headers)
+    IO.inspect({"mapped headers", headers})
     # TODO: finch build can fail as well
     try do
       req = Finch.build(method, url, headers, body)
@@ -50,6 +52,26 @@ defmodule Sandman.HttpClient do
         end)
 
         res_content_info = get_content_info_from_headers(res.headers)
+        unmapped_result =   %{
+          "body" => res.body,
+          "headers" => headers,
+          "status" => res.status,
+          "json" => fn _, luerl_state ->
+            # args can either be self when called with :, or [] when called with .
+            res.body
+            |> Jason.decode
+            |> case do
+              {:ok, data} ->
+                mapped = LuaMapper.reverse_map(data)
+                {encoded, luerl_state} = :luerl.encode(mapped, luerl_state)
+                {[encoded], luerl_state}
+              {:error, err} ->
+                message = Jason.DecodeError.message(err)
+                {:luerl_lib.lua_error({"Json parse error", message}, luerl_state), luerl_state}
+            end
+          end
+        }
+
         %{
           req: req,
           res: res,
@@ -57,11 +79,7 @@ defmodule Sandman.HttpClient do
           res_content_info: res_content_info,
           error: nil,
           direction: :out,
-          lua_result: [LuaMapper.reverse_map(%{
-            body: res.body,
-            headers: headers,
-            status: res.status
-          }), nil]
+          lua_result: [LuaMapper.reverse_map(unmapped_result), nil]
         }
 
       {:error, exc = %Mint.TransportError{}} ->

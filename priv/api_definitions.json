@@ -1,0 +1,246 @@
+{
+  "print": {
+    "type": "function",
+    "description": "Prints values to the console/logs",
+    "schema": {
+      "params": "any"
+    }
+  },
+  "sandman": {
+    "type": "table",
+    "http": {
+      "type": "table",
+      "get": {
+        "type": "function",
+        "description": "Makes an HTTP GET request"
+      },
+      "post": {
+        "type": "function",
+        "description": "Makes an HTTP POST request"
+      },
+      "put": {
+        "type": "function",
+        "description": "Makes an HTTP PUT request"
+      },
+      "delete": {
+        "type": "function",
+        "description": "Makes an HTTP DELETE request"
+      },
+      "patch": {
+        "type": "function",
+        "description": "Makes an HTTP PATCH request"
+      },
+      "head": {
+        "type": "function",
+        "description": "Makes an HTTP HEAD request"
+      },
+      "send": {
+        "type": "function",
+        "description": "Sends an HTTP request with custom configuration"
+      }
+    },
+    "server": {
+      "type": "table",
+      "start": {
+        "type": "function",
+        "description": "Starts the HTTP server"
+      },
+      "get": {
+        "type": "function",
+        "description": "Handles HTTP GET requests on the server"
+      },
+      "post": {
+        "type": "function",
+        "description": "Handles HTTP POST requests on the server"
+      },
+      "put": {
+        "type": "function",
+        "description": "Handles HTTP PUT requests on the server"
+      },
+      "delete": {
+        "type": "function",
+        "description": "Handles HTTP DELETE requests on the server"
+      },
+      "patch": {
+        "type": "function",
+        "description": "Handles HTTP PATCH requests on the server"
+      },
+      "head": {
+        "type": "function",
+        "description": "Handles HTTP HEAD requests on the server"
+      },
+      "add_route": {
+        "type": "function",
+        "description": "Adds a route to the HTTP server"
+      }
+    },
+    "document": {
+      "type": "table",
+      "set": {
+        "type": "function",
+        "description": "Sets a value in the document context",
+        "schema": {
+          "params": [
+            {"type": "string", "name": "key"},
+            {"type": "any", "name": "value"}
+          ],
+          "ret_vals": []
+        }
+      },
+      "get": {
+        "type": "function",
+        "description": "Gets a value from the document context",
+        "schema": {
+          "params": [{"type": "string", "name": "key"}],
+          "ret_vals": [{"type": "any"}]
+        }
+      }
+    },
+    "json": {
+      "type": "table",
+      "decode": {
+        "type": "function",
+        "description": "Decodes a JSON string into a Lua variable",
+        "schema": {
+          "params": [{"name": "json_string", "type": "string"}],
+          "ret_vals": [{"name": "value", "type": "any", "encode": true, "map": true}]
+        },
+        "example_values": {
+          "json_string": "'{\"this\": \"is Sandman\"}'"
+        },
+        "has_try": true
+      },
+      "encode": {
+        "type": "function",
+        "description": "Encodes a Lua variable into a JSON string",
+        "schema": {
+          "params": [{"name": "value", "type": "any", "decode": true, "map": true}],
+          "ret_vals": [{"name": "json_string", "type": "string"}]
+        },
+        "example_values": {
+          "value": "{this = \"is Sandman\"}"
+        }
+      }
+    },
+    "base64": {
+      "type": "table",
+      "decode": {
+        "type": "function",
+        "description": "Decodes a base64 string",
+        "schema": {
+          "params": [{"name": "b64_string", "type": "string"}],
+          "ret_vals": [{"name": "data", "type": "string"}]
+        },
+        "has_try": true
+      },
+      "encode": {
+        "type": "function",
+        "description": "Encodes a string to base64",
+        "schema": {
+          "params": [{"name": "data", "type": "string"}],
+          "ret_vals": [{"name": "b64_string", "type": "string"}]
+        }
+      },
+      "decode_url": {
+        "type": "function",
+        "description": "Decodes a URL-safe base64 string",
+        "schema": {
+          "params": [{"name": "b64_string", "type": "string"}],
+          "ret_vals": [{"name": "data", "type": "string"}]
+        },
+        "has_try": true
+      },
+      "encode_url": {
+        "type": "function",
+        "description": "Encodes a string to URL-safe base64",
+        "schema": {
+          "params": [{"name": "data", "type": "string"}],
+          "ret_vals": [{"name": "b64_string", "type": "string"}]
+        }
+      }
+    },
+    "jwt": {
+      "type": "table",
+      "sign": {
+        "type": "function",
+        "description": "Signs a JWT token",
+        "schema": {
+          "params": [
+            {"name": "claims", "type": "table", "decode": true, "map": true},
+            {"name": "secret", "type": "string"},
+            {"name": "options", "type": "table", "decode": true, "map": true}
+          ],
+          "ret_vals": [{"name": "token", "type": "string"}]
+        },
+        "example_values": {
+            "claims": "{name = \"Sandman\"}",
+            "secret": "\"SECRET\"",
+            "options": "{alg = \"HS512\"}"
+          }
+      },
+      "decode": {
+        "type": "function",
+        "description": "Decodes a JWT token",
+        "schema": {
+          "params": [{"name": "token", "type": "string"}],
+          "ret_vals": [
+            {"name": "claims", "type": "table", "map": true, "encode": true},
+            {"name": "header", "type": "table", "map": true, "encode": true}
+          ]
+        },
+        "example_values": {
+          "token": "\"eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiU2FuZG1hbiJ9.wbxPiV7bVJ_IlvdHTORcdvdQe6-nwo4wc61fhtcKK-Ua8A4xk8qqmNUTi0Am82Zf4RwB9KpqPnUe0EzA77EfSg\""
+        },
+        "has_try": true
+      },
+      "verify": {
+        "type": "function",
+        "description": "Verifies a JWT token",
+        "schema": {
+          "params": [
+            {"name": "token", "type": "string"},
+            {"name": "secret", "type": "string"},
+            {"name": "options", "type": "table", "decode": true, "map": true}
+          ],
+          "ret_vals": [
+            {"name": "claims", "type": "table", "map": true, "encode": true},
+            {"name": "header", "type": "table", "map": true, "encode": true}
+          ]
+        },
+        "example_values": {
+          "token": "\"eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiU2FuZG1hbiJ9.wbxPiV7bVJ_IlvdHTORcdvdQe6-nwo4wc61fhtcKK-Ua8A4xk8qqmNUTi0Am82Zf4RwB9KpqPnUe0EzA77EfSg\"",
+          "secret": "\"SECRET\"",
+          "options": "{alg = \"HS512\"}"
+        },
+        "has_try": true
+      }
+    },
+    "uri": {
+      "type": "table",
+      "parse": {
+        "type": "function",
+        "description": "Parses a URI string into components"
+      },
+      "tostring": {
+        "type": "function",
+        "description": "Converts URI components to a string"
+      },
+      "encode": {
+        "type": "function",
+        "description": "URL-encodes a string"
+      },
+      "decode": {
+        "type": "function",
+        "description": "URL-decodes a string"
+      },
+      "encodeComponent": {
+        "type": "function",
+        "description": "URL-encodes a string component"
+      },
+      "decodeComponent": {
+        "type": "function",
+        "description": "URL-decodes a string component"
+      }
+    }
+  }
+}

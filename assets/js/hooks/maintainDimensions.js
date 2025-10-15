@@ -1,21 +1,31 @@
-const MaintainHeight = {
+// Hook specifically for split.js containers to maintain their dimensions
+const MaintainSplitDimensions = {
   beforeUpdate() {
-    this.prevHeight = this.el.style.height;
+    // Store all CSS properties that split.js sets
+    const style = this.el.style;
+    this.prevStyles = {
+      width: style.width,
+      height: style.height,
+      flexBasis: style.flexBasis,
+      flexGrow: style.flexGrow,
+      flexShrink: style.flexShrink,
+      minWidth: style.minWidth,
+      maxWidth: style.maxWidth,
+      minHeight: style.minHeight,
+      maxHeight: style.maxHeight
+    };
   },
   updated() {
-    this.el.style.height = this.prevHeight;
+    // Restore all the properties that split.js uses
+    const style = this.el.style;
+    Object.entries(this.prevStyles).forEach(([prop, value]) => {
+      if (value) {
+        style[prop] = value;
+      }
+    });
   }
-}
-
-const MaintainWidth = {
-  beforeUpdate() {
-    this.prevWidth = this.el.style.width;
-  },
-  updated() {
-    this.el.style.width = this.prevWidth;
-  }
-}
+};
 
 export default {
-  MaintainHeight, MaintainWidth
+  MaintainSplitDimensions
 };

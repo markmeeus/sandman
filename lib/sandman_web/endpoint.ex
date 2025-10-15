@@ -1,6 +1,5 @@
 defmodule SandmanWeb.Endpoint do
-  use Desktop.Endpoint, otp_app: :sandman
-  #use Phoenix.Endpoint, otp_app: :sandman
+  use Phoenix.Endpoint, otp_app: :sandman
 
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.

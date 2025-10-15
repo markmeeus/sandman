@@ -16,8 +16,8 @@ defmodule Sandman.LuerlServer do
     GenServer.cast(pid, {:reset, state_ids})
   end
 
-  def run_code(pid, state_id, new_state_id, response_tag, code) do
-    GenServer.cast(pid, {:spawn_code, state_id, new_state_id, response_tag, code})
+  def run_code(pid, state_id, new_state_id, response_tag, code, delay_ms \\ 0) do
+    GenServer.cast(pid, {:spawn_code, state_id, new_state_id, response_tag, code, delay_ms})
   end
 
   def call_function(pid, state_id, new_state_id, response_tag, function_path, args) do
@@ -144,7 +144,13 @@ defmodule Sandman.LuerlServer do
       {:noreply, state}
   end
 
-  def handle_cast({:spawn_code, state_id, new_state_id, response_tag, code},
+  # Handle spawn_code without delay parameter (backward compatibility)
+  def handle_cast({:spawn_code, state_id, new_state_id, response_tag, code}, state) do
+    handle_cast({:spawn_code, state_id, new_state_id, response_tag, code, 0}, state)
+  end
+
+  # Handle spawn_code with delay parameter
+  def handle_cast({:spawn_code, state_id, new_state_id, response_tag, code, delay_ms},
         state = %{luerl_states: luerl_states, document_pid: document_pid, handlers: handlers}
       ) do
     luerl_state = case {state_id, get_luerl_state(luerl_states, state_id, handlers)}  do
@@ -159,6 +165,7 @@ defmodule Sandman.LuerlServer do
         _ ->
           self_pid = self()
           spawn(fn ->
+            if delay_ms > 0, do: Process.sleep(delay_ms)
             case LuerlWrapper.run_code(code, luerl_state) do
               {:ok, [], luerl_state} ->
                 send(self_pid, {:spawn_result, [], response_tag, :ok, new_state_id, luerl_state})

@@ -1,16 +1,17 @@
 import * as monaco from "monaco-editor";
-
+import globalUndoManager from "../globalUndo";
 
 function trackSize(editor, container, resize){
   editor.onDidChangeHiddenAreas(()=>{
     // changing collapsible code block
     resize();
   });
+  let insideObserver = false;
   new ResizeObserver(()=>{
-    if(!this.insideObserver){
-      this.insideObserver = true;
+    if(!insideObserver){
+      insideObserver = true;
       resize()
-      this.insideObserver = false;
+      insideObserver = false;
     }
 
   }).observe(container);
@@ -32,10 +33,11 @@ const MonacoHook = {
   mounted() {
     const code = decodeHtml(this.el.innerHTML);
     const blockId = this.el.dataset.blockId;
+    const language = this.el.dataset.blockType;
     this.el.innerText = "";
     let editor = monaco.editor.create(this.el, {
     	value: code,
-      language: 'lua',
+      language: language,
       glyphMargin: true,
     	minimap: {
     		enabled: false
@@ -45,12 +47,62 @@ const MonacoHook = {
         enabled: false,
       },
       fontSize: '12px',
-      fontWeight: "bold",
+      //fontWeight: '600',
       theme: 'vs-dark',
       renderLineHighlight: "none",
       overviewRulerBorder: false,
       overviewRulerLanes: 0,
-      scrollBeyondLastLine: false
+      scrollBeyondLastLine: false,
+      lineNumbersMinChars: 2
+    });
+
+    // Register with global undo manager
+    globalUndoManager.registerEditor(blockId, editor);
+
+    // Track focus state manually
+    let editorHasFocus = false;
+
+    editor.onDidFocusEditorText(() => {
+      editorHasFocus = true;
+
+      // Send cursor-moved event when editor gains focus
+      const event = new Event('sandman:cursor-moved');
+      event.data = { blockId };
+      window.dispatchEvent(event);
+
+      // Send block-focused event to backend
+      this.pushEvent("block-focused", { block_id: blockId });
+    });
+
+    editor.onDidBlurEditorText(() => {
+      editorHasFocus = false;
+      // Send block-blurred event to backend
+      this.pushEvent("block-blurred", { block_id: blockId });
+    });
+
+    // Send cursor-moved event when cursor position changes within the editor
+    editor.onDidChangeCursorPosition(() => {
+      if (editorHasFocus) {
+        const event = new Event('sandman:cursor-moved');
+        event.data = { blockId };
+        window.dispatchEvent(event);
+      }
+    });
+
+    // Add keyboard shortcuts using DOM events instead of Monaco commands
+    const editorDomNode = editor.getDomNode();
+    editorDomNode.addEventListener('keydown', (e) => {
+      // ESC - remove focus from editor while keeping block selected
+      if (e.key === 'Escape' && editorHasFocus) {
+        e.preventDefault();
+
+        // For markdown blocks, send unfocus event to backend
+        if (language === 'markdown') {
+          this.pushEvent("unfocus-markdown", {});
+        }
+
+        document.activeElement.blur();
+      }
     });
 
     // send changes to backend
@@ -128,35 +180,6 @@ const MonacoHook = {
 
       this.oldDecorationsCollection = editor.createDecorationsCollection(decorations);
       this.oldDecorations = decorations;
-
-      console.log(this.oldDecorations, this.oldDecorations[0]);
-      //below is the glyph I am calling
-      // var decorations = editor.createDecorationsCollection([
-      //   {
-      //     range: new monaco.Range(2, 0, 2, 0),
-      //     options: {
-      //       isWholeLine: true,
-      //       className: "line-has-requests ok",
-      //       glyphMarginClassName: "has-requests ok request-count-1",
-      //     },
-      //   },
-      //   // {
-        //   range: new monaco.Range(3, 1, 3, 1),
-        //   options: {
-        //     isWholeLine: true,
-        //     className: "line-has-requests error",
-        //     glyphMarginClassName: "has-requests error request-count-9p",
-        //   },
-        // },
-        // {
-        //   range: new monaco.Range(4, 1, 4, 1),
-        //   options: {
-        //     isWholeLine: true,
-        //     className: "line-has-requests warn",
-        //     glyphMarginClassName: "has-requests warn request-count-4",
-        //   },
-        // }
-    //   ]);
     })
 
 
@@ -166,6 +189,22 @@ const MonacoHook = {
     })
     // set initial size
     resize(editor, this.el);
+
+    // Store references for cleanup
+    this.editor = editor;
+    this.blockId = blockId;
+  },
+
+  destroyed() {
+    // Unregister from global undo manager
+    if (this.blockId) {
+      globalUndoManager.unregisterEditor(this.blockId);
+    }
+
+    // Dispose of Monaco editor
+    if (this.editor) {
+      this.editor.dispose();
+    }
   }
 }
 

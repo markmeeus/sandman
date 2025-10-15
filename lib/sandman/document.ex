@@ -1,15 +1,11 @@
 defmodule Sandman.Document do
 
-  alias Phoenix.Endpoint.Cowboy2Adapter
-  alias Sandman.LuerlWrapper
   alias Phoenix.PubSub
   alias Sandman.LuerlServer
   alias Sandman.LuaMapper
-  alias Sandman.HttpClient
-  alias Sandman.Encoders.Json
   alias Sandman.DocumentEncoder
-  alias Sandman.LuaSupport
   alias Sandman.Http.CowboyManager
+  alias Sandman.DocumentHandlers
 
   use GenServer, restart: :transient
 
@@ -25,8 +21,8 @@ defmodule Sandman.Document do
     GenServer.call(pid, :get)
   end
 
-  def add_block(pid, after_block) do
-    GenServer.cast(pid, {:add_block, :after, after_block})
+  def add_block(pid, after_block, block_type \\ "lua") do
+    GenServer.cast(pid, {:add_block, :after, after_block, block_type})
   end
 
   def remove_block(pid, block_id) do
@@ -37,16 +33,21 @@ defmodule Sandman.Document do
     GenServer.cast(pid, {:change_code, block_id, code})
   end
 
-  def update_title(pid, title) do
-    GenServer.cast(pid, {:update_title, title})
-  end
 
-  def run_block(pid, block_id) do
-    GenServer.cast(pid, {:run_block, block_id})
+  def run_block(pid, block_id, context \\ %{}) do
+    GenServer.cast(pid, {:run_block, block_id, context})
   end
 
   def run_all_blocks(pid) do
     GenServer.cast(pid, :run_all_blocks)
+  end
+
+  def update_block_state(pid, block_id, new_state) do
+    GenServer.cast(pid, {:update_block_state, block_id, new_state})
+  end
+
+  def get_block_state(pid, block_id) do
+    GenServer.call(pid, {:get_block_state, block_id})
   end
 
   def get_request_by_id(pid, {block_id, index}) when is_pid(pid) do
@@ -71,47 +72,8 @@ defmodule Sandman.Document do
 
   def init([doc_id, file_path, doc_id_fn]) do
     self_pid = self()
-    {:ok, luerl_server_pid} = LuerlServer.start_link(self_pid, %{
-      print: fn args, luerl_state ->
-        {:ok, res} = GenServer.call(self_pid, {:handle_lua_call, :print, args})
-        {res, luerl_state}
-      end,
-      fetch: fn method, args, luerl_state ->
-        # this is running in the luerl_server
-        # TODO; refactor this so that req can be stored before request is being sent
-        {result, luerl_state} = HttpClient.fetch_handler(doc_id, method, args, luerl_state)
-
-        call_info = LuerlWrapper.get_call_info(luerl_state)
-        # send the result to the document
-        GenServer.cast(self_pid, {:record_http_request, result, call_info, nil})
-        # return with lua script
-        {result.lua_result, luerl_state}
-      end,
-      start_server: fn port, luerl_state ->
-        {:ok, res} = GenServer.call(self_pid, {:handle_lua_call, :start_server, port})
-        {res, luerl_state}
-      end,
-      add_route: fn method, args, luerl_state ->
-        call_info = LuerlWrapper.get_call_info(luerl_state)
-        res = case GenServer.call(self_pid, {:handle_lua_call, :add_route, [method] ++ args, call_info}) do
-          {:ok, res} ->
-            res
-          {:error, message} ->
-            :luerl_lib.lua_error({:badarg, method, message}, luerl_state)
-        end
-        {res, luerl_state}
-      end,
-      json_decode: &Json.decode(doc_id, &1, &2),
-      json_encode: &Json.encode(doc_id, &1, &2),
-      uri: %{
-        parse: &LuaSupport.Uri.parse(doc_id, &1, &2),
-        tostring: &LuaSupport.Uri.tostring(doc_id, &1, &2),
-        encode: &LuaSupport.Uri.encode(doc_id, &1, &2),
-        decode: &LuaSupport.Uri.decode(doc_id, &1, &2),
-        encodeComponent: &LuaSupport.Uri.encodeComponent(doc_id, &1, &2),
-        decodeComponent: &LuaSupport.Uri.decodeComponent(doc_id, &1, &2),
-      }
-    })
+    handlers = DocumentHandlers.build_handlers(self_pid, doc_id)
+    {:ok, luerl_server_pid} = LuerlServer.start_link(self_pid, handlers)
     File.touch!(file_path, :erlang.universaltime())
     {:ok, file} = File.read(file_path)
     document = DocumentEncoder.decode(file, doc_id_fn)
@@ -124,7 +86,9 @@ defmodule Sandman.Document do
       requests: %{},
       servers: %{},
       current_block_id: nil,
+      current_block_context: %{},
       run_queue: [],
+      shared: %{},
     }}
   end
 
@@ -134,6 +98,15 @@ defmodule Sandman.Document do
 
   def handle_call({:get_request_by_id, {block_id, index}}, _, state = %{requests: requests}) do
     {:reply, get_request_by_id(requests, {block_id, index}), state}
+  end
+
+  def handle_call({:get_block_state, block_id}, _, state = %{document: document}) do
+    block = Enum.find(document.blocks, & &1[:id] == block_id)
+    block_state = case block do
+      nil -> nil
+      block -> Map.get(block, :state, :empty)
+    end
+    {:reply, block_state, state}
   end
 
   # luacallbacks
@@ -172,9 +145,18 @@ defmodule Sandman.Document do
 
     {:reply, {:ok, [true]}, new_state}
   end
-  def handle_call({:handle_lua_call, :add_route, _args, _call_info}, _sender, state = %{doc_id: doc_id}) do
+  def handle_call({:handle_lua_call, :add_route, _args, _call_info}, _sender, state = %{doc_id: _doc_id}) do
       message = "Error adding routes, invalid arguments, expecting server, path and handler"
       {:reply, {:error , message}, state}
+  end
+  def handle_call({:handle_lua_call, :document_set, [key, value]}, _sender, state = %{shared: shared}) do
+    shared = Map.put(shared, key, value)
+    new_state = put_in(state.shared, shared)
+    {:reply, {:ok, []}, new_state}
+  end
+  def handle_call({:handle_lua_call, :document_get, [key]}, _sender, state = %{shared: shared}) do
+    IO.inspect({"shared", key, shared})
+    {:reply, {:ok, Map.get(shared, key, nil)}, state}
   end
   def handle_cast({:handle_server_request, replyto_pid, server_id, request}, state = %{doc_id: doc_id, servers: servers}) do
     server = Map.get(servers, server_id)
@@ -188,11 +170,12 @@ defmodule Sandman.Document do
     {:noreply, state}
   end
 
-  def handle_cast({:add_block, :after, "-"}, state  = %{document: document, doc_id: doc_id}) do
+  def handle_cast({:add_block, :after, "-", block_type}, state  = %{document: document, doc_id: doc_id}) do
     new_block = %{
-      type: "lua",
+      type: block_type,
       code: "",
-      id: UUID.uuid4()
+      id: UUID.uuid4(),
+      state: :empty
     }
     new_blocks = [new_block] ++ (document.blocks || [])
     document = Map.put(document, :blocks, new_blocks)
@@ -201,11 +184,17 @@ defmodule Sandman.Document do
     {:noreply, %{ state | document: document}}
   end
 
-  def handle_cast({:add_block, :after, after_block_id}, state = %{document: document, doc_id: doc_id}) do
+  # Backward compatibility for old 3-parameter calls
+  def handle_cast({:add_block, :after, "-"}, state) do
+    handle_cast({:add_block, :after, "-", "lua"}, state)
+  end
+
+  def handle_cast({:add_block, :after, after_block_id, block_type}, state = %{document: document, doc_id: doc_id}) do
     new_block = %{
-      type: "lua",
+      type: block_type,
       code: "",
-      id: UUID.uuid4()
+      id: UUID.uuid4(),
+      state: :empty
     }
     new_blocks = Enum.reduce(document.blocks, [], fn
       block = %{id: ^after_block_id}, acc -> acc ++ [block, new_block]
@@ -217,7 +206,12 @@ defmodule Sandman.Document do
     {:noreply, %{ state | document: document}}
   end
 
-  def handle_cast({:record_http_request, req_res, call_info, block_id}, state = %{doc_id: doc_id, current_block_id: current_block_id}) do
+  # Backward compatibility for old 3-parameter calls
+  def handle_cast({:add_block, :after, after_block_id}, state) do
+    handle_cast({:add_block, :after, after_block_id, "lua"}, state)
+  end
+
+  def handle_cast({:record_http_request, req_res, call_info, _block_id}, state = %{doc_id: doc_id, current_block_id: _current_block_id}) do
     req_res = Map.put(req_res, :call_info, call_info)
     block_id = call_info.block_id
     new_state = update_in(state.requests[block_id], fn val -> (val || []) ++ [req_res] end)
@@ -234,32 +228,43 @@ defmodule Sandman.Document do
     {:noreply, %{ state | document: document}}
   end
 
-  def handle_cast({:change_code, block_id, code}, state = %{document: document}) do
+  def handle_cast({:change_code, block_id, code}, state = %{document: document, doc_id: doc_id}) do
     new_blocks = Enum.map(document.blocks, fn
       block = %{id: ^block_id} -> Map.put(block, :code, code)
       block -> block
     end)
     document = Map.put(document, :blocks, new_blocks)
     write_file(state)
+    PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
     {:noreply, %{ state | document: document}}
   end
 
-  def handle_cast({:update_title, title}, state = %{document: document}) do
-    document = Map.put(document, :title, title)
-    write_file(state)
+  def handle_cast({:update_block_state, block_id, new_state}, state = %{document: document, doc_id: doc_id}) do
+    new_blocks = Enum.map(document.blocks, fn
+      block = %{id: ^block_id} -> Map.put(block, :state, new_state)
+      block -> block
+    end)
+    document = Map.put(document, :blocks, new_blocks)
+    PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", {:block_state_changed, block_id, new_state})
     {:noreply, %{ state | document: document}}
   end
+
 
   def handle_cast({:run_block, block_id}, state ) do
-    {:noreply, start_block(block_id, state)}
+    {:noreply, start_block(block_id, %{}, state)}
+  end
+
+  def handle_cast({:run_block, block_id, context}, state ) do
+    {:noreply, start_block(block_id, context, state)}
   end
 
   def handle_cast(:run_all_blocks, state = %{document: document}) do
-    state = case document.blocks do
+    # only run lua blocks
+    state = case document.blocks |> Enum.filter(& &1.type == "lua") do
       [] -> state
       [first | run_queue ] ->
         state = Map.put(state, :run_queue, run_queue)
-        start_block(first.id, state)
+        start_block(first.id, %{}, state)
     end
     {:noreply, state}
   end
@@ -276,15 +281,35 @@ defmodule Sandman.Document do
     log(doc_id, "stopped listening at #{port}")
     {:noreply, state}
   end
-  def handle_info({:lua_response, {:run_block}, response}, state = %{doc_id: doc_id}) do
-    state = put_in(state.current_block_id, nil)
-    state = case response do
+  def handle_info({:lua_response, {:run_block}, response}, state = %{doc_id: doc_id, current_block_id: current_block_id}) do
+    context = Map.get(state, :current_block_context, %{})
+    # Update block state based on execution result
+    case response do
       {:error, _err, formatted} ->
+        if current_block_id do
+          update_block_state(self(), current_block_id, :errored)
+        end
         log(doc_id, "Error: " <> formatted)
+      :no_state_for_block ->
+        if current_block_id do
+          update_block_state(self(), current_block_id, :errored)
+        end
+        log(doc_id, "This block cannot be run right now. Did you run the previous block?")
+      _ ->
+        if current_block_id do
+          update_block_state(self(), current_block_id, :executed)
+          # Emit block-executed event with context
+          PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", {:block_executed, current_block_id, context})
+        end
+    end
+
+    state = put_in(state.current_block_id, nil)
+    state = put_in(state.current_block_context, %{})
+    state = case response do
+      {:error, _err, _formatted} ->
         put_in(state.run_queue, [])
       :no_state_for_block ->
-          log(doc_id, "This block cannot be run right now. Did you run the previous block?")
-          put_in(state.run_queue, [])
+        put_in(state.run_queue, [])
       _ ->
         # in dit geval starten we een niewe
         start_next_queued_block(state)
@@ -336,17 +361,22 @@ defmodule Sandman.Document do
   defp start_next_queued_block(state = %{run_queue: []}), do: state
   defp start_next_queued_block(state = %{run_queue: [next | rest_queue]}) do
     state = Map.put(state, :run_queue, rest_queue)
-    start_block(next.id, state)
+    start_block(next.id, %{}, state)
   end
 
-  defp start_block(block_id, state = %{document: document, doc_id: doc_id, luerl_server_pid: luerl_server_pid}) do
+  defp start_block(block_id, context, state = %{document: document, doc_id: doc_id, luerl_server_pid: luerl_server_pid}) do
     block = Enum.find(document.blocks, & &1[:id] == block_id)
-    {prev_blocks, next_blocks} =  document.blocks
-      |> IO.inspect
-      |> Enum.split_while(fn bl -> bl.id != block.id end)
+
+    # If block is not found, return the state unchanged
+    if is_nil(block) do
+      state
+    else
+      {prev_blocks, next_blocks} =  document.blocks
+        |> Enum.split_while(fn bl -> bl.id != block.id end)
 
     last_block_id = prev_blocks
-      |> List.last()
+      |> Enum.reverse()
+      |> Enum.find(& &1.type == "lua")
       |> case do
         nil -> nil
         block -> block.id
@@ -357,18 +387,29 @@ defmodule Sandman.Document do
     end
     |> Enum.map(& &1.id)
 
+    # Reset block states to :empty for all blocks that will be reset
+    Enum.each(blocks_to_reset, fn block_id ->
+      update_block_state(self(), block_id, :empty)
+    end)
+
     clean_servers = Enum.reduce(blocks_to_reset, state.servers, fn block_id, servers ->
       clean_servers_and_routes(servers, block_id)
     end)
     state = put_in(state.servers, clean_servers)
     LuerlServer.reset_states(luerl_server_pid, blocks_to_reset)
-    LuerlServer.run_code(luerl_server_pid, last_block_id, block.id, {:run_block}, block.code)
+
+    # Set block state to :running before execution
+    update_block_state(self(), block.id, :running)
+    # pass 500ms delay, so the ui has a chance to view the state change
+    LuerlServer.run_code(luerl_server_pid, last_block_id, block.id, {:run_block}, block.code, 50)
 
     state = put_in(state.requests[block_id], [])
     state = put_in(state.current_block_id, block_id)
+    state = put_in(state.current_block_context, context)
     # using request recorded, since all requests are gone now
     # todo: refactor this
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", {:request_recorded, block.id})
     state
+    end
   end
 end

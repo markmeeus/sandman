@@ -57,10 +57,10 @@ defmodule Sandman.Http.CowboyManager do
 
   def handle_cast({:disconnect, client_pid, id}, state) do
     Process.unlink(client_pid)
-    client = %{client_pid: client_pid, id: id}
+    disconnecting_client = %{client_pid: client_pid, id: id}
     new_port_infos = Enum.reduce(state.port_infos, %{}, fn {port, port_info}, acc ->
-      clients = Enum.filter(port_info.clients, fn client ->
-        client != client
+      _remaining_clients = Enum.filter(port_info.clients, fn client ->
+        client != disconnecting_client
       end)
       |> case do
         [] ->
@@ -89,7 +89,7 @@ defmodule Sandman.Http.CowboyManager do
   def handle_info({:EXIT, pid, _}, state) do
     # remove all clients for this process
     new_port_infos = Enum.reduce(state.port_infos, %{}, fn {port, port_info}, acc ->
-      clients = Enum.filter(port_info.clients, fn client ->
+      _remaining_clients = Enum.filter(port_info.clients, fn client ->
         client.client_pid != pid
       end)
       |> case do

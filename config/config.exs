@@ -17,7 +17,10 @@ config :sandman, SandmanWeb.Endpoint,
     layout: false
   ],
   pubsub_server: Sandman.PubSub,
-  live_view: [signing_salt: "Shc4SoZI"]
+  live_view: [
+    signing_salt: "Shc4SoZI",
+    timeout: :infinity
+  ]
 
 # Configures the mailer
 #
@@ -76,8 +79,6 @@ config :hammer, # TODO, understand this config (https://hexdocs.pm/hammer/tutori
             [expiry_ms: 60_000 * 60 * 4,
              cleanup_interval_ms: 60_000 * 10]}
 
-config :sandman, :desktop,
-  open_window: true
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

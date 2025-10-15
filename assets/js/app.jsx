@@ -31,7 +31,6 @@ import HomeHook from './hooks/home';
 import MonacoHook from "./hooks/monaco";
 import DocumentHook from "./hooks/document";
 import MaintainDimensions from "./hooks/maintainDimensions";
-import TitleForm from "./hooks/titleForm";
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
@@ -40,9 +39,7 @@ let liveSocket = new LiveSocket("/live", Socket, {
 		HomeHook,
 		MonacoHook,
 		DocumentHook,
-		MaintainHeight: MaintainDimensions.MaintainHeight,
-		MaintainWidth: MaintainDimensions.MaintainWidth,
-		TitleForm
+		MaintainSplitDimensions: MaintainDimensions.MaintainSplitDimensions,
   }
 })
 
@@ -79,7 +76,6 @@ liveSocket.connect()
 // >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
-
 
 self.MonacoEnvironment = {
 	globalAPI: true,

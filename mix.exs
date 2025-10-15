@@ -14,7 +14,7 @@ defmodule Sandman.MixProject do
       releases: [
         sandman: [
           applications: [runtime_tools: :permanent, ssl: :permanent],
-          steps: [:assemble, &Desktop.Deployment.generate_installer/1]
+          # steps: [:assemble, &Desktop.Deployment.generate_installer/1]
         ],
       ],
     ]
@@ -40,7 +40,7 @@ defmodule Sandman.MixProject do
   defp deps do
     [
       {:phoenix, "~> 1.7.3"},
-      {:desktop, "~> 1.5"},
+      #{:desktop, "~> 1.5"},
       {:phoenix_html, "~> 3.3"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:phoenix_live_view, "~> 0.19.0"},
@@ -56,11 +56,14 @@ defmodule Sandman.MixProject do
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
       {:uuid, "~> 1.1" },
-      {:luerl, git: "git@github.com:markmeeus/luerl.git", ref: "6f512e9"},
+      {:luerl, "~> 1.5"},
       {:hammer, "~> 6.1"},
+      {:joken, "~> 2.5"},
       #{:desktop_deployment, git: "git@github.com:markmeeus/deployment.git", ref: "78f6f9dd31752cfd8ac97c3ee9cd77d9a8960160", runtime: false},
       {:desktop_deployment, path: "/Users/markmeeus/Documents/projects/github/deployment"},
       {:verl, "~> 1.1"},
+      {:debouncer, "~> 0.1.11"},
+      {:earmark, "~> 1.4"}
     ]
   end
 

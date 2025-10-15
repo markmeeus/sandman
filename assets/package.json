@@ -7,5 +7,8 @@
     "react-dom": "^18.2.0",
     "react-markdown": "^8.0.7",
     "split.js": "^1.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.16"
   }
 }
