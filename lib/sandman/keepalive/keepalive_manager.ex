@@ -85,7 +85,9 @@ defmodule Sandman.KeepAliveManager do
     Logger.warning("Exiting BEAM process...")
 
     Logger.flush()
-    Process.sleep(1000) # allow logger to properly flush
+    # allow logger to properly flush, this may not be needed
+    # mac app loses pipe so logs are gone. Needs to be solved there
+    Process.sleep(1000)
     # Exit the entire BEAM process
     System.halt(0)
 

@@ -1,8 +1,5 @@
 defmodule Sandman.Encoders.Base64 do
 
-  alias Sandman.LuaMapper
-  import Sandman.Logger
-
   def encode(_, [decoded], luerl_state) when is_bitstring(decoded) do
     encoded = Base.encode64(decoded)
     {[encoded], luerl_state}
@@ -26,7 +23,7 @@ defmodule Sandman.Encoders.Base64 do
     case Base.url_decode64(encoded, padding: false) do
       {:ok, decoded} ->
         {[decoded], luerl_state}
-      other -> # :error
+      _other -> # :error
         {:error, "Invalid base64 string", luerl_state}
     end
   end

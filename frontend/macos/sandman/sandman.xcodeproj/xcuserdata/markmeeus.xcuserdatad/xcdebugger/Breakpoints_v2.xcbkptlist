@@ -66,36 +66,6 @@
             endingLineNumber = "68"
             landmarkName = "startPhoenixApp()"
             landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "5BBC268C-DD7B-4D90-A0CB-CF7785838F46 - ab46378024bde142"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "sandman.PhoenixManager.startPhoenixApp() -&gt; ()"
-                  moduleName = "sandman.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/markmeeus/Documents/projects/github/sandman-group/sandman/frontend/macos/sandman/sandman/Helpers/PhoenixManager.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "68"
-                  endingLineNumber = "68">
-               </Location>
-               <Location
-                  uuid = "5BBC268C-DD7B-4D90-A0CB-CF7785838F46 - ab46378024bde142"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "sandman.PhoenixManager.startPhoenixApp() -&gt; ()"
-                  moduleName = "sandman.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/markmeeus/Documents/projects/github/sandman-group/sandman/frontend/macos/sandman/sandman/Helpers/PhoenixManager.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "68"
-                  endingLineNumber = "68">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -143,6 +113,22 @@
             startingLineNumber = "85"
             endingLineNumber = "85"
             landmarkName = "startPhoenixApp()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "1B710A92-4703-4348-8E50-62229721E733"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "sandman/Helpers/PhoenixManager.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "261"
+            endingLineNumber = "261"
+            landmarkName = "sendKeepaliveRequest()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

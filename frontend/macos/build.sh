@@ -185,7 +185,7 @@ echo -e "${YELLOW}⏳ Starting Phoenix app for testing...${NC}"
 PHOENIX_PID=$!
 
 # Wait a moment for startup
-sleep 3
+sleep 10
 
 # Check if the process is running
 if kill -0 $PHOENIX_PID 2>/dev/null; then

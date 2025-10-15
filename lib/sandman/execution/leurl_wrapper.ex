@@ -1,7 +1,6 @@
 defmodule Sandman.LuerlWrapper do
 
   import Sandman.ErrorFormatter
-  alias Sandman.LuaMapper
 
   def init(handlers) do
     luerl_state = :luerl_sandbox.init()
@@ -30,7 +29,7 @@ defmodule Sandman.LuerlWrapper do
     luerl_state
   end
   def get_context(luerl_state) do
-    {:ok, block_id, luerl_state} = :luerl.get_table_keys_dec(["sandman", "_context", "block_id"], luerl_state)
+    {:ok, block_id, _luerl_state} = :luerl.get_table_keys_dec(["sandman", "_context", "block_id"], luerl_state)
     %{
       block_id: block_id
     }

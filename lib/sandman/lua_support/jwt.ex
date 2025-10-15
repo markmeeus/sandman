@@ -1,5 +1,4 @@
 defmodule Sandman.LuaSupport.Jwt do
-  alias Sandman.LuaMapper
   import Sandman.Logger
 
   @doc """
@@ -11,20 +10,20 @@ defmodule Sandman.LuaSupport.Jwt do
     try do
       alg = Map.get(options, "alg", if(is_nil(secret), do: "none", else: "HS256"))
 
-      {token, error} =
+      token =
         cond do
           # Handle unsigned tokens (alg: "none" or no secret)
           is_nil(secret) or alg == "none" ->
-            {create_unsigned_token(data), nil}
+            create_unsigned_token(data)
 
           # Handle signed tokens
           true ->
             case Joken.generate_and_sign(%{}, data, Joken.Signer.create(alg, secret)) do
               {:ok, token, _claims} ->
-                {token, nil}
+                token
 
-              {:error, reason} ->
-                {nil, inspect(reason)}
+              {:error, _reason} ->
+                nil
             end
         end
 
@@ -49,10 +48,10 @@ defmodule Sandman.LuaSupport.Jwt do
 
   Returns either {[claims, header], luerl_state} or {:error, reason, luerl_state}
   """
-  def decode(doc_id, [token], luerl_state) do
+  def decode(_doc_id, [token], luerl_state) do
     try do
       case String.split(token, ".") do
-        [header_b64, payload_b64, signature_b64] ->
+        [header_b64, payload_b64, _signature_b64] ->
           header = header_b64 |> Base.url_decode64!(padding: false) |> Jason.decode!()
           payload = payload_b64 |> Base.url_decode64!(padding: false) |> Jason.decode!()
 
@@ -62,7 +61,7 @@ defmodule Sandman.LuaSupport.Jwt do
           {:error, "Invalid JWT format", luerl_state}
       end
     rescue
-      error ->
+      _error ->
         {:error, "Invalid token encoding", luerl_state}
     end
   end

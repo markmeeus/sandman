@@ -2,7 +2,6 @@ defmodule Sandman.HttpClient do
   import Sandman.Logger
   import Sandman.Http.Helpers
   alias Sandman.LuaMapper
-  alias Sandman.Encoders.Json
 
   def fetch_handler(doc_id, method, args, luerl_state) do
     result = args

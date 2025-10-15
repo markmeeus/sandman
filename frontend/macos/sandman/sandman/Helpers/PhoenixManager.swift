@@ -118,6 +118,7 @@ class PhoenixManager: ObservableObject {
         var environment = ProcessInfo.processInfo.environment
         environment["PORT"] = "\(self.port)"
         environment["LOG_LEVEL"] = "debug"
+        environment["KEEPALIVE_ENABLED"] = "true" // configure beam process to terminate itself when the app is gone
 
         // Generate a unique node name to avoid conflicts
         let uniqueId = UUID().uuidString.prefix(8)

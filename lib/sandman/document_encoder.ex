@@ -73,8 +73,8 @@ defmodule Sandman.DocumentEncoder do
       _block -> blocks ++ [last_block]
     end
     |> Enum.map(fn
-      block =%{type: "markdown", code: code} ->
-        block = if String.ends_with?(code, "\n") do
+      block = %{type: "markdown", code: code} ->
+        if String.ends_with?(code, "\n") do
           %{block | code: String.slice(code, 0..-2//1)}
         else
           block

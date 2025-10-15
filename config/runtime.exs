@@ -29,9 +29,6 @@ if config_env() == :prod do
   # variable instead.
   secret_key_base = "yxE0QkOzFjes89oq5Q0F7RaZb20tEq7dgY5ghWojxOY3ciAjmL1eajEJ3SQ+NXPi"
 
-  host = System.get_env("PHX_HOST") || "example.com"
-  port = String.to_integer(System.get_env("PORT") || "4000")
-
   config :sandman, SandmanWeb.Endpoint,
     http: [ip: {127, 0, 0, 1}, port: System.get_env("PORT")],
     secret_key_base: secret_key_base,

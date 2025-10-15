@@ -65,7 +65,7 @@ defmodule Sandman.ErrorFormatter do
   defp format_stack_line({{:tref, _}, _function_args, [file: _, line: line_nr]}, _luerl_state) do
     "at #{line_nr}:"
   end
-  defp format_stack_line({{Sandman.LuerlWrapper, _}, _function_args, _}, luerl_state) do
+  defp format_stack_line({{Sandman.LuerlWrapper, _}, _function_args, _}, _luerl_state) do
     "[internal]"
   end
 

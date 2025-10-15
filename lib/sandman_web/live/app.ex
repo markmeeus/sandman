@@ -8,7 +8,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
   alias SandmanWeb.UpdateBar
   alias Phoenix.PubSub
 
-  def mount(params, session, socket) do
+  def mount(params, _session, socket) do
     socket = case params["file"] do
       "" -> socket
       nil -> socket
@@ -86,10 +86,6 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
 
   def render_select_file(assigns) do
     Sandman.NewOrOpen.render(assigns)
-  end
-
-  def mount(_params, _session, socket) do
-    {:ok, socket}
   end
 
   defp start_document(mode, socket) do
@@ -289,7 +285,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     socket = case Integer.parse(line_nr) do
       {line_nr, _} ->
         push_event(socket, "monaco-update-selected", %{block_id: block_id, selected: %{line_nr: line_nr}})
-      nil -> socket
+      _other -> socket
     end
     {request_index, _} = Integer.parse(request_index)
 
@@ -408,7 +404,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     {:noreply, socket}
   end
 
-  def handle_info({:block_state_changed, block_id, new_state}, socket = %{assigns: %{doc_pid: doc_pid}}) do
+  def handle_info({:block_state_changed, _block_id, _new_state}, socket = %{assigns: %{doc_pid: doc_pid}}) do
     # Refresh document to get updated block states - LiveView will automatically re-render
     document = Document.get(doc_pid)
     socket = assign(socket, :document, document)

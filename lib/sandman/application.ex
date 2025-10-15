@@ -15,17 +15,22 @@ defmodule Sandman.Application do
       # Start Finch
       {Finch, name: Sandman.Finch.UpdateManager},
       {Finch, name: Sandman.Finch, pools: %{
-        default: [conn_opts: [transport_opts: [verify: :verify_none]]] #TODO ohoh, misschien aparte unsecure pool?
+        default: [conn_opts: [transport_opts: [verify: :verify_none]]] # https://github.com/markmeeus/sandman/issues/59
       }},
       # Start the Endpoint (http/https)
       SandmanWeb.Endpoint,
       Sandman.UpdateManager,
       Sandman.Http.CowboyManager,
-      # Start the KeepAliveManager
-      Sandman.KeepAliveManager,
       # Start a worker by calling: Sandman.Worker.start_link(arg)
       # {Sandman.Worker, arg}
     ]
+
+    children = if System.get_env("KEEPALIVE_ENABLED") == "true" do
+      [Sandman.KeepAliveManager | children]
+    else
+      children
+    end
+
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Sandman.Supervisor]

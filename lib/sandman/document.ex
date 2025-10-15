@@ -1,15 +1,9 @@
 defmodule Sandman.Document do
 
-  alias Phoenix.Endpoint.Cowboy2Adapter
-  alias Sandman.LuerlWrapper
   alias Phoenix.PubSub
   alias Sandman.LuerlServer
   alias Sandman.LuaMapper
-  alias Sandman.HttpClient
-  alias Sandman.Encoders.{Json, Base64}
-  alias Sandman.LuaSupport.Jwt
   alias Sandman.DocumentEncoder
-  alias Sandman.LuaSupport
   alias Sandman.Http.CowboyManager
   alias Sandman.DocumentHandlers
 
@@ -151,7 +145,7 @@ defmodule Sandman.Document do
 
     {:reply, {:ok, [true]}, new_state}
   end
-  def handle_call({:handle_lua_call, :add_route, _args, _call_info}, _sender, state = %{doc_id: doc_id}) do
+  def handle_call({:handle_lua_call, :add_route, _args, _call_info}, _sender, state = %{doc_id: _doc_id}) do
       message = "Error adding routes, invalid arguments, expecting server, path and handler"
       {:reply, {:error , message}, state}
   end
@@ -217,7 +211,7 @@ defmodule Sandman.Document do
     handle_cast({:add_block, :after, after_block_id, "lua"}, state)
   end
 
-  def handle_cast({:record_http_request, req_res, call_info, block_id}, state = %{doc_id: doc_id, current_block_id: current_block_id}) do
+  def handle_cast({:record_http_request, req_res, call_info, _block_id}, state = %{doc_id: doc_id, current_block_id: _current_block_id}) do
     req_res = Map.put(req_res, :call_info, call_info)
     block_id = call_info.block_id
     new_state = update_in(state.requests[block_id], fn val -> (val || []) ++ [req_res] end)

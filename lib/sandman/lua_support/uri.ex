@@ -43,7 +43,7 @@ defmodule Sandman.LuaSupport.Uri do
     |> case do
       url when is_binary(url) ->
         {[URI.encode(url)], luerl_state}
-      other ->
+      _other ->
         {:luerl_lib.lua_error({"Unexpected param", "expecting string"}, luerl_state), luerl_state}
       end
   end
@@ -52,7 +52,7 @@ defmodule Sandman.LuaSupport.Uri do
     |> case do
       url when is_binary(url) ->
         {[URI.decode(url)], luerl_state}
-      other ->
+      _other ->
         {:luerl_lib.lua_error({"Unexpected param", "expecting string"}, luerl_state), luerl_state}
       end
   end
@@ -62,7 +62,7 @@ defmodule Sandman.LuaSupport.Uri do
     |> case do
       url when is_binary(url) ->
         {[URI.encode(url, &URI.char_unreserved?(&1))], luerl_state}
-      other ->
+      _other ->
         {:luerl_lib.lua_error({"Unexpected param", "expecting string"}, luerl_state), luerl_state}
       end
   end
@@ -71,7 +71,7 @@ defmodule Sandman.LuaSupport.Uri do
     |> case do
       url when is_binary(url) ->
         {[URI.decode(url)], luerl_state}
-      other ->
+      _other ->
         {:luerl_lib.lua_error({"Unexpected param", "expecting string"}, luerl_state), luerl_state}
       end
   end

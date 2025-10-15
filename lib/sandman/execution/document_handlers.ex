@@ -4,8 +4,8 @@ defmodule Sandman.DocumentHandlers do
   alias Sandman.LuaApiDefinitions
   alias Sandman.Encoders.Base64
   alias Sandman.Encoders.Json
-  alias Sandman.Encoders.Uri
   alias Sandman.LuaSupport.Jwt
+  alias Sandman.LuaSupport.Uri
 
   alias Sandman.LuaMapper
 
@@ -81,12 +81,12 @@ defmodule Sandman.DocumentHandlers do
       {["sandman", "jwt", "sign"], &Jwt.sign(doc_id, &1, &2)},
       {["sandman", "jwt", "verify"], &Jwt.verify(doc_id, &1, &2)},
       {["sandman", "jwt", "decode"], &Jwt.decode(doc_id, &1, &2)},
-      {["sandman", "uri", "parse"], &LuaSupport.Uri.parse(doc_id, &1, &2)},
-      {["sandman", "uri", "tostring"], &LuaSupport.Uri.tostring(doc_id, &1, &2)},
-      {["sandman", "uri", "encode"], &LuaSupport.Uri.encode(doc_id, &1, &2)},
-      {["sandman", "uri", "decode"], &LuaSupport.Uri.decode(doc_id, &1, &2)},
-      {["sandman", "uri", "encodeComponent"], &LuaSupport.Uri.encodeComponent(doc_id, &1, &2)},
-      {["sandman", "uri", "decodeComponent"], &LuaSupport.Uri.decodeComponent(doc_id, &1, &2)},
+      {["sandman", "uri", "parse"], &Uri.parse(doc_id, &1, &2)},
+      {["sandman", "uri", "tostring"], &Uri.tostring(doc_id, &1, &2)},
+      {["sandman", "uri", "encode"], &Uri.encode(doc_id, &1, &2)},
+      {["sandman", "uri", "decode"], &Uri.decode(doc_id, &1, &2)},
+      {["sandman", "uri", "encodeComponent"], &Uri.encodeComponent(doc_id, &1, &2)},
+      {["sandman", "uri", "decodeComponent"], &Uri.decodeComponent(doc_id, &1, &2)},
      ] |> wrap_handlers()
   end
 
@@ -120,7 +120,6 @@ defmodule Sandman.DocumentHandlers do
     List.replace_at(path, -1, "try_#{last_element}")
   end
 
-  defp wrap_handler(path, handler, api_def, safe_call \\ false)
   defp wrap_handler(path, handler, api_def = %{type: "function"}, safe_call) do
     full_function_name = Enum.join(path, ".")
 
@@ -141,7 +140,7 @@ defmodule Sandman.DocumentHandlers do
               :luerl_lib.lua_error(errors, luerl_state)
             end
           args ->
-            res = try do
+            _res = try do
                 IO.inspect({"calling handler", full_function_name, handler, args})
                 handler.(args, luerl_state)
               rescue
@@ -187,7 +186,7 @@ defmodule Sandman.DocumentHandlers do
     end
   end
 
-  defp wrap_handler(path, handler, api_def , safe_call) do
+  defp wrap_handler(path, _handler, api_def , safe_call) do
       IO.inspect({"unexpecte handler", path, api_def, safe_call})
       nil
   end
@@ -286,7 +285,7 @@ defmodule Sandman.DocumentHandlers do
   defp arg_type({:tref, _}), do: :table
   defp arg_type({:erl_func, _}), do: :function
   defp arg_type({:funref, _, _}), do: :function
-  defp arg_type(arg) do
+  defp arg_type(_arg) do
     :unknown
   end
 

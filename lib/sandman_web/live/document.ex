@@ -134,30 +134,30 @@ defmodule SandmanWeb.LiveView.Document do
 
   defp render_request(assigns = %{req: %{ res: nil, lua_result: [nil, err] }}) when is_bitstring(err) do
     # TODO: deze moeten we nog fixen, die assigns zijn hier totaal gefaked!
-    is_selected = assigns.selected_request == {assigns.block_id, assigns.request_index}
-    row_class = if is_selected, do: "request-row request-row-selected flex flex-row-reverse text-xs text-red-400 rounded-b pb-1 px-1", else: "request-row flex flex-row-reverse text-xs text-red-400 rounded-b pb-1 px-1"
+    assigns = assign(assigns, :row_class, (
+      if assigns.selected_request == {assigns.block_id, assigns.request_index},
+        do: "request-row request-row-selected flex flex-row-reverse text-xs text-red-400 rounded-b pb-1 px-1",
+        else: "request-row flex flex-row-reverse text-xs text-red-400 rounded-b pb-1 px-1"))
+    assigns = assign(assigns, :err, err)
 
     ~H"""
       <div class="flex flex-col">
-        <div class={row_class} data-block-id={assigns.block_id} data-request-index={assigns.request_index}>
-          <%= format_request(@req)%>: <%= err %>
+        <div class={@row_class} data-block-id={@block_id} data-request-index={@request_index}>
+          <%= format_request(@req)%>: <%= @err %>
         </div>
       </div>
     """
   end
 
   defp render_request(assigns) do
-    is_selected = assigns.selected_request == {assigns.block_id, assigns.request_index}
-
-    row_class = if is_selected do
-      "request-row request-row-selected flex flex-row text-xs text-neutral-100 rounded-b pb-1 px-1 pt-1 bg-neutral-700 hover:bg-neutral-600 transition-colors duration-150"
-    else
-      "request-row flex flex-row text-xs text-neutral-300 rounded-b pb-1 px-1 pt-1 hover:bg-neutral-800 transition-colors duration-150"
-    end
+    assigns = assign(assigns, :row_class, (
+      if assigns.selected_request == {assigns.block_id, assigns.request_index},
+        do: "request-row request-row-selected flex flex-row text-xs text-neutral-100 rounded-b pb-1 px-1 pt-1 bg-neutral-700 hover:bg-neutral-600 transition-colors duration-150",
+        else: "request-row flex flex-row text-xs text-neutral-300 rounded-b pb-1 px-1 pt-1 hover:bg-neutral-800 transition-colors duration-150"))
 
     ~H"""
       <div class="flex flex-col">
-        <a class={row_class}
+        <a class={@row_class}
             data-block-id={assigns.block_id} data-request-index={assigns.request_index}
             href="#" phx-click="select-request" phx-value-block-id={assigns.block_id} phx-value-line_nr={@req.call_info.line_nr} phx-value-request-index={assigns.request_index}>
           <div class="flex-grow">
@@ -203,19 +203,16 @@ defmodule SandmanWeb.LiveView.Document do
   end
 
   defp render_block_content(assigns) do
-    is_focused = assigns.focused_block == assigns.block.id
-    is_markdown = assigns.block.type == "markdown"
-
     ~H"""
     <div class="rounded-t p-1">
       <!-- Always render Monaco editor, but hide it for unfocused markdown blocks -->
-      <div class={if is_markdown && !is_focused, do: "hidden", else: ""}
+      <div class={if @block.type == "markdown" && @focused_block != @block.id, do: "hidden", else: ""}
            phx-update="ignore" id={"monaco-wrapper-#{@block.id}"}>
         <div id={"monaco-#{@block.id}"} phx-hook="MonacoHook" data-block-id={@block.id} data-block-type={@block.type}><%= @block.code %></div>
       </div>
 
       <!-- Render text content for unfocused markdown blocks -->
-      <%= if is_markdown && !is_focused do %>
+      <%= if @block.type == "markdown" && @focused_block != @block.id do %>
         <div class="prose prose-sm text-[12px] prose-invert max-w-none text-neutral-200 font-mono leading-relaxed p-2 cursor-text hover:bg-neutral-800 transition-colors"
              phx-click="focus-block" phx-value-block-id={@block.id} >
              <style>
