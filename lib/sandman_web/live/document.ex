@@ -69,29 +69,29 @@ defmodule SandmanWeb.LiveView.Document do
         <!-- Status indicator column -->
         <div class="w-8 flex flex-col items-center justify-end">
         <!-- Connecting line from above (Run All button or previous block) -->
-        <%= render_connecting_line(%{state: Map.get(block, :state, :empty)}) %>
+        <.render_connecting_line state={Map.get(block, :state, :empty)} />
             <!-- Status dot -->
             <%= if block.type == "lua" do %>
-            <%= render_block_state_indicator(%{state: Map.get(block, :state, :empty)}) %>
+            <.render_block_state_indicator state={Map.get(block, :state, :empty)} />
             <% end %>
         </div>
         <!-- Block content -->
         <div class="flex-grow min-w-0 pr-2">
           <div class={"group rounded #{if block.type == "lua", do: "border", else: ""} #{if @selected_block && @selected_block == block.id, do: "selected-block", else: "border-neutral-700"}"}>
-            <%= render_block_content(%{block: block, focused_block: @focused_block}) %>
+            <.render_block_content block={block} focused_block={@focused_block} />
             <div class="px-1" >
               <%= if(@open_requests[block.id]) do %>
                 <%= for {req, req_index} <- Enum.with_index(requests_for_block(@requests, block.id)) do%>
-                  <%= render_request(%{req: req, block_id: block.id, request_index: req_index, selected_request: @selected_request}) %>
+                  <.render_request req={req} block_id={block.id} request_index={req_index} selected_request={@selected_request} />
                 <% end %>
               <%end%>
             </div>
             <%= if block.type == "lua" do %>
                 <div class="min-h-5">
                   <div class="flex flex-row fs-2 my-2 px-6 text-sm sticky">
-                    <%= render_run_button(%{block: block, preceding_block: preceding_block}) %>
+                    <.render_run_button block={block} preceding_block={preceding_block} />
                     <div class="flex-grow"/>
-                    <%= render_block_stats(%{requests: requests_for_block(@requests, block.id), block: block, is_open: !!@open_requests[block.id]}) %>
+                    <.render_block_stats requests={requests_for_block(@requests, block.id)} block={block} is_open={!!@open_requests[block.id]} />
                     <div class="flex-grow"/>
                     <%= if @confirming_removal == block.id do %>
                       <!-- Confirmation buttons -->
@@ -132,8 +132,12 @@ defmodule SandmanWeb.LiveView.Document do
     """
   end
 
-  defp render_request(assigns = %{req: %{ res: nil, lua_result: [nil, err] }}) when is_bitstring(err) do
-    # TODO: deze moeten we nog fixen, die assigns zijn hier totaal gefaked!
+  attr :req, :map, required: true
+  attr :block_id, :string, required: true
+  attr :request_index, :integer, required: true
+  attr :selected_request, :any, required: true
+
+  def render_request(assigns = %{req: %{ res: nil, lua_result: [nil, err] }}) when is_bitstring(err) do
     assigns = assign(assigns, :row_class, (
       if assigns.selected_request == {assigns.block_id, assigns.request_index},
         do: "request-row request-row-selected flex flex-row-reverse text-xs text-red-400 rounded-b pb-1 px-1",
@@ -149,7 +153,7 @@ defmodule SandmanWeb.LiveView.Document do
     """
   end
 
-  defp render_request(assigns) do
+  def render_request(assigns) do
     assigns = assign(assigns, :row_class, (
       if assigns.selected_request == {assigns.block_id, assigns.request_index},
         do: "request-row request-row-selected flex flex-row text-xs text-neutral-100 rounded-b pb-1 px-1 pt-1 bg-neutral-700 hover:bg-neutral-600 transition-colors duration-150",
@@ -158,8 +162,8 @@ defmodule SandmanWeb.LiveView.Document do
     ~H"""
       <div class="flex flex-col">
         <a class={@row_class}
-            data-block-id={assigns.block_id} data-request-index={assigns.request_index}
-            href="#" phx-click="select-request" phx-value-block-id={assigns.block_id} phx-value-line_nr={@req.call_info.line_nr} phx-value-request-index={assigns.request_index}>
+            data-block-id={@block_id} data-request-index={@request_index}
+            href="#" phx-click="select-request" phx-value-block-id={@block_id} phx-value-line_nr={@req.call_info.line_nr} phx-value-request-index={@request_index}>
           <div class="flex-grow">
             <span><%= format_request(@req) %></span>
           </div>
@@ -171,13 +175,17 @@ defmodule SandmanWeb.LiveView.Document do
     """
   end
 
-  defp render_block_stats(assigns = %{is_open: true}) do
+  attr :requests, :list, required: true
+  attr :block, :map, required: true
+  attr :is_open, :boolean, required: true
+
+  def render_block_stats(assigns = %{is_open: true}) do
     ~H"""
     <a href="#" class="px-1 text-neutral-300 hover:text-neutral-100 transition-colors" phx-click="toggle-requests" phx-value-block-id={@block.id}>▲</a>
     """
   end
 
-  defp render_block_stats(assigns) do
+  def render_block_stats(assigns) do
     ~H"""
     <%= case Enum.count(@requests) do %>
     <% 0 -> %>
@@ -202,7 +210,10 @@ defmodule SandmanWeb.LiveView.Document do
     end
   end
 
-  defp render_block_content(assigns) do
+  attr :block, :map, required: true
+  attr :focused_block, :any, required: true
+
+  def render_block_content(assigns) do
     ~H"""
     <div class="rounded-t p-1">
       <!-- Always render Monaco editor, but hide it for unfocused markdown blocks -->
@@ -249,11 +260,14 @@ defmodule SandmanWeb.LiveView.Document do
     """
   end
 
-  defp render_run_button(assigns) do
-    block_state = Map.get(assigns.block, :state, :empty)
-    preceding_state = if assigns.preceding_block, do: Map.get(assigns.preceding_block, :state, :empty), else: nil
+  attr :block, :map, required: true
+  attr :preceding_block, :any, required: true
 
-    case {block_state, preceding_state} do
+  def render_run_button(assigns) do
+    assigns = assign(assigns, :block_state, Map.get(assigns.block, :state, :empty))
+    assigns = assign(assigns, :preceding_state, if(assigns.preceding_block, do: Map.get(assigns.preceding_block, :state, :empty), else: nil))
+
+    case {assigns.block_state, assigns.preceding_state} do
       # If preceding block is :empty, don't show button
       {_, :empty} when not is_nil(assigns.preceding_block) ->
         ~H"""
@@ -287,7 +301,9 @@ defmodule SandmanWeb.LiveView.Document do
     end
   end
 
-  defp render_connecting_line(assigns) do
+  attr :state, :atom, required: true
+
+  def render_connecting_line(assigns) do
     case assigns.state do
       :executed ->
         ~H"""
@@ -308,7 +324,9 @@ defmodule SandmanWeb.LiveView.Document do
     end
   end
 
-  defp render_block_state_indicator(assigns) do
+  attr :state, :atom, required: true
+
+  def render_block_state_indicator(assigns) do
     case assigns.state do
       :executed ->
         ~H"""
@@ -331,8 +349,10 @@ defmodule SandmanWeb.LiveView.Document do
     end
   end
 
-  defp format_response(nil), do: nil
-  defp format_response(assigns) do
+  attr :res, :any, required: false
+
+  def format_response(%{res: nil} = _assigns), do: nil
+  def format_response(assigns) do
      ~H"""
      <span class="text-neutral-400 bg-neutral-700 px-1.5 py-0.5 rounded text-xs font-medium mx-1">
         <%= @res.status %>
