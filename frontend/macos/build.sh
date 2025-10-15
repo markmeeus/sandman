@@ -223,9 +223,55 @@ cp -r "$BUILT_APP_PATH" "$RELEASE_FOLDER/"
 
 echo -e "${GREEN}✅ App copied to release folder!${NC}"
 
+# Create DMG for distribution
+echo -e "${YELLOW}💿 Creating DMG for distribution...${NC}"
+
+# Get version from Info.plist
+APP_VERSION=$(defaults read "$RELEASE_FOLDER/sandman.app/Contents/Info.plist" CFBundleShortVersionString 2>/dev/null)
+DMG_NAME="Sandman-${APP_VERSION}.dmg"
+DMG_PATH="$RELEASE_FOLDER/$DMG_NAME"
+
+# Remove existing DMG if it exists
+if [ -f "$DMG_PATH" ]; then
+    echo -e "${YELLOW}🗑️  Removing existing DMG...${NC}"
+    rm -f "$DMG_PATH"
+fi
+
+# Create a temporary directory for DMG contents
+DMG_TEMP_DIR=$(mktemp -d)
+echo -e "${YELLOW}📁 Temporary DMG directory: $DMG_TEMP_DIR${NC}"
+
+# Copy app to temp directory
+cp -r "$RELEASE_FOLDER/sandman.app" "$DMG_TEMP_DIR/"
+
+# Create a symbolic link to Applications folder
+ln -s /Applications "$DMG_TEMP_DIR/Applications"
+
+# Create the DMG
+echo -e "${YELLOW}🔨 Creating DMG file...${NC}"
+hdiutil create -volname "Sandman" \
+    -srcfolder "$DMG_TEMP_DIR" \
+    -ov -format UDZO \
+    "$DMG_PATH"
+
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✅ DMG created successfully!${NC}"
+
+    # Get DMG size
+    DMG_SIZE=$(du -h "$DMG_PATH" | cut -f1)
+    echo -e "${GREEN}💿 DMG file: $DMG_PATH${NC}"
+    echo -e "${GREEN}📊 DMG size: $DMG_SIZE${NC}"
+else
+    echo -e "${RED}❌ DMG creation failed${NC}"
+fi
+
+# Clean up temporary directory
+rm -rf "$DMG_TEMP_DIR"
+echo -e "${GREEN}🧹 Cleaned up temporary files${NC}"
+
 echo -e "${GREEN}🎉 Build completed successfully!${NC}"
 echo -e "${GREEN}📱 Final app: $BUILT_APP_PATH${NC}"
 echo -e "${GREEN}📦 Release copy: $RELEASE_FOLDER/sandman.app${NC}"
+echo -e "${GREEN}💿 Distribution DMG: $DMG_PATH${NC}"
 echo -e "${YELLOW}💡 To run the app: open '$RELEASE_FOLDER/sandman.app'${NC}"
-echo -e "${YELLOW}💡 The Phoenix app will start automatically on port 7000${NC}"
-echo -e "${YELLOW}💡 Access the web interface at: http://localhost:7000${NC}"
+echo -e "${YELLOW}💡 To distribute: Share the DMG file with users${NC}"
