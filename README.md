@@ -14,6 +14,36 @@ Sandman lets you write API workflows as executable notebooks. Each notebook is a
 
 **Markdown Native**: At its core, Sandman is built around Markdown. Your notebooks are just plain `.md` files with executable Lua code blocks. Open them in any text editor, diff them in git, review them in pull requests—they're just Markdown. Sandman reads and writes the same Markdown format you already know, making your executable notebooks readable and editable anywhere.
 
+## Getting Started
+
+### Download
+
+Download the latest version of Sandman for macOS from [GitHub Releases](https://github.com/markmeeus/sandman/releases/).
+
+**Requirements:**
+- macOS (Apple Silicon only for now)
+- No other dependencies needed
+
+### Quick Start
+
+1. **Download and Install**
+   - Download `Sandman-{version}-silicon.dmg` from the [releases page](https://github.com/markmeeus/sandman/releases/)
+   - Double click and drag `sandman` app to your Applications folder
+   - Open Sandman
+
+2. **Create Your First Notebook**
+   - Open a folder in Sandman
+   - Create a new `.md` file (e.g., `my-first-test.md`)
+   - Add a Lua code block with some executable code
+   - Run it with `⌘+Enter` or click the Run button
+
+3. **Start Building**
+   - Mix Markdown documentation with executable Lua code
+   - Chain requests together with shared state
+   - Commit your notebooks to git like any other file
+
+See the complete [documentation](https://sandmanapp.com) for API reference and advanced usage.
+
 ### Key Features
 
 - 📝 **Executable Documentation** - Your docs and tests are the same file. If it runs, it's correct.
@@ -150,24 +180,17 @@ Sandman notebooks are:
 - **Onboarding** - New team members run notebooks to learn the API
 - **Exploration** - Experiment with third-party APIs interactively
 
-## Getting Started
+## Building from Source
 
-### Installation
+If you want to build Sandman from source instead of downloading from releases:
 
-Download Sandman for macOS from [sandmanapp.com](https://sandmanapp.com) (or build from source).
+1. Clone this repository
+2. Install Elixir and Erlang (see `.tool-versions` for versions)
+3. Run `mix deps.get` to install dependencies
+4. Run `mix phx.server` to start the development server
+5. For macOS app build, run `./build_all.sh`
 
 *Windows, Linux, and CLI versions coming soon*
-
-### Your First Notebook
-
-1. Launch Sandman and open a folder
-2. Create a new file (e.g., `my-first-test.md`)
-3. Add a code block and write some Lua code
-4. Run it with `⌘+Enter` or the Run button
-5. Add markdown blocks to document what you're testing
-6. Commit to git like any other file
-
-See the [documentation](https://sandmanapp.com) for complete guides and API reference.
 
 ## Project Status
 
