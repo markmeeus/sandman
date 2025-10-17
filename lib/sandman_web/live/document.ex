@@ -24,6 +24,20 @@ defmodule SandmanWeb.LiveView.Document do
     """
   end
 
+  attr :block_id, :string, required: true
+  attr :visibility_class, :string, default: "invisible group-hover:visible"
+
+  def render_add_block_buttons(assigns) do
+    ~H"""
+    <div class="flex flex-row">
+      <div class="flex-grow"/>
+      <button class={"px-2 py-0.5 mr-2 text-xs text-neutral-300 hover:text-neutral-100 #{@visibility_class} bg-neutral-800 hover:bg-neutral-700 rounded transition-colors"} phx-click="add-code" phx-value-block-id={@block_id}><span class="font-bold">+</span> Add Code</button>
+      <button class={"px-2 py-0.5 mr-3 text-xs text-neutral-300 hover:text-neutral-100 #{@visibility_class} bg-neutral-800 hover:bg-neutral-700 rounded transition-colors"} phx-click="add-markdown" phx-value-block-id={@block_id}><span class="font-bold">+</span> Add Markdown</button>
+      <div class="flex-grow"/>
+    </div>
+    """
+  end
+
   def render_empty_state(assigns) do
     ~H"""
       <div class="flex items-center justify-center min-h-screen p-16">
@@ -38,37 +52,33 @@ defmodule SandmanWeb.LiveView.Document do
             </div>
           </div>
 
-          <!-- Welcome Text -->
-          <h1 class="text-5xl font-bold text-neutral-100 mb-6">
-            Start Building
-          </h1>
           <p class="text-xl text-neutral-400 mb-20 leading-relaxed">
-            Create your first block to begin. Add code to execute or markdown to document your work.
+            Add code to execute or markdown to document your work.
           </p>
 
           <!-- Action Buttons -->
           <div class="flex flex-row gap-6 justify-center items-center">
             <button
-              class="group relative px-12 py-5 bg-neutral-800 hover:bg-neutral-700 text-neutral-100 rounded-lg transition-all duration-200 border border-neutral-600 hover:border-neutral-500 hover:scale-105"
+              class="group relative px-12 py-4 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded-lg transition-all duration-200 border border-neutral-600 hover:border-neutral-500 hover:scale-105"
               phx-click="add-code"
               phx-value-block-id="-">
               <div class="flex items-center justify-center gap-3">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                 </svg>
-                <span class="font-semibold text-lg">Add Code</span>
+                <span class="text-lg">Add Code</span>
               </div>
             </button>
 
             <button
-              class="group relative px-12 py-5 bg-neutral-800 hover:bg-neutral-700 text-neutral-100 rounded-lg transition-all duration-200 border border-neutral-600 hover:border-neutral-500 hover:scale-105"
+              class="group relative px-12 py-4 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded-lg transition-all duration-200 border border-neutral-600 hover:border-neutral-500 hover:scale-105"
               phx-click="add-markdown"
               phx-value-block-id="-">
               <div class="flex items-center justify-center gap-3">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
-                <span class="font-semibold text-lg">Add Markdown</span>
+                <span class="text-lg">Add Markdown</span>
               </div>
             </button>
           </div>
@@ -94,12 +104,7 @@ defmodule SandmanWeb.LiveView.Document do
       <!-- Top insert block button -->
       <div class="flex-grow py-2">
         <div class="group h-5">
-          <div class="flex flex-row">
-            <div class="flex-grow"/>
-            <button class="pt-1 mr-3 text-sm text-neutral-300 hover:text-neutral-100 hidden group-hover:block" phx-click="add-code" phx-value-block-id="-"><span class="font-bold">+</span> Add Code</button>
-            <button class="pt-1 mr-3 text-sm text-neutral-300 hover:text-neutral-100 hidden group-hover:block" phx-click="add-markdown" phx-value-block-id="-"><span class="font-bold">+</span> Add Markdown</button>
-            <div class="flex-grow"/>
-          </div>
+          <.render_add_block_buttons block_id="-" visibility_class="hidden group-hover:block" />
         </div>
       </div>
     </div>
@@ -160,12 +165,7 @@ defmodule SandmanWeb.LiveView.Document do
         <div class="w-8"></div> <!-- Empty space to align with status indicators -->
         <div class="flex-grow">
           <div class="group h-5">
-            <div class="flex flex-row">
-              <div class="flex-grow"/>
-              <button class="mr-3 text-sm text-neutral-300 hover:text-neutral-100 invisible group-hover:visible" phx-click="add-code" phx-value-block-id={block.id}><span class="font-bold">+</span> Add Code</button>
-              <button class="mr-3 text-sm text-neutral-300 hover:text-neutral-100 invisible group-hover:visible" phx-click="add-markdown" phx-value-block-id={block.id}><span class="font-bold">+</span> Add Markdown</button>
-              <div class="flex-grow"/>
-            </div>
+            <.render_add_block_buttons block_id={block.id} />
           </div>
         </div>
       </div>

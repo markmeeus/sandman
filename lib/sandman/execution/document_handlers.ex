@@ -85,8 +85,8 @@ defmodule Sandman.DocumentHandlers do
       {["sandman", "uri", "tostring"], &Uri.tostring(doc_id, &1, &2)},
       {["sandman", "uri", "encode"], &Uri.encode(doc_id, &1, &2)},
       {["sandman", "uri", "decode"], &Uri.decode(doc_id, &1, &2)},
-      {["sandman", "uri", "encodeComponent"], &Uri.encodeComponent(doc_id, &1, &2)},
-      {["sandman", "uri", "decodeComponent"], &Uri.decodeComponent(doc_id, &1, &2)},
+      {["sandman", "uri", "encode_component"], &Uri.encode_component(doc_id, &1, &2)},
+      {["sandman", "uri", "decode_component"], &Uri.decode_component(doc_id, &1, &2)},
      ] |> wrap_handlers()
   end
 
@@ -244,8 +244,9 @@ defmodule Sandman.DocumentHandlers do
 
   defp map_arg(arg, param) do
     if param[:map] do
-      {mapped, _warnings} =LuaMapper.map(arg, param[:schema] || :any)
+      {mapped, warnings} =LuaMapper.map(arg, param[:schema] || :any)
       # todo, handle warnings here
+      # but schemas are loaded from json and attributes into atom
       mapped
     else
       arg

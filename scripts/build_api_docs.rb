@@ -61,7 +61,7 @@ class ApiDocGenerator
 
       ## API Modules
 
-      ### [Global Functions](/sandman-docs/docs/api-global/)
+      ### [Global Functions](/docs/api-global/)
       Core functions available globally without any module prefix:
       #{generate_function_list(@definitions.reject { |k, _| k == 'sandman' })}
 
@@ -139,7 +139,7 @@ class ApiDocGenerator
       description = module_description(module_name)
       functions = extract_functions(module_def)
 
-      "### [#{title}](/sandman-docs/docs/api-#{module_name}/)\n#{description}\n#{generate_function_list(functions, module_name)}\n"
+      "### [#{title}](/docs/api-#{module_name}/)\n#{description}\n#{generate_function_list(functions, module_name)}\n"
     end.join("\n")
   end
 
@@ -438,7 +438,7 @@ class ApiDocGenerator
                        else
                          func_name
                        end
-        "- [`#{display_name}()`](/sandman-docs/docs/api-#{module_name}/##{anchor}) - #{func_def['description']}"
+        "- [`#{display_name}()`](/docs/api-#{module_name}/##{anchor}) - #{func_def['description']}"
       else
         anchor = func_name.downcase.gsub('.', '')
         display_name = if func_def['has_try']
@@ -446,7 +446,7 @@ class ApiDocGenerator
                        else
                          func_name
                        end
-        "- [`#{display_name}()`](/sandman-docs/docs/api-global/##{anchor}) - #{func_def['description']}"
+        "- [`#{display_name}()`](/docs/api-global/##{anchor}) - #{func_def['description']}"
       end
     end.compact
 

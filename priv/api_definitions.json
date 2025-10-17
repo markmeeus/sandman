@@ -219,27 +219,82 @@
       "type": "table",
       "parse": {
         "type": "function",
-        "description": "Parses a URI string into components"
+        "description": "Parses a URI string into components",
+        "schema": {
+          "params": [{"name": "uri", "type": "string"}],
+          "ret_vals": [{"name": "components", "type": "table", "encode": true, "map": false}]
+        },
+        "example_values": {
+          "uri": "\"https://user@server.com:1234/test/path?qry=1&param=2\""
+        }
       },
       "tostring": {
         "type": "function",
-        "description": "Converts URI components to a string"
+        "description": "Converts URI components to a string",
+        "schema": {
+          "params": [
+            {
+              "name": "components", "type": "table", "decode": true, "map": true,
+              "schema": {
+                "host": "string",
+                "path": "string",
+                "port": "integer",
+                "scheme": "string",
+                "userinfo": "string",
+                "query": "any",
+                "queryString": "string"
+              }
+            }
+          ],
+          "ret_vals": [{"name": "uri", "type": "string"}]
+        },
+        "example_values": {
+          "components": "{host = \"server.com\", path = \"/test/path\", port = 1234, query = {qry = 1, param = 2}, scheme = \"https\", userinfo = \"user\"}"
+        }
       },
       "encode": {
         "type": "function",
-        "description": "URL-encodes a string"
+        "description": "URI-encodes a url",
+        "schema": {
+          "params": [{"name": "uri", "type": "string"}],
+          "ret_vals": [{"name": "encoded_uri", "type": "string"}]
+        },
+        "example_values": {
+          "uri": "\"http://test.com/Hello Sandman\""
+        }
       },
       "decode": {
         "type": "function",
-        "description": "URL-decodes a string"
+        "description": "URI-decodes a URI",
+        "schema": {
+          "params": [{"name": "encoded_uri", "type": "string"}],
+          "ret_vals": [{"name": "uri", "type": "string"}]
+        },
+        "example_values": {
+          "encoded_uri": "\"http://test.com/Hello%20Sandman\""
+        }
       },
-      "encodeComponent": {
+      "encode_component": {
         "type": "function",
-        "description": "URL-encodes a string component"
+        "description": "URI-encodes a URI component",
+        "schema": {
+          "params": [{"name": "uri", "type": "string"}],
+          "ret_vals": [{"name": "encoded_uri", "type": "string"}]
+        },
+        "example_values": {
+          "uri": "\"http://test.com/Hello Sandman\""
+        }
       },
-      "decodeComponent": {
+      "decode_component": {
         "type": "function",
-        "description": "URL-decodes a string component"
+        "description": "URI-decodes a URI component",
+        "schema": {
+          "params": [{"name": "encoded_uri", "type": "string"}],
+          "ret_vals": [{"name": "uri", "type": "string"}]
+        },
+        "example_values": {
+          "encoded_uri": "\"http%3A%2F%2Ftest.com%2FHello%20Sandman\""
+        }
       }
     }
   }
