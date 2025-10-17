@@ -34,7 +34,7 @@
         "type": "function",
         "description": "Makes an HTTP HEAD request"
       },
-      "send": {
+      "request": {
         "type": "function",
         "description": "Sends an HTTP request with custom configuration"
       }

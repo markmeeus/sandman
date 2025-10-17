@@ -43,7 +43,7 @@ defmodule Sandman.DocumentHandlers do
       {["sandman", "http", "delete"], &fetch_handler.(["DELETE"] ++ &1, &2)},
       {["sandman", "http", "patch"], &fetch_handler.(["PATCH"] ++ &1, &2)},
       {["sandman", "http", "head"], &fetch_handler.(["HEAD"] ++ &1, &2)},
-      {["sandman", "http", "send"], &fetch_handler.(&1, &2)},
+      {["sandman", "http", "request"], &fetch_handler.(&1, &2)},
       {["print"],fn args, luerl_state ->
         decoded_args = :luerl.decode_list(args, luerl_state)
         {:ok, res} = GenServer.call(self_pid, {:handle_lua_call, :print, decoded_args})
