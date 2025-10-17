@@ -26,12 +26,52 @@ defmodule SandmanWeb.LiveView.Document do
 
   def render_empty_state(assigns) do
     ~H"""
-      <div class="group h-5">
-        <div class="flex flex-row">
-          <div class="flex-grow"/>
-          <button class="pt-1 mr-3 text-sm text-neutral-300 hover:text-neutral-100" phx-click="add-code" phx-value-block-id="-"><span class="font-bold">+</span> Add Code</button>
-          <button class="pt-1 mr-3 text-sm text-neutral-300 hover:text-neutral-100" phx-click="add-markdown" phx-value-block-id="-"><span class="font-bold">+</span> Add Markdown</button>
-          <div class="flex-grow"/>
+      <div class="flex items-center justify-center min-h-screen p-16">
+        <div class="text-center max-w-4xl w-full">
+          <!-- Icon -->
+          <div class="mb-16 flex justify-center">
+            <div class="relative">
+              <div class="absolute inset-0 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-full blur-xl opacity-30"></div>
+              <div class="relative">
+                <img src="/images/sandman-icon.png" alt="Sandman" class="w-32 h-32" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Welcome Text -->
+          <h1 class="text-5xl font-bold text-neutral-100 mb-6">
+            Start Building
+          </h1>
+          <p class="text-xl text-neutral-400 mb-20 leading-relaxed">
+            Create your first block to begin. Add code to execute or markdown to document your work.
+          </p>
+
+          <!-- Action Buttons -->
+          <div class="flex flex-row gap-6 justify-center items-center">
+            <button
+              class="group relative px-12 py-5 bg-neutral-800 hover:bg-neutral-700 text-neutral-100 rounded-lg transition-all duration-200 border border-neutral-600 hover:border-neutral-500 hover:scale-105"
+              phx-click="add-code"
+              phx-value-block-id="-">
+              <div class="flex items-center justify-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+                <span class="font-semibold text-lg">Add Code</span>
+              </div>
+            </button>
+
+            <button
+              class="group relative px-12 py-5 bg-neutral-800 hover:bg-neutral-700 text-neutral-100 rounded-lg transition-all duration-200 border border-neutral-600 hover:border-neutral-500 hover:scale-105"
+              phx-click="add-markdown"
+              phx-value-block-id="-">
+              <div class="flex items-center justify-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span class="font-semibold text-lg">Add Markdown</span>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
     """
