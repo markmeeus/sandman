@@ -30,13 +30,15 @@ defmodule SandmanWeb.LiveView.RequestResponse do
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 mb-1">
                       <.http_method_badge method={req_res.req.method} />
+                      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-m font-medium text-neutral-100 bg-neutral-700">
+                        <%= format_url(req_res) %>
+                      </span>
                       <%= if(req_res.res) do %>
                         <.status_badge status={req_res.res.status} />
                       <% end %>
                     </div>
-                    <h2 class="text-sm font-medium text-neutral-100 truncate">
-                      <%= format_request(req_res) %>
-                    </h2>
+
+
                   </div>
                 </div>
               </div>
