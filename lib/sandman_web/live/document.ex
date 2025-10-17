@@ -88,10 +88,11 @@ defmodule SandmanWeb.LiveView.Document do
             </div>
             <%= if block.type == "lua" do %>
                 <div class="min-h-5">
-                  <div class="flex flex-row fs-2 my-2 px-6 text-sm sticky">
+                  <div class="flex flex-row fs-2 my-2 px-6 text-sm sticky" phx-update="replace"
+                    id={"#{if @open_requests[block.id], do: "block-footer-#{block.id}", else: "block-footer-#{block.id}-closed"}"}>
                     <.render_run_button block={block} preceding_block={preceding_block} />
                     <div class="flex-grow"/>
-                    <.render_block_stats requests={requests_for_block(@requests, block.id)} block={block} is_open={!!@open_requests[block.id]} />
+                    <.render_block_stats requests={requests_for_block(@requests, block.id)} block={block} is_open={@open_requests[block.id]} />
                     <div class="flex-grow"/>
                     <%= if @confirming_removal == block.id do %>
                       <!-- Confirmation buttons -->
@@ -137,60 +138,65 @@ defmodule SandmanWeb.LiveView.Document do
   attr :request_index, :integer, required: true
   attr :selected_request, :any, required: true
 
-  def render_request(assigns = %{req: %{ res: nil, lua_result: [nil, err] }}) when is_bitstring(err) do
-    assigns = assign(assigns, :row_class, (
-      if assigns.selected_request == {assigns.block_id, assigns.request_index},
-        do: "request-row request-row-selected flex flex-row-reverse text-xs text-red-400 rounded-b pb-1 px-1",
-        else: "request-row flex flex-row-reverse text-xs text-red-400 rounded-b pb-1 px-1"))
-    assigns = assign(assigns, :err, err)
-
-    ~H"""
-      <div class="flex flex-col">
-        <div class={@row_class} data-block-id={@block_id} data-request-index={@request_index}>
-          <%= format_request(@req)%>: <%= @err %>
-        </div>
-      </div>
-    """
-  end
-
   def render_request(assigns) do
-    assigns = assign(assigns, :row_class, (
-      if assigns.selected_request == {assigns.block_id, assigns.request_index},
-        do: "request-row request-row-selected flex flex-row text-xs text-neutral-100 rounded-b pb-1 px-1 pt-1 bg-neutral-700 hover:bg-neutral-600 transition-colors duration-150",
-        else: "request-row flex flex-row text-xs text-neutral-300 rounded-b pb-1 px-1 pt-1 hover:bg-neutral-800 transition-colors duration-150"))
+    # Check if this is an error request
+    is_error = case assigns.req do
+      %{res: nil, lua_result: [nil, err]} when is_bitstring(err) -> true
+      _ -> false
+    end
 
-    ~H"""
-      <div class="flex flex-col">
-        <a class={@row_class}
-            data-block-id={@block_id} data-request-index={@request_index}
-            href="#" phx-click="select-request" phx-value-block-id={@block_id} phx-value-line_nr={@req.call_info.line_nr} phx-value-request-index={@request_index}>
-          <div class="flex-grow">
-            <span><%= format_request(@req) %></span>
+    if is_error do
+      %{lua_result: [nil, err]} = assigns.req
+      assigns = assign(assigns, :row_class, (
+        if assigns.selected_request == {assigns.block_id, assigns.request_index},
+          do: "request-row request-row-selected flex flex-row-reverse text-xs text-red-400 rounded-b pb-1 px-1",
+          else: "request-row flex flex-row-reverse text-xs text-red-400 rounded-b pb-1 px-1"))
+      assigns = assign(assigns, :err, err)
+
+      ~H"""
+        <div class="flex flex-col">
+          <div class={@row_class} data-block-id={@block_id} data-request-index={@request_index}>
+            <%= format_request(@req)%>: <%= @err %>
           </div>
-          <div>
-            <.format_response res={@req.res} />
-          </div>
-        </a>
-      </div>
-    """
+        </div>
+      """
+    else
+      assigns = assign(assigns, :row_class, (
+        if assigns.selected_request == {assigns.block_id, assigns.request_index},
+          do: "request-row request-row-selected flex flex-row text-xs text-neutral-100 rounded-b pb-1 px-1 pt-1 bg-neutral-700 hover:bg-neutral-600 transition-colors duration-150",
+          else: "request-row flex flex-row text-xs text-neutral-300 rounded-b pb-1 px-1 pt-1 hover:bg-neutral-800 transition-colors duration-150"))
+
+      ~H"""
+        <div class="flex flex-col">
+          <a class={@row_class}
+              data-block-id={@block_id} data-request-index={@request_index}
+              href="#" phx-click="select-request" phx-value-block-id={@block_id} phx-value-line_nr={@req.call_info.line_nr} phx-value-request-index={@request_index}>
+            <div class="flex-grow">
+              <span><%= format_request(@req) %></span>
+            </div>
+            <div>
+              <.format_response res={@req.res} />
+            </div>
+          </a>
+        </div>
+      """
+    end
   end
 
   attr :requests, :list, required: true
   attr :block, :map, required: true
-  attr :is_open, :boolean, required: true
-
-  def render_block_stats(assigns = %{is_open: true}) do
-    ~H"""
-    <a href="#" class="px-1 text-neutral-300 hover:text-neutral-100 transition-colors" phx-click="toggle-requests" phx-value-block-id={@block.id}>▲</a>
-    """
-  end
+  attr :is_open, :any, default: false
 
   def render_block_stats(assigns) do
+    assigns = assign(assigns, :request_count, Enum.count(assigns.requests))
+
     ~H"""
-    <%= case Enum.count(@requests) do %>
-    <% 0 -> %>
-    <% count -> %>
-      <a href="#" class="px-1 text-neutral-300 hover:text-neutral-100 transition-colors" phx-click="toggle-requests" phx-value-block-id={@block.id}><%=count%> requests ▼</a>
+    <%= if @is_open do %>
+      <a href="#" class="px-1 text-neutral-300 hover:text-neutral-100 transition-colors" phx-click="toggle-requests" phx-value-block-id={@block.id}>▲</a>
+    <% else %>
+      <%= if @request_count > 0 do %>
+        <a href="#" class="px-1 text-neutral-300 hover:text-neutral-100 transition-colors" phx-click="toggle-requests" phx-value-block-id={@block.id}><%= @request_count %> requests ▼</a>
+      <% end %>
     <% end %>
     """
   end
