@@ -18,8 +18,8 @@ defmodule Sandman.RequestFormatting do
   end
 
   # for no info on direction
-  defp in_or_out(:in), do: ""
-  defp in_or_out(:out), do: ""
+  def in_or_out(:in), do: "↘"
+  def in_or_out(:out), do: "↗"
 
   defp add_port(formatted, :http, 80), do: formatted
   defp add_port(formatted, :https, 443), do: formatted

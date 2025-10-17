@@ -29,7 +29,7 @@ defmodule SandmanWeb.LiveView.RequestResponse do
                 <div class="flex items-start justify-between">
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 mb-1">
-                      <.http_method_badge method={req_res.req.method} />
+                      <.http_method_badge method={req_res.req.method} direction={req_res.direction} />
                       <span class="inline-flex items-center px-1.5 py-0.5 rounded text-m font-medium text-neutral-100 bg-neutral-700">
                         <%= format_url(req_res) %>
                       </span>
@@ -262,22 +262,9 @@ defmodule SandmanWeb.LiveView.RequestResponse do
 
   # HTTP Method Badge Component
   def http_method_badge(assigns) do
-
-    {bg_class, text_class} = case String.upcase(to_string(assigns.method)) do
-      "GET" -> {"bg-neutral-700", "text-neutral-200"}
-      "POST" -> {"bg-neutral-600", "text-neutral-100"}
-      "PUT" -> {"bg-neutral-500", "text-white"}
-      "PATCH" -> {"bg-neutral-400", "text-neutral-900"}
-      "DELETE" -> {"bg-neutral-300", "text-neutral-900"}
-      _ -> {"bg-neutral-700", "text-neutral-200"}
-    end
-
-    assigns = assign(assigns, :bg_class, bg_class)
-    assigns = assign(assigns, :text_class, text_class)
-
     ~H"""
-    <span class={"inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium #{@bg_class} #{@text_class}"}>
-      <%= @method %>
+    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-m font-medium bg-neutral-500 text-white">
+      <%= in_or_out(@direction) %> <%= @method %>
     </span>
     """
   end
@@ -297,7 +284,7 @@ defmodule SandmanWeb.LiveView.RequestResponse do
     assigns = assign(assigns, :text_class, text_class)
 
     ~H"""
-    <span class={"inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium #{@bg_class} #{@text_class}"}>
+    <span class={"inline-flex items-center px-1.5 py-0.5 rounded text-m font-medium #{@bg_class} #{@text_class}"}>
       <%= @status %>
     </span>
     """
