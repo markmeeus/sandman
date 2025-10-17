@@ -260,8 +260,8 @@ defmodule SandmanWeb.LiveView.RequestResponse do
 
   # HTTP Method Badge Component
   def http_method_badge(assigns) do
-    method = String.upcase(to_string(assigns.method))
-    {bg_class, text_class} = case method do
+
+    {bg_class, text_class} = case String.upcase(to_string(assigns.method)) do
       "GET" -> {"bg-neutral-700", "text-neutral-200"}
       "POST" -> {"bg-neutral-600", "text-neutral-100"}
       "PUT" -> {"bg-neutral-500", "text-white"}
@@ -270,13 +270,12 @@ defmodule SandmanWeb.LiveView.RequestResponse do
       _ -> {"bg-neutral-700", "text-neutral-200"}
     end
 
-    assigns = assign(assigns, :method_text, method)
     assigns = assign(assigns, :bg_class, bg_class)
     assigns = assign(assigns, :text_class, text_class)
 
     ~H"""
     <span class={"inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium #{@bg_class} #{@text_class}"}>
-      <%= @method_text %>
+      <%= @method %>
     </span>
     """
   end
