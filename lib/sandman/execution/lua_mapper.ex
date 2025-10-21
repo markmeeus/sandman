@@ -167,8 +167,21 @@ defmodule Sandman.LuaMapper do
   def to_lua_code(_termex), do: "?" # dont leak any internals please
 
   def to_printable(termex, root\\true)
-  def to_printable(termex, true) when is_bitstring(termex), do: trim(termex)
-  def to_printable(termex, false) when is_bitstring(termex), do: "\"#{trim(termex)}\""
+  def to_printable(termex, true) when is_bitstring(termex) do
+    if String.valid?(termex) do
+      trim(termex)
+    else
+      "<binary: #{Base.encode64(termex) |> trim()}>"
+    end
+  end
+
+  def to_printable(termex, false) when is_bitstring(termex) do
+    if String.valid?(termex) do
+      "\"#{trim(termex)}\""
+    else
+      "<binary: #{Base.encode64(termex) |> trim()}>"
+    end
+  end
   def to_printable(termex, _) when is_number(termex), do: termex
   def to_printable(true, _), do: "true"
   def to_printable(false, _), do: "false"
