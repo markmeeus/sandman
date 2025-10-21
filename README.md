@@ -4,8 +4,6 @@
 
 Sandman is a tool for creating living API documentation and testing workflows. Write interactive notebooks that combine Lua code with Markdown—make HTTP requests, spin up servers, test webhooks, and document your API workflows in git-friendly files.
 
-> ⚠️ **Beta Software**: Sandman is actively under development. While it's already quite usable for real work, expect to encounter bugs and unfinished features. Your feedback and contributions are very welcome!
-
 ## What is Sandman?
 
 Sandman lets you write API workflows as executable notebooks. Each notebook is a Markdown file containing blocks of Lua code that run sequentially with shared state. It's like Jupyter for HTTP APIs—but optimized for API testing, mocking, and documentation.
@@ -13,6 +11,8 @@ Sandman lets you write API workflows as executable notebooks. Each notebook is a
 **Desktop Editor + HTTP Engine**: Sandman is a desktop application that combines a notebook-style editor with a powerful HTTP engine. Write your Lua scripts in the interactive editor, and the built-in engine executes them—making HTTP requests, spinning up servers, and managing all the networking for you. Everything runs locally on your machine, keeping your API keys and data secure.
 
 **Markdown Native**: At its core, Sandman is built around Markdown. Your notebooks are just plain `.md` files with executable Lua code blocks. Open them in any text editor, diff them in git, review them in pull requests—they're just Markdown. Sandman reads and writes the same Markdown format you already know, making your executable notebooks readable and editable anywhere.
+
+![Sandman Screenshot](screenshot.jpg)
 
 ## Getting Started
 
@@ -113,8 +113,10 @@ sandman.server.post(server, "/webhook", function(request)
     print("Received webhook:", webhook_data)
     return {body = "ok"}
 end)
+```
 
--- In another block, trigger the webhook
+In another block, trigger the webhook
+```lua
 response = sandman.http.post("http://localhost:7010/webhook",
     {["Content-Type"] = "application/json"},
     sandman.json.encode({event = "test", timestamp = os.time()})
@@ -200,7 +202,7 @@ Sandman is in **active beta development**. It's functional and already useful fo
 - 🚧 **In Progress**: CLI version, improved error handling, better code editor, more comprehensive docs
 - 📋 **Planned**: Windows & Linux support, environment variables, CLI/CI/CD integration, Plugin system, Interactive Document UI components
 
-We welcome bug reports, feature requests, and contributions!
+Bug reports, feature requests, and contributions are more than welcome!
 
 ## Contributing
 

@@ -89,8 +89,8 @@ defmodule SandmanWeb.LiveView.RequestResponse do
           extra_toggle_event="switch_req_body_format" />
       </div>
 
-      <div id="request-body" class="px-3 pb-3">
-        <div class="h-96 border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden">
+      <div id="request-body" class="px-3 pb-3" style="height: calc(100vh - 250px); min-height: 400px;">
+        <div class="h-full border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden">
           <%= if @show_raw_body do %>
             <iframe id="raw" class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{@block_id}/request/#{@request_idx}?raw=true"}>
               </iframe>
@@ -127,8 +127,8 @@ defmodule SandmanWeb.LiveView.RequestResponse do
           extra_toggle_event="switch_res_body_format" />
       </div>
 
-      <div id="response-body" class="px-3 pb-3">
-        <div class="h-96 border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden">
+      <div id="response-body" class="px-3 pb-3" style="height: calc(100vh - 250px); min-height: 400px;">
+        <div class="h-full border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden">
           <%= if @show_raw_body do %>
             <iframe id="raw" class="h-full w-full" src={"/#{Base.url_encode64(:erlang.term_to_binary(@doc_pid))}/#{@block_id}/response/#{@request_idx}?raw=true"}>
               </iframe>
