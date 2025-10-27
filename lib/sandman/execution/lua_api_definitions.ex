@@ -11,11 +11,13 @@ defmodule Sandman.LuaApiDefinitions do
       convert_nested_param_schema = fn param ->
         case param do
           %{schema: schema} when is_map(schema) ->
-            # Convert each value in the nested schema from string to atom
+            # Convert only the VALUES (types) in the nested schema from string to atom
+            # revert KEYS to strings
             converted_schema = Enum.map(schema, fn {key, value} ->
-              atom_value = if is_binary(value), do: String.to_atom(value), else: value
-              {key, atom_value}
-            end) |> Map.new()
+              key = to_string(key)
+              {key, String.to_atom(value)}
+            end) |> Enum.into(%{})
+
             Map.put(param, :schema, converted_schema)
 
           param ->

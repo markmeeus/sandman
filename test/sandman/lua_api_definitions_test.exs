@@ -207,26 +207,16 @@ defmodule Sandman.LuaApiDefinitionsTest do
       assert is_map(param.schema)
       nested_schema = param.schema
 
-      assert nested_schema.host == :string
-      assert is_atom(nested_schema.host)
+      assert nested_schema["host"] == :string
 
-      assert nested_schema.path == :string
-      assert is_atom(nested_schema.path)
+      assert nested_schema["path"] == :string
 
-      assert nested_schema.port == :integer
-      assert is_atom(nested_schema.port)
+      assert nested_schema["port"] == :integer
 
-      assert nested_schema.scheme == :string
-      assert is_atom(nested_schema.scheme)
-
-      assert nested_schema.userinfo == :string
-      assert is_atom(nested_schema.userinfo)
-
-      assert nested_schema.query == :any
-      assert is_atom(nested_schema.query)
-
-      assert nested_schema.queryString == :string
-      assert is_atom(nested_schema.queryString)
+      assert nested_schema["scheme"] == :string
+      assert nested_schema["userinfo"] == :string
+      assert nested_schema["query"] == :any
+      assert nested_schema["queryString"] == :string
     end
 
     test "converts sandman.uri.encode/decode param types to atoms" do
