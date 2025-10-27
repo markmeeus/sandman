@@ -6,6 +6,7 @@ defmodule Sandman.Document do
   alias Sandman.DocumentEncoder
   alias Sandman.Http.CowboyManager
   alias Sandman.DocumentHandlers
+  alias Sandman.DotEnvLoader
 
   use GenServer, restart: :transient
 
@@ -71,16 +72,26 @@ defmodule Sandman.Document do
   end
 
   def init([doc_id, file_path, doc_id_fn]) do
+    {:ok, file} = File.read(file_path)
+    env = case File.exists?("#{file_path}.env") do
+      true ->
+        {:ok, env_file} = File.read("#{file_path}.env")
+        DotEnvLoader.parse(env_file)
+      false ->
+         %{}
+    end
+    document = DocumentEncoder.decode(file, doc_id_fn)
+
     self_pid = self()
     handlers = DocumentHandlers.build_handlers(self_pid, doc_id)
     {:ok, luerl_server_pid} = LuerlServer.start_link(self_pid, handlers)
     File.touch!(file_path, :erlang.universaltime())
-    {:ok, file} = File.read(file_path)
-    document = DocumentEncoder.decode(file, doc_id_fn)
+
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_loaded)
     {:ok, %{
       doc_id: doc_id,
       document: document,
+      env: env,
       file_path: file_path,
       luerl_server_pid: luerl_server_pid,
       requests: %{},
@@ -118,6 +129,14 @@ defmodule Sandman.Document do
     log(doc_id, formatted)
     # append
     {:reply, {:ok, [true]}, state}
+  end
+  def handle_call({:handle_lua_call, :getenv, key}, _sender, state = %{env: env}) do
+    case Map.get(env, key, nil) do
+      nil ->
+        {:reply, System.get_env(key), state}
+      value ->
+        {:reply, value, state}
+    end
   end
   def handle_call({:handle_lua_call, :start_server, [port]}, _sender, state) do
     id =  UUID.uuid4()

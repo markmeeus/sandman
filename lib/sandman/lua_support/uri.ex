@@ -24,7 +24,7 @@ defmodule Sandman.LuaSupport.Uri do
       {queryString, _} -> Map.put(url_map, :query, queryString)
     end
 
-    uri = struct(%URI{},url_map)
+    uri = struct(%URI{}, url_map)
     res = URI.to_string(uri)
     {[res], luerl_state}
   end

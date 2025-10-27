@@ -6,7 +6,7 @@ defmodule Sandman.DocumentHandlers do
   alias Sandman.Encoders.Json
   alias Sandman.LuaSupport.Jwt
   alias Sandman.LuaSupport.Uri
-
+  alias Sandman.LuaSupport.GetEnv
   alias Sandman.LuaMapper
 
   def build_handlers(self_pid, doc_id) do
@@ -37,6 +37,7 @@ defmodule Sandman.DocumentHandlers do
     end
 
     [
+      {["sandman", "getenv"], &GetEnv.getenv(self_pid, doc_id,  &1, &2)},
       {["sandman", "http", "get"], &fetch_handler.(["GET"] ++ &1, &2)},
       {["sandman", "http", "post"], &fetch_handler.(["POST"] ++ &1, &2)},
       {["sandman", "http", "put"], &fetch_handler.(["PUT"] ++ &1, &2)},
@@ -127,7 +128,6 @@ defmodule Sandman.DocumentHandlers do
     params = schema.params
 
     fn args, luerl_state ->
-      IO.inspect({"wrap_handler", path, api_def, safe_call})
       # test number of args
       if(params == :any || length(params) == length(args)) do
         case preprocess_args(args, params, full_function_name, luerl_state) do
@@ -141,7 +141,6 @@ defmodule Sandman.DocumentHandlers do
             end
           args ->
             _res = try do
-                IO.inspect({"calling handler", full_function_name, handler, args})
                 handler.(args, luerl_state)
               rescue
                 error ->
@@ -150,7 +149,6 @@ defmodule Sandman.DocumentHandlers do
                     {error_val, luerl_state} = :luerl.encode("Invalid arguments for #{full_function_name}, #{inspect(error)}", luerl_state)
                     {[nil_val, error_val], luerl_state}
                   else
-                    IO.inspect(error)
                     # this should actually not happen.
                     # the handlers should not throw, but return {:error, message, luerl_state}
                     :luerl_lib.lua_error("Invalid arguments for #{full_function_name}, #{inspect(error)}", luerl_state)
@@ -187,7 +185,6 @@ defmodule Sandman.DocumentHandlers do
   end
 
   defp wrap_handler(path, _handler, api_def , safe_call) do
-      IO.inspect({"unexpecte handler", path, api_def, safe_call})
       nil
   end
 
@@ -216,11 +213,8 @@ defmodule Sandman.DocumentHandlers do
   defp preprocess_args(args, params, full_function_name, luerl_state) do
     case validate_args(args, params, full_function_name) do
       [] ->
-        IO.inspect({"preprocessing args", args, params})
         map_args(args, params, luerl_state)
-        |> IO.inspect()
       errors ->
-        IO.inspect({"errors", errors})
         {:error, Enum.join(errors, ", ")}
     end
   end

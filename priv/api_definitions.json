@@ -8,6 +8,17 @@
   },
   "sandman": {
     "type": "table",
+    "getenv": {
+      "type": "function",
+      "description": "Gets an environment variable, only variable names prefixed with SANDMAN_ are allowed for now.",
+      "schema": {
+        "params": [{"name": "var_name", "type": "string"}],
+        "ret_vals": [{"name": "value", "type": "string"}]
+      },
+      "example_values": {
+        "var_name": "SANDMAN_API_SECRET"
+      }
+    },
     "http": {
       "type": "table",
       "get": {
@@ -222,7 +233,7 @@
         "description": "Parses a URI string into components",
         "schema": {
           "params": [{"name": "uri", "type": "string"}],
-          "ret_vals": [{"name": "components", "type": "table", "encode": true, "map": false}]
+          "ret_vals": [{"name": "components", "type": "table", "encode": true, "map": true}]
         },
         "example_values": {
           "uri": "\"https://user@server.com:1234/test/path?qry=1&param=2\""

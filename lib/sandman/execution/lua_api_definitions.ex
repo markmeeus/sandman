@@ -7,98 +7,104 @@ defmodule Sandman.LuaApiDefinitions do
     {:ok, content} ->
       json = Jason.decode!(content, keys: :atoms)
 
-      # Convert types to atoms inline - completely inline approach
+      # Helper function to convert nested schema inside params
+      convert_nested_param_schema = fn param ->
+        case param do
+          %{schema: schema} when is_map(schema) ->
+            # Convert each value in the nested schema from string to atom
+            converted_schema = Enum.map(schema, fn {key, value} ->
+              atom_value = if is_binary(value), do: String.to_atom(value), else: value
+              {key, atom_value}
+            end) |> Map.new()
+            Map.put(param, :schema, converted_schema)
+
+          param ->
+            param
+        end
+      end
+
+      # Helper function to convert params list
+      convert_params = fn
+        "any" -> :any
+        params when is_list(params) ->
+          Enum.map(params, fn param ->
+            param
+            |> Map.update!(:type, &String.to_atom/1)
+            |> convert_nested_param_schema.()
+          end)
+        other -> other
+      end
+
+      # Helper function to convert ret_vals list
+      convert_ret_vals = fn
+        "any" -> :any
+        ret_vals when is_list(ret_vals) ->
+          Enum.map(ret_vals, fn ret_val ->
+            Map.update!(ret_val, :type, &String.to_atom/1)
+          end)
+        other -> other
+      end
+
+      # Helper function to process an API definition (function)
+      process_api_def = fn api_def ->
+        api_def
+        |> then(fn def ->
+          case def do
+            %{schema: %{params: params}} = d ->
+              put_in(d[:schema][:params], convert_params.(params))
+            d -> d
+          end
+        end)
+        |> then(fn def ->
+          case def do
+            %{schema: %{ret_vals: ret_vals}} = d ->
+              put_in(d[:schema][:ret_vals], convert_ret_vals.(ret_vals))
+            d -> d
+          end
+        end)
+      end
+
+      # Helper function to process nested items (children of tables)
+      process_nested_items = fn items ->
+        Enum.map(items, fn {key, value} ->
+          {key, process_api_def.(value)}
+        end)
+        |> Map.new()
+      end
+
+      # Process the entire JSON structure
       json
       |> Enum.map(fn {key, value} ->
-        # Process each API definition
-        converted_value =
-          value
-          # Handle schema params conversion
-          |> (fn api_def ->
-            case api_def do
-              %{schema: %{params: "any"}} = def ->
-                put_in(def[:schema][:params], :any)
+        converted_value = case value do
+          # Top-level tables (like "sandman")
+          %{type: "table"} = table_def ->
+            # Get all children (non-metadata fields)
+            children = Map.drop(table_def, [:type, :description])
 
-              %{schema: %{params: params}} = def when is_list(params) ->
-                atom_params = Enum.map(params, fn param ->
-                  Map.update!(param, :type, &String.to_atom/1)
-                end)
-                put_in(def[:schema][:params], atom_params)
+            # Process children recursively
+            processed_children = Enum.map(children, fn {child_key, child_value} ->
+              processed_child = case child_value do
+                # Nested table (like "sandman.http", "sandman.json")
+                %{type: "table"} = nested_table ->
+                  nested_children = Map.drop(nested_table, [:type, :description])
+                  processed_nested = process_nested_items.(nested_children)
+                  Map.merge(nested_table, processed_nested)
 
-              def ->
-                def
-            end
-          end).()
-          # Handle schema ret_vals conversion
-          |> (fn api_def ->
-            case api_def do
-              %{schema: %{ret_vals: "any"}} = def ->
-                put_in(def[:schema][:ret_vals], :any)
-
-              %{schema: %{ret_vals: ret_vals}} = def when is_list(ret_vals) ->
-                atom_ret_vals = Enum.map(ret_vals, fn ret_val ->
-                  Map.update!(ret_val, :type, &String.to_atom/1)
-                end)
-                put_in(def[:schema][:ret_vals], atom_ret_vals)
-
-              def ->
-                def
-            end
-          end).()
-          # Handle nested tables (recursive processing)
-          |> (fn api_def ->
-            Enum.reduce(api_def, %{}, fn {k, v}, acc ->
-              case v do
-                %{type: "table"} = table_def ->
-                  # For nested tables, recursively process their children
-                  nested_map = Map.drop(table_def, [:type, :description])
-                  processed_nested = Enum.map(nested_map, fn {nested_key, nested_value} ->
-                    # Process nested API definitions
-                    processed_nested_value =
-                      nested_value
-                      # Handle nested schema params
-                      |> (fn nested_def ->
-                        case nested_def do
-                          %{schema: %{params: "any"}} = def ->
-                            put_in(def[:schema][:params], :any)
-
-                          %{schema: %{params: params}} = def when is_list(params) ->
-                            atom_params = Enum.map(params, fn param ->
-                              Map.update!(param, :type, &String.to_atom/1)
-                            end)
-                            put_in(def[:schema][:params], atom_params)
-
-                          def ->
-                            def
-                        end
-                      end).()
-                      # Handle nested ret_vals
-                      |> (fn nested_def ->
-                        case nested_def do
-                          %{schema: %{ret_vals: "any"}} = def ->
-                            put_in(def[:schema][:ret_vals], :any)
-
-                          %{schema: %{ret_vals: ret_vals}} = def when is_list(ret_vals) ->
-                            atom_ret_vals = Enum.map(ret_vals, fn ret_val ->
-                              Map.update!(ret_val, :type, &String.to_atom/1)
-                            end)
-                            put_in(def[:schema][:ret_vals], atom_ret_vals)
-
-                          def ->
-                            def
-                        end
-                      end).()
-
-                    {nested_key, processed_nested_value}
-                  end) |> Map.new()
-
-                  Map.put(acc, k, Map.merge(table_def, processed_nested))
-
+                # Direct function child (like "sandman.getenv")
                 other ->
-                  Map.put(acc, k, other)
+                  process_api_def.(other)
               end
+
+              {child_key, processed_child}
             end)
-          end).()
+            |> Map.new()
+
+            Map.merge(table_def, processed_children)
+
+          # Top-level functions (like "print")
+          other ->
+            process_api_def.(other)
+        end
 
         {key, converted_value}
       end)
@@ -149,12 +155,29 @@ defmodule Sandman.LuaApiDefinitions do
 
       %{schema: %{params: params}} = def when is_list(params) ->
         atom_params = Enum.map(params, fn param ->
-          Map.update!(param, :type, &String.to_atom/1)
+          param
+          |> Map.update!(:type, &String.to_atom/1)
+          |> convert_nested_param_schema_runtime()
         end)
         put_in(def[:schema][:params], atom_params)
 
       def ->
         def
+    end
+  end
+
+  defp convert_nested_param_schema_runtime(param) do
+    case param do
+      %{schema: schema} when is_map(schema) ->
+        # Convert each value in the nested schema from string to atom
+        converted_schema = Enum.map(schema, fn {key, value} ->
+          atom_value = if is_binary(value), do: String.to_atom(value), else: value
+          {key, atom_value}
+        end) |> Map.new()
+        Map.put(param, :schema, converted_schema)
+
+      param ->
+        param
     end
   end
 
