@@ -125,7 +125,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
   end
 
   def handle_event("add-markdown", %{"block-id" => block_id}, socket = %{assigns: %{doc_pid: doc_pid}}) do
-    Document.add_block(doc_pid, block_id, "markdown")
+     Document.add_block(doc_pid, block_id, "markdown")
     {:noreply, socket}
   end
 
@@ -211,10 +211,8 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     if current_document do
       block = Enum.find(current_document.document.blocks, & &1.id == block_id)
       if block && block.type == "markdown" && socket.assigns[:focused_block] == block_id do
-        IO.inspect({"resetting focused_block", block_id})
         {:noreply, assign(socket, :focused_block, nil)}
       else
-        IO.inspect({"hier?", block.type, socket.assigns[:focused_block], block_id, block.id})
         {:noreply, assign(socket, :focused_block, nil)}
         #{:noreply, socket}
       end
@@ -387,6 +385,25 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
 
   def handle_info(:document_changed, socket = %{assigns: %{doc_pid: doc_pid}}) do
     {:noreply, assign(socket, :document, Document.get(doc_pid))}
+  end
+
+  def handle_info({:block_added, block_id}, socket) do
+    # For markdown blocks, set focused_block so the editor becomes visible
+    # Then push event to focus the newly added block's Monaco editor
+    current_document = socket.assigns[:document]
+
+    socket = if current_document do
+      block = Enum.find(current_document.document.blocks, & &1.id == block_id)
+      if block && block.type == "markdown" do
+        assign(socket, :focused_block, block_id)
+      else
+        socket
+      end
+    else
+      socket
+    end
+
+    {:noreply, push_event(socket, "focus-monaco-editor", %{"block_id" => block_id})}
   end
 
   def handle_info({:request_recorded, block_id}, socket = %{assigns: %{doc_pid: doc_pid}}) do

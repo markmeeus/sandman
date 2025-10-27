@@ -139,6 +139,15 @@ const DocumentHook = {
       this.focusBlock(payload["block-id"]);
     });
 
+    // Register handler for focusing newly added blocks
+    this.handleEvent("focus-monaco-editor", (payload) => {
+      const blockId = payload["block_id"];
+      // Wait a bit for the DOM to update and Monaco editor to be mounted
+      setTimeout(() => {
+        this.focusBlock(blockId);
+      }, 100);
+    });
+
     // for scroll events from LiveView
     this.handleEvent("scroll-to-selected", (payload) => {
       this.scrollToBlock(payload["block_id"]);

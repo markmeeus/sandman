@@ -199,6 +199,7 @@ defmodule Sandman.Document do
     new_blocks = [new_block] ++ (document.blocks || [])
     document = Map.put(document, :blocks, new_blocks)
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
+    PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", {:block_added, new_block.id})
     write_file(state)
     {:noreply, %{ state | document: document}}
   end
@@ -221,6 +222,7 @@ defmodule Sandman.Document do
     end)
     document = Map.put(document, :blocks, new_blocks)
     PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", :document_changed)
+    PubSub.broadcast(Sandman.PubSub, "document:#{doc_id}", {:block_added, new_block.id})
     write_file(state)
     {:noreply, %{ state | document: document}}
   end

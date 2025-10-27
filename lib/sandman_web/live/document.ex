@@ -270,7 +270,8 @@ defmodule SandmanWeb.LiveView.Document do
 
       <!-- Render text content for unfocused markdown blocks -->
       <%= if @block.type == "markdown" && @focused_block != @block.id do %>
-        <div class="prose prose-sm text-[12px] prose-invert max-w-none text-neutral-200 font-mono leading-relaxed px-2 cursor-text hover:bg-neutral-800 transition-colors"
+        <div class={"prose prose-sm text-[12px] prose-invert max-w-none text-neutral-200 font-mono leading-relaxed
+          #{if String.length(@block.code) > 0, do: "px-2", else: "p-2"} cursor-text hover:bg-neutral-800 transition-colors"}
              phx-click="focus-block" phx-value-block-id={@block.id} >
              <style>
               h1 { color:#AAA !important; margin-top: 0 !important;}
