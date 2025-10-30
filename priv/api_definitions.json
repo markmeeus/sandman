@@ -16,7 +16,7 @@
         "ret_vals": [{"name": "value", "type": "string"}]
       },
       "example_values": {
-        "var_name": "SANDMAN_API_SECRET"
+        "var_name": "\"SANDMAN_API_SECRET\""
       }
     },
     "http": {
