@@ -10,7 +10,7 @@
     "type": "table",
     "getenv": {
       "type": "function",
-      "description": "Gets an environment variable, only variable names prefixed with SANDMAN_ are allowed for now.",
+      "description": "Gets an environment variable, only variable names prefixed with SANDMAN_ are allowed for now (os.getenv is sandboxed). Sandman will also look for a file '<yourfile>.env' for a .env file.",
       "schema": {
         "params": [{"name": "var_name", "type": "string"}],
         "ret_vals": [{"name": "value", "type": "string"}]
