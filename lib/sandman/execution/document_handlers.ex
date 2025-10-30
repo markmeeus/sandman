@@ -184,10 +184,6 @@ defmodule Sandman.DocumentHandlers do
     end
   end
 
-  defp wrap_handler(path, _handler, api_def , safe_call) do
-      nil
-  end
-
   defp map_returns(returns, ret_vals, luerl_state) do
     Enum.zip(returns, ret_vals)
     |> Enum.reduce({[], luerl_state}, fn {return, ret_val}, {encoded_returns, luerl_state} ->
@@ -238,7 +234,7 @@ defmodule Sandman.DocumentHandlers do
 
   defp map_arg(arg, param) do
     if param[:map] do
-      {mapped, warnings} =LuaMapper.map(arg, param[:schema] || :any)
+      {mapped, _warnings} =LuaMapper.map(arg, param[:schema] || :any)
       # todo, handle warnings here
       # but schemas are loaded from json and attributes into atom
       mapped

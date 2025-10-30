@@ -22,9 +22,7 @@ defmodule Sandman.HttpClient do
   end
 
   def fetch(doc_id, method, url, headers, body) do
-    IO.inspect({"unmapped headers", headers})
     headers = map_headers(doc_id, headers)
-    IO.inspect({"mapped headers", headers})
     # TODO: finch build can fail as well
     try do
       req = Finch.build(method, url, headers, body)

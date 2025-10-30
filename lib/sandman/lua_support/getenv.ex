@@ -9,7 +9,7 @@ defmodule Sandman.LuaSupport.GetEnv do
       end
     rescue
       error ->
-        {:error, "Failed to get environment variable: #{error.message}", luerl_state}
+        {:error, "Failed to get environment variable: #{Exception.message(error)}", luerl_state}
     end
   end
 end

@@ -20,7 +20,6 @@ defmodule SandmanWeb.LiveView.Docs do
 
           <div class="space-y-4">
             <%= for {namespace, functions} <- @grouped_functions do %>
-              <% is_expanded = MapSet.member?(@docs_expanded_namespaces, namespace) %>
               <div class="border border-neutral-600 rounded-lg overflow-hidden">
                 <button
                   class="w-full bg-neutral-700 px-4 py-2 border-b border-neutral-600 hover:bg-neutral-650 transition-colors text-left flex items-center justify-between"
@@ -28,33 +27,29 @@ defmodule SandmanWeb.LiveView.Docs do
                   phx-value-namespace={namespace}
                 >
                   <h3 class="text-sm font-medium text-neutral-100"><%= namespace %></h3>
-                  <div class={"text-neutral-400 transition-transform duration-200 #{if is_expanded, do: "rotate-90", else: ""}"}>
+                  <div class={"text-neutral-400 transition-transform duration-200 #{if MapSet.member?(@docs_expanded_namespaces, namespace), do: "rotate-90", else: ""}"}>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                     </svg>
                   </div>
                 </button>
-                <%= if is_expanded do %>
+                <%= if MapSet.member?(@docs_expanded_namespaces, namespace) do %>
                   <div class="divide-y divide-neutral-600">
                     <%= for func <- functions do %>
-                      <% function_id = func.name %>
-                      <% is_function_expanded = MapSet.member?(@docs_expanded_functions, function_id) %>
-                      <% has_details = length(func.params) > 0 or length(func.return_values) > 0 %>
-
                       <div class="hover:bg-neutral-750">
                         <div class="p-4">
                           <div class="flex items-start justify-between">
                             <div class="flex-1">
                               <div class="flex items-center gap-2 mb-1">
-                                <%= if has_details do %>
+                                <%= if length(func.params) > 0 or length(func.return_values) > 0 do %>
                                   <button
                                     class="flex items-center gap-2 text-left hover:bg-neutral-700 rounded px-1 py-0.5 transition-colors group"
                                     phx-click="toggle-docs-function"
-                                    phx-value-function={function_id}
+                                    phx-value-function={func.name}
                                     title="Toggle parameters and return values"
                                   >
                                     <code class="text-blue-400 font-mono text-sm group-hover:text-blue-300"><%= if func.has_try, do: "(try_)", else: "" %><%= List.last(func.path) %></code>
-                                    <div class={"text-neutral-400 group-hover:text-neutral-200 transition-all duration-200 #{if is_function_expanded, do: "rotate-90", else: ""}"}>
+                                    <div class={"text-neutral-400 group-hover:text-neutral-200 transition-all duration-200 #{if MapSet.member?(@docs_expanded_functions, func.name), do: "rotate-90", else: ""}"}>
                                       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                                       </svg>
@@ -70,7 +65,7 @@ defmodule SandmanWeb.LiveView.Docs do
                               </div>
                               <p class="text-sm text-neutral-300 mb-2"><%= func.description %></p>
 
-                              <%= if has_details and is_function_expanded do %>
+                              <%= if (length(func.params) > 0 or length(func.return_values) > 0) and MapSet.member?(@docs_expanded_functions, func.name) do %>
                                 <div class="mt-3 space-y-3 pl-4 border-l-2 border-neutral-600">
                                   <%= if func.has_try do %>
                                     <div class="mb-3 p-2 bg-amber-900/20 border border-amber-600/30 rounded text-xs">
@@ -193,7 +188,7 @@ defmodule SandmanWeb.LiveView.Docs do
     functions
     |> Enum.group_by(fn func ->
       if length(func.path) > 1 do
-        func.path |> Enum.slice(0..-2//-1) |> Enum.join(".")
+        func.path |> Enum.slice(0..-2//1) |> Enum.join(".")
       else
         "Global"
       end
