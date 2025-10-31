@@ -1,5 +1,7 @@
 # Sandman
 
+![alt text](<external/icons/Rounded 128.png>)
+
 **Executable notebooks for HTTP APIs**
 
 Sandman combines Postman, Jupyter Notebooks, and Lua into a single tool. You can create executable notebooks with Lua code blocks and Markdown documentation—optimized for HTTP client and server workflows with full request/response inspection. Everything lives in plain Markdown files, making it perfect for version control.
