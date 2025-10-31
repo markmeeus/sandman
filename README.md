@@ -6,7 +6,7 @@
 
 Sandman combines Postman, Jupyter Notebooks, and Lua into a single tool. You can create executable notebooks with Lua code blocks and Markdown documentation—optimized for HTTP client and server workflows with full request/response inspection. Everything lives in plain Markdown files, making it perfect for version control.
 
-Sandman is currently a desktop tool, everything runs on your machine. I have plans to add a cli so that Sandman could be automated, to run yout files as tests in a CI tool for instance.
+Sandman is currently a desktop tool, everything runs on your machine. I have plans to add a cli so that Sandman could be automated, to run your markdown files as tests in a CI tool for instance.
 
 ## Immutable Blocks
 Blocks in Sandman build upon the state of the previous block. Each block can add to or modify the state, but cannot change what previous blocks have already established. This creates a unidirectional flow: you can freely iterate on a block until you're satisfied, then move on to the next one—confident that earlier blocks won't break.
