@@ -202,22 +202,30 @@ class NavigationDelegate : NSObject, WKNavigationDelegate {
         decidePolicyFor navigationAction: WKNavigationAction
     ) async -> WKNavigationActionPolicy {
 
-        guard let requestUrl = navigationAction.request.url else {
+        guard navigationAction.request.url != nil else {
             // no url? no need to allow this
             return .cancel
         }
-
+        if(navigationAction.navigationType == .linkActivated)
+        {
+            // bump out of the app
+            NSWorkspace.shared.open(navigationAction.request.url!)
+            return .cancel
+        }
         if let loadedUrl
         {
-            if(navigationAction.request.url!.hasSameOrigin(as: loadedUrl)){
+            if(navigationAction.request.url!.hasSameOrigin(as: loadedUrl) ||
+               !navigationAction.sourceFrame.isMainFrame){
+                // allow with same origin or not in the main frame.
+                // response could load resources inside the iframe
                 return .allow
             } else {
-                // bumpo out of the app
-                NSWorkspace.shared.open(navigationAction.request.url!)
+                // this is a request to another domain in the main frame
+                // better not allow this. Links are allready bumped out before.
                 return .cancel
             }
         } else{
-            // first page is loaded
+            // allow initial page load
             return .allow
         }
     }
