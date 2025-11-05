@@ -252,7 +252,7 @@ defmodule Sandman.DocumentHandlers do
       if param.type == :any || arg_type(arg) == param.type do
         acc
       else
-        acc ++ ["Bad argument ##{index + 1} to '#{full_function_name}' expected #{param.type}, got #{type_to_string(arg_type(arg))})"]
+        acc ++ ["Bad type for argument ##{index + 1} to '#{full_function_name}' expected #{param.type}, got #{type_to_string(arg_type(arg))}"]
       end
     end)
   end
