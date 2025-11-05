@@ -30,6 +30,7 @@ import hotkeys from 'hotkeys-js';
 import HomeHook from './hooks/home';
 import MonacoHook from "./hooks/monaco";
 import DocumentHook from "./hooks/document";
+import MarkdownBlockHook from "./hooks/markdownBlock";
 import MaintainDimensions from "./hooks/maintainDimensions";
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
@@ -39,6 +40,7 @@ let liveSocket = new LiveSocket("/live", Socket, {
 		HomeHook,
 		MonacoHook,
 		DocumentHook,
+		MarkdownBlockHook,
 		MaintainSplitDimensions: MaintainDimensions.MaintainSplitDimensions,
   }
 })

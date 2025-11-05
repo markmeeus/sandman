@@ -271,8 +271,8 @@ defmodule SandmanWeb.LiveView.Document do
       <!-- Render text content for unfocused markdown blocks -->
       <%= if @block.type == "markdown" && @focused_block != @block.id do %>
         <div class={"prose prose-sm text-[12px] prose-invert max-w-none text-neutral-200 font-mono leading-relaxed
-          #{if String.length(@block.code) > 0, do: "px-2", else: "p-2"} cursor-text hover:bg-neutral-800 transition-colors"}
-             phx-click="focus-block" phx-value-block-id={@block.id} >
+          #{if String.length(@block.code) > 0, do: "px-2", else: "p-2"} cursor-text hover:bg-neutral-800 transition-colors markdown-block"}
+             data-block-id={@block.id} >
              <style>
               h1 { color:#AAA !important; margin-top: 0 !important;}
               h2 { color:#AAA !important; margin-top: 0 !important;}
@@ -299,7 +299,7 @@ defmodule SandmanWeb.LiveView.Document do
               hr { color:#AAA !important;}
 
              </style>
-             <div class="markdown-wrappper">
+             <div class="markdown-wrappper" phx-hook="MarkdownBlockHook" id={"markdown-content-#{@block.id}"}>
               <%= MarkdownRenderer.render_with_target_blank(@block.code) %></div>
              </div>
       <% end %>

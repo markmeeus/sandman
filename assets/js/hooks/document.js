@@ -11,6 +11,18 @@ const DocumentHook = {
       });
     });
 
+    // Handle double-click on markdown blocks to focus them
+    document.addEventListener("dblclick", (e) => {
+      const markdownBlock = e.target.closest('.markdown-block');
+      if (markdownBlock) {
+        const blockId = markdownBlock.dataset.blockId;
+        if (blockId) {
+          this.pushEvent("focus-block", { "block-id": blockId });
+          e.preventDefault();
+        }
+      }
+    });
+
     // Send escape back to liveview so it can exit markdown editing
     window.addEventListener("keydown", (e) => {
       if (e.key === 'Escape') {
