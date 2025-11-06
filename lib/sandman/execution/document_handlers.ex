@@ -37,7 +37,7 @@ defmodule Sandman.DocumentHandlers do
     end
 
     [
-      {["sandman", "getenv"], &GetEnv.getenv(self_pid, doc_id,  &1, &2)},
+      {["sandman", "system", "getenv"], &GetEnv.getenv(self_pid, doc_id,  &1, &2)},
       {["sandman", "http", "get"], &fetch_handler.(["GET"] ++ &1, &2)},
       {["sandman", "http", "post"], &fetch_handler.(["POST"] ++ &1, &2)},
       {["sandman", "http", "put"], &fetch_handler.(["PUT"] ++ &1, &2)},
