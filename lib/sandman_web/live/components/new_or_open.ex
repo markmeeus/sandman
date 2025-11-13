@@ -7,6 +7,10 @@ defmodule Sandman.NewOrOpen do
     <%= live_render(@socket, UpdateBar, id: "update_bar") %>
     <div class="no-select h-screen bg-neutral-900 flex items-center justify-center">
       <div>
+        <div class="flex justify-center mb-6">
+          <img src="/images/sandman-icon.png" alt="Sandman" class="w-24 h-24" />
+        </div>
+        <h1 class="text-3xl font-bold text-neutral-100 text-center mb-3">Welcome to Sandman</h1>
         <h2 class="text-sm font-medium text-neutral-400 text-center mb-8">Create a new file, or open an existing one</h2>
         <ul role="list" class="grid grid-cols-1 gap-4">
           <li class="col-span-1 flex rounded-lg shadow-sm">

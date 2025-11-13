@@ -28,14 +28,23 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     socket = socket
     |> assign(:window_id, :browser)
     |> assign(:focused_block, nil)
+    |> assign(:file_picker_mode, nil)
+    |> assign(:current_path, System.user_home!())
+    |> assign(:entries, [])
+    |> assign(:new_filename, "")
+    |> assign(:new_filename_error, nil)
+    |> assign(:show_hidden, false)
     {:ok, socket}
   end
 
   def render(assigns) do
-    if(assigns[:doc_pid]) do
-      render_app(assigns)
-    else
-      render_select_file(assigns)
+    cond do
+      assigns[:doc_pid] ->
+        render_app(assigns)
+      assigns[:file_picker_mode] != nil ->
+        render_file_picker(assigns)
+      true ->
+        render_select_file(assigns)
     end
   end
 
@@ -88,30 +97,124 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     Sandman.NewOrOpen.render(assigns)
   end
 
-  defp start_document(mode, socket) do
-    case FileAccess.select_file(mode) do
-      file_name when is_bitstring(file_name) ->
-        url = SandmanWeb.Endpoint.url()
-          |> URI.parse()
-          |> URI.append_query(URI.encode_query(%{file: file_name}))
-          |> URI.to_string()
+  def render_file_picker(assigns) do
+    Sandman.FilePicker.render(assigns |> Map.put(:mode, assigns[:file_picker_mode]))
+  end
 
-        :wx_misc.launchDefaultBrowser(url);
-        #open_file(file_name, socket)
+  defp show_file_picker(mode, socket) do
+    current_path = System.user_home!()
+    show_hidden = false
+    entries = list_directory_entries(current_path, show_hidden)
 
-      _other ->
-        socket # no file selected
-    end
+    socket
+    |> assign(:file_picker_mode, mode)
+    |> assign(:current_path, current_path)
+    |> assign(:entries, entries)
+    |> assign(:new_filename, "")
+    |> assign(:new_filename_error, nil)
+    |> assign(:show_hidden, show_hidden)
   end
 
   def handle_event("ctrl-key", _, socket), do: {:noreply, socket}
 
   def handle_event("open_file", _, socket) do
-    {:noreply, start_document(:open, socket)}
+    {:noreply, show_file_picker(:open, socket)}
   end
 
   def handle_event("new_file", _, socket) do
-    {:noreply, start_document(:new, socket)}
+    {:noreply, show_file_picker(:new, socket)}
+  end
+
+  def handle_event("navigate_to_directory", %{"path" => path}, socket) do
+    show_hidden = socket.assigns.show_hidden
+    entries = list_directory_entries(path, show_hidden)
+    socket = socket
+    |> assign(:current_path, path)
+    |> assign(:entries, entries)
+    |> push_event("scroll-to-top", %{})
+    {:noreply, socket}
+  end
+
+  def handle_event("navigate_to_parent", _, socket) do
+    current_path = socket.assigns.current_path
+    parent_path = Path.dirname(current_path)
+    show_hidden = socket.assigns.show_hidden
+    entries = list_directory_entries(parent_path, show_hidden)
+
+    socket = socket
+    |> assign(:current_path, parent_path)
+    |> assign(:entries, entries)
+    |> push_event("scroll-to-top", %{})
+    {:noreply, socket}
+  end
+
+  def handle_event("toggle_hidden_files", _params, socket) do
+    # Toggle the current state
+    show_hidden = !socket.assigns.show_hidden
+    current_path = socket.assigns.current_path
+    entries = list_directory_entries(current_path, show_hidden)
+
+    socket = socket
+    |> assign(:show_hidden, show_hidden)
+    |> assign(:entries, entries)
+    |> push_event("scroll-to-top", %{})
+    {:noreply, socket}
+  end
+
+  def handle_event("select_file_from_picker", %{"path" => path}, socket) do
+    # Redirect to the same page with the file parameter
+    {:noreply, push_navigate(socket, to: "/?file=#{URI.encode(path)}")}
+  end
+
+  def handle_event("update_new_filename", %{"value" => filename}, socket) do
+    error = validate_filename(filename, socket.assigns.current_path)
+    socket = socket
+    |> assign(:new_filename, filename)
+    |> assign(:new_filename_error, error)
+    {:noreply, socket}
+  end
+
+  def handle_event("check_enter_key", %{"key" => "Enter"}, socket) do
+    if socket.assigns.new_filename != "" && socket.assigns.new_filename_error == nil do
+      handle_event("create_new_file", %{}, socket)
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("check_enter_key", _, socket) do
+    {:noreply, socket}
+  end
+
+  def handle_event("create_new_file", _, socket) do
+    filename = socket.assigns.new_filename
+    current_path = socket.assigns.current_path
+    file_path = Path.join(current_path, filename)
+
+    case validate_filename(filename, current_path) do
+      nil ->
+        # Create the file with default template
+        case File.write(file_path, Sandman.NewFileTemplate.contents()) do
+          :ok ->
+            {:noreply, push_navigate(socket, to: "/?file=#{URI.encode(file_path)}")}
+          {:error, reason} ->
+            socket = assign(socket, :new_filename_error, "Failed to create file: #{inspect(reason)}")
+            {:noreply, socket}
+        end
+      error ->
+        socket = assign(socket, :new_filename_error, error)
+        {:noreply, socket}
+    end
+  end
+
+  def handle_event("cancel_file_picker", _, socket) do
+    socket = socket
+    |> assign(:file_picker_mode, nil)
+    |> assign(:entries, [])
+    |> assign(:new_filename, "")
+    |> assign(:new_filename_error, nil)
+    |> assign(:show_hidden, false)
+    {:noreply, socket}
   end
 
   def handle_event("code-changed", %{"blockId" => block_id, "value" => code}, socket = %{assigns: %{doc_pid: doc_pid}}) do
@@ -575,4 +678,62 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     end
   end
   defp can_run_block?(_, _), do: false # only lua can run
+
+  # File picker helper functions
+  defp list_directory_entries(path, show_hidden \\ false) do
+    case File.ls(path) do
+      {:ok, entries} ->
+        entries
+        |> Enum.filter(fn name ->
+          # Filter out hidden files if show_hidden is false
+          show_hidden || !String.starts_with?(name, ".")
+        end)
+        |> Enum.map(fn name ->
+          full_path = Path.join(path, name)
+          stat = File.stat!(full_path)
+
+          case stat.type do
+            :directory ->
+              %{type: :directory, name: name, path: full_path, size: nil}
+            :regular ->
+              size = format_file_size(stat.size)
+              %{type: :file, name: name, path: full_path, size: size}
+            _ ->
+              nil
+          end
+        end)
+        |> Enum.filter(& &1 != nil)
+        |> Enum.sort_by(fn entry ->
+          # Sort directories first, then files, both alphabetically
+          {entry.type == :file, String.downcase(entry.name)}
+        end)
+
+      {:error, _reason} ->
+        []
+    end
+  end
+
+  defp format_file_size(size) when size < 1024, do: "#{size} B"
+  defp format_file_size(size) when size < 1024 * 1024, do: "#{Float.round(size / 1024, 1)} KB"
+  defp format_file_size(size) when size < 1024 * 1024 * 1024, do: "#{Float.round(size / (1024 * 1024), 1)} MB"
+  defp format_file_size(size), do: "#{Float.round(size / (1024 * 1024 * 1024), 1)} GB"
+
+  defp validate_filename(filename, current_path) do
+    cond do
+      filename == "" ->
+        "Filename cannot be empty"
+
+      String.contains?(filename, ["/", "\\", "\0"]) ->
+        "Filename cannot contain slashes or null characters"
+
+      String.starts_with?(filename, ".") ->
+        "Filename cannot start with a dot"
+
+      File.exists?(Path.join(current_path, filename)) ->
+        "File already exists"
+
+      true ->
+        nil
+    end
+  end
 end

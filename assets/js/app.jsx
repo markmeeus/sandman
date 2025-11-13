@@ -32,6 +32,7 @@ import MonacoHook from "./hooks/monaco";
 import DocumentHook from "./hooks/document";
 import MarkdownBlockHook from "./hooks/markdownBlock";
 import MaintainDimensions from "./hooks/maintainDimensions";
+import ScrollToTop from "./hooks/scrollToTop";
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
@@ -42,6 +43,7 @@ let liveSocket = new LiveSocket("/live", Socket, {
 		DocumentHook,
 		MarkdownBlockHook,
 		MaintainSplitDimensions: MaintainDimensions.MaintainSplitDimensions,
+		ScrollToTop,
   }
 })
 
