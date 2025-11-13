@@ -5,6 +5,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
 
   alias Sandman.Document
   alias Sandman.FileAccess
+  alias Sandman.FileAccess.RecentPath
   alias SandmanWeb.UpdateBar
   alias Phoenix.PubSub
 
@@ -29,7 +30,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     |> assign(:window_id, :browser)
     |> assign(:focused_block, nil)
     |> assign(:file_picker_mode, nil)
-    |> assign(:current_path, System.user_home!())
+    |> assign(:current_path, RecentPath.get())
     |> assign(:entries, [])
     |> assign(:new_filename, "")
     |> assign(:new_filename_error, nil)
@@ -102,7 +103,7 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
   end
 
   defp show_file_picker(mode, socket) do
-    current_path = System.user_home!()
+    current_path = RecentPath.get()
     show_hidden = false
     entries = list_directory_entries(current_path, show_hidden)
 
@@ -163,6 +164,8 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
 
   def handle_event("select_file_from_picker", %{"path" => path}, socket) do
     # Redirect to the same page with the file parameter
+    # Save the directory as recent path
+    RecentPath.save(path)
     {:noreply, push_navigate(socket, to: "/?file=#{URI.encode(path)}")}
   end
 
@@ -196,6 +199,8 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
         # Create the file with default template
         case File.write(file_path, Sandman.NewFileTemplate.contents()) do
           :ok ->
+            # Save the directory as recent path
+            RecentPath.save(file_path)
             {:noreply, push_navigate(socket, to: "/?file=#{URI.encode(file_path)}")}
           {:error, reason} ->
             socket = assign(socket, :new_filename_error, "Failed to create file: #{inspect(reason)}")
