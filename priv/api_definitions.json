@@ -57,35 +57,106 @@
       "type": "table",
       "start": {
         "type": "function",
-        "description": "Starts the HTTP server"
+        "description": "Starts an HTTP server on a given port. Returns a server id to be used in request handlers.",
+        "schema": {
+          "params": [{"name": "port", "type": "number"}],
+          "ret_vals": [{"name": "server", "type": "string"}]
+        },
+        "example_values": {
+          "port": 8080
+        }
       },
       "get": {
         "type": "function",
-        "description": "Handles HTTP GET requests on the server"
+        "description": "Adds a request handler for GET requests",
+        "schema": {
+          "params": [{"name": "server", "type": "string"}, {"name": "path", "type": "string"}, {"name": "handler", "type": "function"}],
+          "ret_vals": []
+        },
+        "example_values": {
+          "server": "server",
+          "path": "\"/hello\"",
+          "handler": "function(req) return {body = \"Hello, World!\"} end"
+        }
       },
       "post": {
         "type": "function",
-        "description": "Handles HTTP POST requests on the server"
+        "description": "Adds a request handler for POST requests",
+        "schema": {
+          "params": [{"name": "server", "type": "string"}, {"name": "path", "type": "string"}, {"name": "handler", "type": "function"}],
+          "ret_vals": []
+        },
+        "example_values": {
+          "server": "server",
+          "path": "\"/hello\"",
+          "handler": "function(req) return {body = \"Hello, World!\"} end"
+        }
       },
       "put": {
         "type": "function",
-        "description": "Handles HTTP PUT requests on the server"
+        "description": "Adds a request handler for PUT requests",
+        "schema": {
+          "params": [{"name": "server", "type": "string"}, {"name": "path", "type": "string"}, {"name": "handler", "type": "function"}],
+          "ret_vals": []
+        },
+        "example_values": {
+          "server": "server",
+          "path": "\"/hello\"",
+          "handler": "function(req) return {body = \"Hello, World!\"} end"
+        }
       },
       "delete": {
         "type": "function",
-        "description": "Handles HTTP DELETE requests on the server"
+        "description": "Adds a request handler for DELETE requests",
+        "schema": {
+          "params": [{"name": "server", "type": "string"}, {"name": "path", "type": "string"}, {"name": "handler", "type": "function"}],
+          "ret_vals": []
+        },
+        "example_values": {
+          "server": "server",
+          "path": "\"/hello\"",
+          "handler": "function(req) return {body = \"Hello, World!\"} end"
+        }
       },
       "patch": {
         "type": "function",
-        "description": "Handles HTTP PATCH requests on the server"
+        "description": "Adds a request handler for PATCH requests",
+        "schema": {
+          "params": [{"name": "server", "type": "string"}, {"name": "path", "type": "string"}, {"name": "handler", "type": "function"}],
+          "ret_vals": []
+        },
+        "example_values": {
+          "server": "server",
+          "path": "\"/hello\"",
+          "handler": "function(req) return {body = \"Hello, World!\"} end"
+        }
       },
       "head": {
         "type": "function",
-        "description": "Handles HTTP HEAD requests on the server"
+        "description": "Adds a request handler for HEAD requests",
+        "schema": {
+          "params": [{"name": "server", "type": "string"}, {"name": "path", "type": "string"}, {"name": "handler", "type": "function"}],
+          "ret_vals": []
+        },
+        "example_values": {
+          "server": "server",
+          "path": "\"/hello\"",
+          "handler": "function(req) return {body = \"Hello, World!\"} end"
+        }
       },
       "add_route": {
         "type": "function",
-        "description": "Adds a route to the HTTP server"
+        "description": "Adds a request handler for http request",
+        "schema": {
+          "params": [{"name": "method", "type": "string"}, {"name": "server", "type": "string"}, {"name": "path", "type": "string"}, {"name": "handler", "type": "function"}],
+          "ret_vals": []
+        },
+        "example_values": {
+          "server": "server",
+          "method": "\"GET\"",
+          "path": "\"/hello\"",
+          "handler": "function(req) return {body = \"Hello, World!\"} end"
+        }
       }
     },
     "document": {
@@ -106,7 +177,7 @@
         "description": "Gets a value from the document context",
         "schema": {
           "params": [{"type": "string", "name": "key"}],
-          "ret_vals": [{"type": "any"}]
+          "ret_vals": [{"name": "value", "type": "any"}]
         }
       }
     },
