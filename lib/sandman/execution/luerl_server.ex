@@ -20,9 +20,6 @@ defmodule Sandman.LuerlServer do
     GenServer.cast(pid, {:spawn_code, state_id, new_state_id, response_tag, code, delay_ms})
   end
 
-  def call_function(pid, state_id, new_state_id, response_tag, function_path, args) do
-    GenServer.cast(pid, {:call_function, state_id, new_state_id, response_tag, function_path, args})
-  end
   def spawn_function(pid, state_id, new_state_id, response_tag, function_path, args) do
     GenServer.cast(pid, {:spawn_function, state_id, new_state_id, response_tag, function_path, args})
   end
@@ -31,7 +28,8 @@ defmodule Sandman.LuerlServer do
     state = %{
       luerl_states: %{}, #every block has it's own state
       handlers: handlers,
-      document_pid: document_pid
+      document_pid: document_pid,
+      running_workers: %{} # Track spawned PIDs per new_state_id: %{"block_id" => [pid, pid, ...]}
     }
 
     Process.flag(:max_heap_size, %{
@@ -75,44 +73,9 @@ defmodule Sandman.LuerlServer do
     {:noreply, %{state | luerl_states: luerl_states}}
   end
 
-  #this is not used..., also not tested... needs luerl_states on error refactoring at the very least.
-  def handle_cast(
-        {:call_function, state_id, new_state_id, response_tag, function_path, args},
-        state = %{luerl_states: luerl_states, document_pid: document_pid}
-      ) do
-    luerl_state = case {state_id, get_luerl_state(luerl_states, state_id, nil)}  do
-        {nil, luerl_state} -> set_context(luerl_state, %{ block_id: new_state_id }) # nil always returns a new valid state
-        {_, nil} -> :no_state_for_block # if asking state for a block, it should be there!
-        {_, luerl_state} -> set_context(luerl_state, %{ block_id: new_state_id })
-    end
-    {response, luerl_states} =
-      case luerl_state do
-        :no_state_for_block -> {:no_state_for_block, luerl_states}
-        _ ->
-          case LuerlWrapper.call_function(function_path, args, luerl_state) do
-            {:ok, [], luerl_state} ->
-              {[], save_luerl_state(luerl_states, new_state_id, luerl_state)}
-
-            {:ok, [response], luerl_state} ->
-              {response, save_luerl_state(luerl_states, new_state_id, luerl_state)}
-            # lua has multiple return values, only consuming first one for now
-            {:ok, [response | _], luerl_state}  ->
-              {response, save_luerl_state(luerl_states, new_state_id, luerl_state)}
-
-            {:error, err, _, formatted} ->
-              {{:error, err, formatted}, luerl_states}
-
-          end
-      end
-
-    send(document_pid, {:lua_response, response_tag, response})
-    {:noreply, %{state | luerl_states: luerl_states}}
-  end
-
-  # same as call, but runs in isolation and returns the result
   def handle_cast(
         {:spawn_function, state_id, new_state_id, response_tag, function_path, args},
-        state = %{luerl_states: luerl_states, document_pid: document_pid}
+        state = %{luerl_states: luerl_states, document_pid: document_pid, running_workers: running_workers}
       ) do
     luerl_state = case {state_id, get_luerl_state(luerl_states, state_id, nil)}  do
         {nil, luerl_state} -> set_context(luerl_state, %{ block_id: new_state_id }) # nil always returns a new valid state
@@ -120,28 +83,33 @@ defmodule Sandman.LuerlServer do
         {_, luerl_state} -> set_context(luerl_state, %{ block_id: new_state_id })
     end
 
-      case luerl_state do
+      new_state = case luerl_state do
         :no_state_for_block ->
           send(document_pid, {:lua_response, response_tag, :no_state_for_block})
+          state
         _ ->
           self_pid = self()
-          spawn(fn ->
+          pid = spawn_link(fn ->
+            worker_pid = self()
             case LuerlWrapper.call_function(function_path, args, luerl_state) do
               {:ok, [], luerl_state} ->
-                send(self_pid, {:spawn_result, [], response_tag, :ok, new_state_id, luerl_state})
+                send(self_pid, {:spawn_result, worker_pid, [], response_tag, :ok, new_state_id, luerl_state})
 
               {:ok, [response], luerl_state} ->
-                send(self_pid, {:spawn_result, response, response_tag, :ok, new_state_id, luerl_state})
+                send(self_pid, {:spawn_result, worker_pid, response, response_tag, :ok, new_state_id, luerl_state})
               # lua has multiple return values, only consuming first one for now
               {:ok, [response | _], luerl_state}  ->
-                send(self_pid, {:spawn_result, response, response_tag, :ok, new_state_id, luerl_state})
+                send(self_pid, {:spawn_result, worker_pid, response, response_tag, :ok, new_state_id, luerl_state})
               {:error, err, _, formatted} ->
-                send(self_pid, {:spawn_result, {:error, err, formatted}, response_tag, :error, nil, nil})
+                send(self_pid, {:spawn_result, worker_pid, {:error, err, formatted}, response_tag, :error, nil, nil})
 
             end
           end)
+          # Add pid to running_workers for this new_state_id
+          new_running_workers = Map.update(running_workers, new_state_id, [pid], fn pids -> [pid | pids] end)
+          %{state | running_workers: new_running_workers}
       end
-      {:noreply, state}
+      {:noreply, new_state}
   end
 
   # Handle spawn_code without delay parameter (backward compatibility)
@@ -151,7 +119,7 @@ defmodule Sandman.LuerlServer do
 
   # Handle spawn_code with delay parameter
   def handle_cast({:spawn_code, state_id, new_state_id, response_tag, code, delay_ms},
-        state = %{luerl_states: luerl_states, document_pid: document_pid, handlers: handlers}
+        state = %{luerl_states: luerl_states, document_pid: document_pid, handlers: handlers, running_workers: running_workers}
       ) do
     luerl_state = case {state_id, get_luerl_state(luerl_states, state_id, handlers)}  do
         {nil, luerl_state} -> set_context(luerl_state, %{ block_id: new_state_id }) # nil always returns a new valid state
@@ -159,29 +127,34 @@ defmodule Sandman.LuerlServer do
         {_, luerl_state} -> set_context(luerl_state, %{ block_id: new_state_id })
     end
 
-      case luerl_state do
+      new_state = case luerl_state do
         :no_state_for_block ->
           send(document_pid, {:lua_response, response_tag, :no_state_for_block})
+          state
         _ ->
           self_pid = self()
-          spawn(fn ->
+          pid = spawn_link(fn ->
+            worker_pid = self()
             if delay_ms > 0, do: Process.sleep(delay_ms)
             case LuerlWrapper.run_code(code, luerl_state) do
               {:ok, [], luerl_state} ->
-                send(self_pid, {:spawn_result, [], response_tag, :ok, new_state_id, luerl_state})
+                send(self_pid, {:spawn_result, worker_pid, [], response_tag, :ok, new_state_id, luerl_state})
 
               {:ok, [response], luerl_state} ->
-                send(self_pid, {:spawn_result, response, response_tag, :ok, new_state_id, luerl_state})
+                send(self_pid, {:spawn_result, worker_pid, response, response_tag, :ok, new_state_id, luerl_state})
               # lua has multiple return values, only consuming first one for now
               {:ok, [response | _], luerl_state}  ->
-                send(self_pid, {:spawn_result, response, response_tag, :ok, new_state_id, luerl_state})
+                send(self_pid, {:spawn_result, worker_pid, response, response_tag, :ok, new_state_id, luerl_state})
               {:error, err, _, formatted} ->
-                send(self_pid, {:spawn_result, {:error, err, formatted}, response_tag, :error, nil, nil})
+                send(self_pid, {:spawn_result, worker_pid, {:error, err, formatted}, response_tag, :error, nil, nil})
 
             end
           end)
+          # Add pid to running_workers for this new_state_id
+          new_running_workers = Map.update(running_workers, new_state_id, [pid], fn pids -> [pid | pids] end)
+          %{state | running_workers: new_running_workers}
       end
-    {:noreply, state}
+    {:noreply, new_state}
   end
   def handle_cast({:reset, state_ids}, state = %{luerl_states: luerl_states}) do
     new_states = Enum.reduce(state_ids, luerl_states, fn state_id, states ->
@@ -190,19 +163,48 @@ defmodule Sandman.LuerlServer do
     {:noreply, Map.put(state, :luerl_states, new_states) }
   end
 
-  def handle_info({:spawn_result, response, response_tag, :ok, state_id, luerl_state},
-    state = %{luerl_states: luerl_states, document_pid: document_pid}
+  def handle_info({:spawn_result, worker_pid, response, response_tag, :ok, state_id, luerl_state},
+    state = %{luerl_states: luerl_states, document_pid: document_pid, running_workers: running_workers}
   ) do
     send(document_pid, {:lua_response, response_tag, response})
     luerl_states = save_luerl_state(luerl_states, state_id, luerl_state)
-    {:noreply, %{state | luerl_states: luerl_states}}
+
+    # Remove the completed worker PID from running_workers for this state_id
+    new_running_workers = Map.update(running_workers, state_id, [], fn pids ->
+      List.delete(pids, worker_pid)
+    end)
+
+    {:noreply, %{state | luerl_states: luerl_states, running_workers: new_running_workers}}
   end
 
-  def handle_info({:spawn_result, response, response_tag, :error, _, _},
-    state = %{document_pid: document_pid}
+  def handle_info({:spawn_result, worker_pid, response, response_tag, :error, state_id, _},
+    state = %{document_pid: document_pid, running_workers: running_workers}
   ) do
     send(document_pid, {:lua_response, response_tag, response})
-    {:noreply, state}
+
+    # Remove the failed worker PID from running_workers if state_id is present
+    new_running_workers = if state_id do
+      Map.update(running_workers, state_id, [], fn pids ->
+        List.delete(pids, worker_pid)
+      end)
+    else
+      running_workers
+    end
+
+    {:noreply, %{state | running_workers: new_running_workers}}
+  end
+
+  def terminate(_reason, state) do
+    # Force kill all running worker processes (e.g., Lua code in infinite loops)
+    # Iterate through all state_ids and their associated PIDs
+    Enum.each(state[:running_workers] || %{}, fn {_state_id, pids} ->
+      Enum.each(pids, fn pid ->
+        if Process.alive?(pid) do
+          Process.exit(pid, :kill)
+        end
+      end)
+    end)
+    :ok
   end
 
   def get_luerl_state(_, nil, handlers), do: LuerlWrapper.init(handlers)

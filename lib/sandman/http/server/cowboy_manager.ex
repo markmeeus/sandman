@@ -52,7 +52,7 @@ defmodule Sandman.Http.CowboyManager do
         # push client in front
         update_in(port_info[port], &[client | &1])
     end)
-    {:noreply, state |> IO.inspect}
+    {:noreply, state}
   end
 
   def handle_cast({:disconnect, client_pid, id}, state) do

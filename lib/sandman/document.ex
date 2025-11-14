@@ -433,4 +433,21 @@ defmodule Sandman.Document do
     state
     end
   end
+
+  def terminate(_reason, state) do
+    # Stop the LuerlServer process
+    # Using :shutdown instead of :normal to ensure linked processes (spawn_link) are killed
+    # When a process exits with :normal, linked processes are not killed
+    # but with :shutdown or :kill, they are terminated
+    if state[:luerl_server_pid] && Process.alive?(state.luerl_server_pid) do
+      GenServer.stop(state.luerl_server_pid, :shutdown)
+    end
+
+    # Disconnect all HTTP servers
+    Enum.each(state[:servers] || %{}, fn {_id, server} ->
+      CowboyManager.disconnect(server.id)
+    end)
+
+    :ok
+  end
 end

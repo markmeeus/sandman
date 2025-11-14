@@ -59,17 +59,6 @@ defmodule Sandman.LuerlWrapper do
     end
   end
 
-  # # TODO: remove this, every call should be with a funref
-  # def call_function(func, args, luerl_state) when is_bitstring(func) do
-  #   function_keypath = String.split(func, ".")
-  #   case :luerl_new.get_table_keys_dec(function_keypath, luerl_state) do
-  #     {:ok, nil, _} ->
-  #       {:error, :no_such_function_at_keypath, luerl_state,
-  #         "Function #{func} does not exist."}
-  #     _ ->
-  #       call_existing_function(function_keypath, args, luerl_state)
-  #    end
-  # end
   def call_function(func, args, luerl_state) do
     try do
       {args, luerl_state} = :luerl.encode_list(args, luerl_state)

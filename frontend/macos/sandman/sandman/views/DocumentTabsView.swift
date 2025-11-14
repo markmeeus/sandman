@@ -112,9 +112,14 @@ struct DocumentTabsView: View {
 
     private func closeTab(_ tab: DocumentTab) {
         if let index = openTabs.firstIndex(where: { $0.id == tab.id }) {
+            // Explicitly shutdown the WebView - this will disconnect the WebSocket
+            if let webViewContainer = webViews[tab.id] {
+                webViewContainer.shutdown()
+            }
+
             openTabs.remove(at: index)
 
-            // Clean up the WebView container
+            // Remove from the dictionary
             webViews.removeValue(forKey: tab.id)
 
             // If we closed the selected tab, select another one
@@ -280,6 +285,27 @@ class WebViewContainer: ObservableObject {
     }
     deinit {
         timer?.invalidate()
+        print("WebViewContainer deinit called")
+    }
+
+    func shutdown() {
+        print("WebViewContainer shutdown - stopping WebView")
+
+        // Stop the heartbeat timer
+        timer?.invalidate()
+        timer = nil
+
+        // Stop all loading
+        webView.stopLoading()
+
+        // Remove the navigation delegate
+        webView.navigationDelegate = nil
+
+        // load blank
+        webView.load(URLRequest(url: URL(string: "about:blank")!))
+
+        // Remove from superview to trigger proper cleanup
+        webView.removeFromSuperview()
     }
 }
 

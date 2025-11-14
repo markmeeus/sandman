@@ -38,6 +38,18 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
     {:ok, socket}
   end
 
+  def terminate(_reason, socket) do
+    # Clean up document process when LiveView terminates
+    case socket.assigns[:doc_pid] do
+      nil -> :ok
+      doc_pid when is_pid(doc_pid) ->
+        if Process.alive?(doc_pid) do
+          GenServer.stop(doc_pid, :shutdown)
+        end
+        :ok
+    end
+  end
+
   def render(assigns) do
     cond do
       assigns[:doc_pid] ->
@@ -562,6 +574,15 @@ defmodule SandmanWeb.Phoenix.LiveView.App do
   defp tab_visibility(_, _), do: "hidden"
 
   def open_file(file_name, socket) do
+    # Clean up any existing document process before opening a new one
+    case socket.assigns[:doc_pid] do
+      nil -> :ok
+      old_doc_pid when is_pid(old_doc_pid) ->
+        if Process.alive?(old_doc_pid) do
+          GenServer.stop(old_doc_pid, :shutdown)
+        end
+    end
+
     # start_doc
     doc_id = UUID.uuid4()
     PubSub.subscribe(Sandman.PubSub, "document:#{doc_id}")
