@@ -29,8 +29,22 @@ if config_env() == :prod do
   # variable instead.
   secret_key_base = "yxE0QkOzFjes89oq5Q0F7RaZb20tEq7dgY5ghWojxOY3ciAjmL1eajEJ3SQ+NXPi"
 
+  host = System.get_env("PHX_HOST") || "localhost"
+  port = String.to_integer(System.get_env("PORT") || "4000")
+
+  # Bind to localhost by default (for Mac app security)
+  # or all interfaces when BIND_ALL_INTERFACES=true (for Docker)
+  ip = case System.get_env("BIND_ALL_INTERFACES") do
+    "true" -> {0, 0, 0, 0, 0, 0, 0, 0}  # IPv6 all interfaces (also handles IPv4)
+    _ -> {127, 0, 0, 1}                  # localhost only (secure default)
+  end
+
   config :sandman, SandmanWeb.Endpoint,
-    http: [ip: {127, 0, 0, 1}, port: System.get_env("PORT")],
+    url: [host: host, port: 443, scheme: "https"],
+    http: [
+      ip: ip,
+      port: port
+    ],
     secret_key_base: secret_key_base,
     server: true
 

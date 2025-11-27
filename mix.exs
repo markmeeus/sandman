@@ -25,7 +25,7 @@ defmodule Sandman.MixProject do
   def application do
     [
       mod: {Sandman.Application, []},
-      extra_applications: [:logger, :runtime_tools, :observer, :wx]
+      extra_applications: [:logger, :runtime_tools]
     ]
   end
 
